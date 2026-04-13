@@ -274,4 +274,4 @@ Steps:
 
 # 🚀 FlowML
 
-**Build Machine Learning Pipelines. Visually. Intelligently. Effortless
+**Build Machine Learning Pipelines. Visually. Intelligently. Effortless**
