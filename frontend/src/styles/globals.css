@@ -1,0 +1,153 @@
+@import "@fontsource/sora/600.css";
+@import "@fontsource/sora/700.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+
+@import "tailwindcss";
+
+/* ─── Design Tokens ─────────────────────────────────────────── */
+@theme {
+  --font-sora: "Sora", sans-serif;
+  --font-inter: "Inter", sans-serif;
+
+  /* Raw palette */
+  --color-dark-background: #020617;
+  --color-dark-card: #0B1120;
+  --color-dark-border: #1E293B;
+  --color-dark-text: #F8FAFC;
+  --color-dark-text-secondary: #94A3B8;
+
+  --color-light-background: #F1F5F9;
+  --color-light-card: #FFFFFF;
+  --color-light-border: #CBD5E1;
+  --color-light-text: #0F172A;
+  --color-light-text-secondary: #475569;
+
+  --color-primary: #6366F1;
+  --color-secondary: #3B82F6;
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+
+  /* Semantic tokens (default = dark) */
+  --color-bg: var(--color-dark-background);
+  --color-surface: var(--color-dark-card);
+  --color-border: var(--color-dark-border);
+  --color-text: var(--color-dark-text);
+  --color-text-muted: var(--color-dark-text-secondary);
+}
+
+/* ─── Light-mode overrides via .light wrapper class ─────────── */
+.light {
+  --color-bg: var(--color-light-background);
+  --color-surface: var(--color-light-card);
+  --color-border: var(--color-light-border);
+  --color-text: var(--color-light-text);
+  --color-text-muted: var(--color-light-text-secondary);
+}
+
+/* ─── Base ───────────────────────────────────────────────────── */
+@layer base {
+  body {
+    @apply font-inter antialiased transition-colors duration-300;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sora font-semibold uppercase tracking-wider;
+  }
+}
+
+/* ─── Reusable semantic utilities ───────────────────────────── */
+.bg-surface   { background-color: var(--color-surface); }
+.bg-canvas    { background-color: var(--color-bg); }
+.border-theme { border-color: var(--color-border); }
+.text-theme   { color: var(--color-text); }
+.text-muted   { color: var(--color-text-muted); }
+
+/* ─── Components ────────────────────────────────────────────── */
+@layer components {
+  .btn-primary {
+    @apply bg-linear-to-r from-primary to-secondary text-white px-4 py-2 rounded-lg font-medium
+           hover:shadow-[0_0_15px_rgba(99,102,241,0.5)] transition-all active:scale-95 flex items-center gap-2;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 rounded-lg font-medium transition-all active:scale-95 flex items-center gap-2;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+  }
+  .btn-secondary:hover {
+    background-color: color-mix(in srgb, var(--color-border) 15%, transparent);
+  }
+
+  .card-premium {
+    @apply rounded-xl shadow-lg transition-all duration-300;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+  }
+}
+
+/* ─── Custom Scrollbar ─────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 9999px;
+}
+
+/* ─── React Flow ────────────────────────────────────────────── */
+
+/* The entire ReactFlow wrapper background - MUST BE TRANSPARENT to show the CSS dots beneath */
+.react-flow {
+  background-color: transparent !important;
+}
+
+/* The pane (canvas area) - MUST BE TRANSPARENT */
+.react-flow__pane {
+  background-color: transparent !important;
+}
+
+/* The viewport wrapper - MUST BE TRANSPARENT */
+.react-flow__viewport {
+  background-color: transparent !important;
+}
+
+/* The background SVG layer itself - if still present, make it transparent */
+.react-flow__background {
+  background-color: transparent !important;
+}
+
+/* Clear the default pattern rect fill */
+.react-flow__background pattern rect {
+  fill: transparent !important;
+}
+
+.react-flow__edge-path {
+  stroke-width: 2;
+  stroke: var(--color-border);
+  opacity: 0.6;
+}
+
+.react-flow__controls {
+  background-color: var(--color-surface) !important;
+  border-color: var(--color-border) !important;
+}
+.react-flow__controls-button {
+  border-color: var(--color-border) !important;
+  fill: var(--color-text) !important;
+  background-color: var(--color-surface) !important;
+}
+.react-flow__controls-button:hover {
+  background-color: var(--color-bg) !important;
+}
+
+.react-flow__attribution {
+  display: none !important;
+}
+
+.react-flow__minimap {
+  background-color: var(--color-surface) !important;
+  border: 1px solid var(--color-border);
+}
