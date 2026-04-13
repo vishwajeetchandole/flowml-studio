@@ -263,49 +263,12 @@ GET /api/download-model
 
 ---
 
-# 📈 Future Improvements
-
-* Deep Learning Support
-* Cloud Deployment
-* Model Deployment API
-* Team Collaboration
-* Dataset Versioning
-
----
-
-# 👨‍💻 Authors
-
-**Vishwajeet Chandole**
-**Ajinkya Walvekar**
-
----
-
-# 🤝 Contributing
-
-Contributions are welcome!
-
 Steps:
 
 1. Fork repository
 2. Create branch
 3. Make changes
 4. Submit pull request
-
----
-
-# 📜 License
-
-MIT License
-
----
-
-# ⭐ Support
-
-If you like this project:
-
-* Star the repository
-* Share with others
-* Contribute
 
 ---
 
