@@ -1,4 +1,6 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle2 } from 'lucide-react';
 import { ThemeProvider } from './theme/ThemeProvider';
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
@@ -12,6 +14,12 @@ function App() {
   const [selectedNode, setSelectedNode] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
   const [pipelineStatus, setPipelineStatus] = useState(null); // null | 'running' | 'success' | 'error'
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const showToast = useCallback((msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  }, []);
 
   // Global dataset info — shared across nodes (upload → model → predict)
   const [uploadedDataset, setUploadedDataset] = useState(null);
@@ -43,6 +51,25 @@ function App() {
     }
   }, [isRunning]);
 
+  const handleSave = useCallback(() => {
+    if (!workflowActionsRef.current) return;
+    const { nodes, edges } = workflowActionsRef.current.getWorkflowData();
+    localStorage.setItem('flowml_workflow', JSON.stringify({ nodes, edges }));
+    showToast('Workflow saved locally!');
+  }, [showToast]);
+
+  const handleExport = useCallback(() => {
+    if (!workflowActionsRef.current) return;
+    const { nodes, edges } = workflowActionsRef.current.getWorkflowData();
+    const blob = new Blob([JSON.stringify({ nodes, edges }, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'flowml_pipeline.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
   // Called by RightPanel when it mutates a node's data (e.g. file uploaded, model trained)
   const handleUpdateNodeData = useCallback((nodeId, newData) => {
     if (workflowActionsRef.current) {
@@ -66,6 +93,8 @@ function App() {
           onRunPipeline={handleRunPipeline}
           isRunning={isRunning}
           pipelineStatus={pipelineStatus}
+          onSave={handleSave}
+          onExport={handleExport}
         />
 
         <div className="flex flex-1 overflow-hidden relative">
@@ -90,6 +119,26 @@ function App() {
         </div>
 
         <ConsolePanel isOpen={isConsoleOpen} onClose={() => setIsConsoleOpen(false)} />
+
+        <AnimatePresence>
+          {toastMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: 50, x: '-50%' }}
+              animate={{ opacity: 1, y: 0, x: '-50%' }}
+              exit={{ opacity: 0, y: 50, x: '-50%' }}
+              className="fixed bottom-8 left-1/2 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg z-[100] text-sm font-medium border"
+              style={{
+                backgroundColor: 'var(--color-surface)',
+                borderColor: 'var(--color-border)',
+                color: 'var(--color-text)',
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)'
+              }}
+            >
+              <CheckCircle2 className="w-5 h-5 text-success" style={{ color: '#22c55e' }} />
+              {toastMessage}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </ThemeProvider>
   );

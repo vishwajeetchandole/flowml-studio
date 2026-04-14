@@ -16,7 +16,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { motion } from 'framer-motion';
 /* eslint-enable no-unused-vars */
 
-const Navbar = ({ toggleConsole, isConsoleOpen, onRunPipeline, isRunning, pipelineStatus }) => {
+const Navbar = ({ toggleConsole, isConsoleOpen, onRunPipeline, isRunning, pipelineStatus, onSave, onExport }) => {
   const { theme, toggleTheme } = useTheme();
 
   // ─── Run Pipeline button — adapts to pipeline state ───────────
@@ -96,8 +96,8 @@ const Navbar = ({ toggleConsole, isConsoleOpen, onRunPipeline, isRunning, pipeli
         <div className="h-6 w-px mx-2" style={{ backgroundColor: 'var(--color-border)' }} />
 
         <div className="flex items-center gap-2">
-          <NavButton icon={<Save className="w-4 h-4" />} label="Save" />
-          <NavButton icon={<Download className="w-4 h-4" />} label="Export" />
+          <NavButton icon={<Save className="w-4 h-4" />} label="Save" onClick={onSave} />
+          <NavButton icon={<Download className="w-4 h-4" />} label="Export" onClick={onExport} />
           <NavButton
             icon={<Terminal className="w-4 h-4" />}
             label="Console"
