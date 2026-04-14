@@ -7,7 +7,9 @@ import {
   FileText,
   Plus
 } from 'lucide-react';
+/* eslint-disable no-unused-vars */
 import { motion } from 'framer-motion';
+/* eslint-enable no-unused-vars */
 
 const NODE_CATEGORIES = [
   {

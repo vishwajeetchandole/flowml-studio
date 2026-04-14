@@ -1,18 +1,75 @@
 import React from 'react';
-import { 
-  Play, 
-  Save, 
-  Download, 
-  Terminal, 
-  Sun, 
-  Moon, 
-  Cpu
+import {
+  Play,
+  Save,
+  Download,
+  Terminal,
+  Sun,
+  Moon,
+  Cpu,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import { useTheme } from '../../theme/ThemeProvider';
+/* eslint-disable no-unused-vars */
 import { motion } from 'framer-motion';
+/* eslint-enable no-unused-vars */
 
-const Navbar = ({ toggleConsole, isConsoleOpen }) => {
+const Navbar = ({ toggleConsole, isConsoleOpen, onRunPipeline, isRunning, pipelineStatus }) => {
   const { theme, toggleTheme } = useTheme();
+
+  // ─── Run Pipeline button — adapts to pipeline state ───────────
+  const runBtn = () => {
+    if (isRunning) {
+      return (
+        <button className="btn-primary opacity-70 cursor-not-allowed" disabled>
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span>Running…</span>
+        </button>
+      );
+    }
+    if (pipelineStatus === 'success') {
+      return (
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onRunPipeline}
+          className="btn-primary"
+          style={{ background: 'linear-gradient(to right,#22c55e,#16a34a)' }}
+        >
+          <CheckCircle2 className="w-4 h-4" />
+          <span>Run Again</span>
+        </motion.button>
+      );
+    }
+    if (pipelineStatus === 'error') {
+      return (
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onRunPipeline}
+          className="btn-primary"
+          style={{ background: 'linear-gradient(to right,#ef4444,#dc2626)' }}
+        >
+          <AlertCircle className="w-4 h-4" />
+          <span>Retry Pipeline</span>
+        </motion.button>
+      );
+    }
+    return (
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={onRunPipeline}
+        className="btn-primary"
+        id="run-pipeline-btn"
+      >
+        <Play className="w-4 h-4 fill-current" />
+        <span>Run Pipeline</span>
+      </motion.button>
+    );
+  };
 
   return (
     <nav
@@ -34,14 +91,7 @@ const Navbar = ({ toggleConsole, isConsoleOpen }) => {
 
       {/* Actions */}
       <div className="flex items-center gap-3">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="btn-primary"
-        >
-          <Play className="w-4 h-4 fill-current" />
-          <span>Run Pipeline</span>
-        </motion.button>
+        {runBtn()}
 
         <div className="h-6 w-px mx-2" style={{ backgroundColor: 'var(--color-border)' }} />
 
@@ -53,6 +103,7 @@ const Navbar = ({ toggleConsole, isConsoleOpen }) => {
             label="Console"
             onClick={toggleConsole}
             active={isConsoleOpen}
+            id="console-toggle-btn"
           />
         </div>
 
@@ -62,20 +113,24 @@ const Navbar = ({ toggleConsole, isConsoleOpen }) => {
           onClick={toggleTheme}
           className="p-2 rounded-lg transition-colors"
           style={{ color: 'var(--color-text-muted)' }}
-          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--color-border) 20%, transparent)'}
-          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor =
+              'color-mix(in srgb, var(--color-border) 20%, transparent)')
+          }
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
           title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          id="theme-toggle-btn"
         >
           {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
-
       </div>
     </nav>
   );
 };
 
-const NavButton = ({ icon, label, onClick, active }) => (
+const NavButton = ({ icon, label, onClick, active, id }) => (
   <motion.button
+    id={id}
     whileHover={{ scale: 1.05 }}
     whileTap={{ scale: 0.95 }}
     onClick={onClick}
@@ -83,8 +138,14 @@ const NavButton = ({ icon, label, onClick, active }) => (
       active ? 'bg-primary/10 text-primary border border-primary/20' : ''
     }`}
     style={!active ? { color: 'var(--color-text-muted)' } : {}}
-    onMouseEnter={e => { if (!active) e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--color-border) 20%, transparent)'; }}
-    onMouseLeave={e => { if (!active) e.currentTarget.style.backgroundColor = 'transparent'; }}
+    onMouseEnter={(e) => {
+      if (!active)
+        e.currentTarget.style.backgroundColor =
+          'color-mix(in srgb, var(--color-border) 20%, transparent)';
+    }}
+    onMouseLeave={(e) => {
+      if (!active) e.currentTarget.style.backgroundColor = 'transparent';
+    }}
   >
     {icon}
     <span className="hidden lg:inline">{label}</span>

@@ -1,14 +1,12 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useTheme } from '../theme/ThemeProvider';
 import ReactFlow, {
   addEdge,
-  Background,
-  BackgroundVariant,
   Controls,
   useNodesState,
   useEdgesState,
   ReactFlowProvider,
-  MarkerType
+  MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -18,7 +16,7 @@ import {
   ModelNode,
   AIDecisionNode,
   OutputNode,
-  PreviewNode
+  PreviewNode,
 } from '../components/nodes/CustomNodes';
 
 const nodeTypes = {
@@ -37,50 +35,105 @@ const nodeTypes = {
   report: OutputNode,
 };
 
+const LABEL_MAP = {
+  upload: 'Upload Dataset',
+  loadCsv: 'Load CSV',
+  preview: 'Preview Dataset',
+  fillMissing: 'Fill Missing',
+  encode: 'Encode Labels',
+  scale: 'Scale Features',
+  randomForest: 'Random Forest',
+  linearRegression: 'Linear Regression',
+  decisionTree: 'Decision Tree',
+  aiDecision: 'AI Decision',
+  explainableAi: 'Explainable AI',
+  prediction: 'Prediction',
+  report: 'Report',
+};
+
+const DESC_MAP = {
+  upload: 'CSV, JSON, SQL — primary data source',
+  loadCsv: 'Load a local CSV file',
+  preview: 'Inspect data as a table',
+  fillMissing: 'Mean, Median, or Constant strategy',
+  encode: 'One-hot or Label encoding',
+  scale: 'Normalize or Standardize features',
+  randomForest: 'Ensemble learning model',
+  linearRegression: 'Baseline regression model',
+  decisionTree: 'Recursive partitioning',
+  aiDecision: 'Autonomous reasoning engine',
+  explainableAi: 'Feature importance & SHAP',
+  prediction: 'Run model inference',
+  report: 'Generate PDF / HTML report',
+};
+
 const initialNodes = [
   {
-    id: '1',
+    id: 'node-1',
     type: 'upload',
-    data: { label: 'Upload Dataset', description: 'Primary training data source' },
-    position: { x: 100, y: 100 },
+    data: { label: 'Upload Dataset', description: 'CSV, JSON, SQL — primary data source' },
+    position: { x: 80, y: 120 },
   },
   {
-    id: '2',
+    id: 'node-2',
     type: 'randomForest',
     data: { label: 'Random Forest', description: 'Ensemble learning model' },
-    position: { x: 400, y: 100 },
+    position: { x: 400, y: 120 },
   },
 ];
 
 const initialEdges = [
   {
     id: 'e1-2',
-    source: '1',
-    target: '2',
+    source: 'node-1',
+    target: 'node-2',
     animated: true,
     style: { stroke: '#6366F1' },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#6366F1' }
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#6366F1' },
   },
 ];
 
-const Workflow = ({ onNodeClick }) => {
+// Inner component — must be inside ReactFlowProvider
+const WorkflowInner = ({ onNodeClick, actionsRef }) => {
   const { theme } = useTheme();
   const reactFlowWrapper = useRef(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
-  // SVG attrs can't use CSS vars — concrete hex per theme
-  // Use high-contrast values so dots are clearly visible
-  const dotColor = theme === 'dark' ? '#334155' : '#cbd5e1';   // slate-700 / slate-300
-  const canvasBg = theme === 'dark' ? '#020617' : '#F8FAFC';   // match --color-bg
+  const dotColor = theme === 'dark' ? '#1e293b' : '#cbd5e1';
+  const canvasBg = theme === 'dark' ? '#020617' : '#f8fafc';
 
-  const onConnect = useCallback((params) => setEdges((eds) => addEdge({
-    ...params,
-    animated: true,
-    style: { stroke: '#6366F1' },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#6366F1' }
-  }, eds)), []);
+  // Expose workflow actions to parent (App.jsx) via ref
+  useEffect(() => {
+    if (!actionsRef) return;
+    actionsRef.current = {
+      getWorkflowData: () => ({ nodes, edges }),
+      updateNode: (nodeId, newData) => {
+        setNodes((nds) =>
+          nds.map((n) =>
+            n.id === nodeId ? { ...n, data: { ...n.data, ...newData } } : n
+          )
+        );
+      },
+    };
+  }, [nodes, edges, actionsRef, setNodes]);
+
+  const onConnect = useCallback(
+    (params) =>
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...params,
+            animated: true,
+            style: { stroke: '#6366F1' },
+            markerEnd: { type: MarkerType.ArrowClosed, color: '#6366F1' },
+          },
+          eds
+        )
+      ),
+    [setEdges]
+  );
 
   const onDragOver = useCallback((event) => {
     event.preventDefault();
@@ -90,12 +143,8 @@ const Workflow = ({ onNodeClick }) => {
   const onDrop = useCallback(
     (event) => {
       event.preventDefault();
-
       const type = event.dataTransfer.getData('application/reactflow');
-
-      if (typeof type === 'undefined' || !type) {
-        return;
-      }
+      if (!type || !reactFlowInstance) return;
 
       const position = reactFlowInstance.screenToFlowPosition({
         x: event.clientX,
@@ -103,25 +152,23 @@ const Workflow = ({ onNodeClick }) => {
       });
 
       const newNode = {
-        id: `${Math.random().toString(36).substr(2, 9)}`,
+        id: `node-${Math.random().toString(36).substr(2, 9)}`,
         type,
         position,
         data: {
-          label: type.charAt(0).toUpperCase() + type.slice(1).replace(/([A-Z])/g, ' $1'),
-          description: `Custom ${type} node configuration`
+          label: LABEL_MAP[type] || type,
+          description: DESC_MAP[type] || `Configure ${type} node`,
         },
       };
-
       setNodes((nds) => nds.concat(newNode));
     },
-    [reactFlowInstance]
+    [reactFlowInstance, setNodes]
   );
 
   return (
-    <div className="w-full h-full flex flex-col" ref={reactFlowWrapper}>
-      {/* Apply dot pattern via CSS radial-gradient - more reliable than SVG Background */}
+    <div className="w-full h-full" ref={reactFlowWrapper}>
       <div
-        className="flex-1 h-full"
+        className="w-full h-full"
         style={{
           backgroundImage: `radial-gradient(circle, ${dotColor} 1px, transparent 1px)`,
           backgroundSize: '22px 22px',
@@ -152,8 +199,11 @@ const Workflow = ({ onNodeClick }) => {
   );
 };
 
-export default ({ onNodeClick }) => (
+// Wrap with provider so useReactFlow() works inside CustomNodes
+const Workflow = ({ onNodeClick, actionsRef }) => (
   <ReactFlowProvider>
-    <Workflow onNodeClick={onNodeClick} />
+    <WorkflowInner onNodeClick={onNodeClick} actionsRef={actionsRef} />
   </ReactFlowProvider>
 );
+
+export default Workflow;

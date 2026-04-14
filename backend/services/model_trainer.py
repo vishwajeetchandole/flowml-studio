@@ -28,6 +28,18 @@ def train_models(X, y, task_type: str, test_size: float = 0.2):
     if task_type == 'classification':
         y = LabelEncoder().fit_transform(y.astype(str))
         
+    # Auto-encode any string/object columns in X so models don't crash
+    # if the user skipped the preprocessing node.
+    X = X.copy()
+    cat_cols = X.select_dtypes(include=['object', 'category', 'string']).columns
+    for col in cat_cols:
+        X[col] = LabelEncoder().fit_transform(X[col].astype(str))
+        
+    # Auto-impute missing values so training doesn't crash
+    if X.isnull().values.any():
+        from sklearn.impute import SimpleImputer
+        X[:] = SimpleImputer(strategy='mean').fit_transform(X)
+        
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
     
     models = {}
@@ -103,6 +115,11 @@ def train_models(X, y, task_type: str, test_size: float = 0.2):
     os.makedirs(save_dir, exist_ok=True)
     model_path = os.path.join(save_dir, "best_model.joblib")
     joblib.dump(best_model, model_path)
+    
+    # Save the feature names so predictor knows what to keep
+    features_path = os.path.join(save_dir, "features.joblib")
+    joblib.dump(X.columns.tolist(), features_path)
+    
     log_event(f"Best model saved to {model_path}.")
     
     return {
