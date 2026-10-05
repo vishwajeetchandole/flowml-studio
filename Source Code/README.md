@@ -122,59 +122,78 @@ Visualization Engine
 ```
 flowml/
 │
-├── frontend/
-├── backend/
+├── Docs/                  # Presentation slides and project documentation
+├── Source Code/
+│   ├── frontend/          # React + Vite + Tailwind CSS frontend
+│   ├── backend/           # FastAPI + Scikit-Learn backend
+│   ├── model_capabilities.yaml
+│   └── README.md
 ├── README.md
-├── .gitignore
+└── .gitignore
 ```
 
 ---
 
 # 🚀 Getting Started
 
-## Clone Repository
+## 1. Clone or Extract Zip
 
 ```bash
-git clone https://github.com/yourusername/flowml.git
-cd flowml
+git clone https://github.com/vishwajeetchandole/flowml-studio.git
+cd flowml-studio
 ```
 
 ---
 
-# Frontend Setup
+## 2. Backend Setup (FastAPI)
+
+In a terminal, navigate to the backend directory and set up Python:
 
 ```bash
-cd frontend
+cd "Source Code/backend"
+
+# (Optional but recommended) create a virtual environment
+python -m venv venv
+
+# Activate virtual environment:
+# Windows:
+.\venv\Scripts\activate
+# macOS / Linux:
+# source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start backend server
+uvicorn app:app --reload --port 8000
+```
+
+Backend will be running at:
+```
+http://localhost:8000
+```
+
+---
+
+## 3. Frontend Setup (React + Vite)
+
+In a **second terminal**, navigate to the frontend directory:
+
+```bash
+cd "Source Code/frontend"
+
+# Install node dependencies
 npm install
+
+# Start Vite dev server
 npm run dev
 ```
 
-Frontend runs at:
-
+Frontend will be running at:
 ```
 http://localhost:5173
 ```
 
----
-
-# Backend Setup
-
-```bash
-cd backend
-pip install -r requirements.txt
-```
-
-Run backend
-
-```bash
-uvicorn app:app --reload
-```
-
-Backend runs at:
-
-```
-http://localhost:8000
-```
 
 ---
 
