@@ -1,0 +1,213 @@
+@import "@fontsource/sora/600.css";
+@import "@fontsource/sora/700.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+
+@import "tailwindcss";
+
+/* ─── Design Tokens ──────────────────────────────────────────────────────────── */
+@theme {
+  --font-sora: "Sora", sans-serif;
+  --font-inter: "Inter", sans-serif;
+
+  /* Dark palette */
+  --color-dark-background: #080c14;
+  --color-dark-card:       #0e1420;
+  --color-dark-border:     #1a2236;
+  --color-dark-text:       #f0f4ff;
+  --color-dark-text-secondary: #8892a4;
+
+  /* Light palette */
+  --color-light-background: #f0f4f8;
+  --color-light-card:       #ffffff;
+  --color-light-border:     #dde3ed;
+  --color-light-text:       #0d1117;
+  --color-light-text-secondary: #4a5568;
+
+  /* Brand */
+  --color-primary:   #6366F1;
+  --color-secondary: #3B82F6;
+  --color-success:   #22C55E;
+  --color-warning:   #F59E0B;
+  --color-danger:    #EF4444;
+
+  /* Semantic (default = dark) */
+  --color-bg:         var(--color-dark-background);
+  --color-surface:    var(--color-dark-card);
+  --color-border:     var(--color-dark-border);
+  --color-text:       var(--color-dark-text);
+  --color-text-muted: var(--color-dark-text-secondary);
+}
+
+/* ─── Light mode ─────────────────────────────────────────────────────────────── */
+.light {
+  --color-bg:         var(--color-light-background);
+  --color-surface:    var(--color-light-card);
+  --color-border:     var(--color-light-border);
+  --color-text:       var(--color-light-text);
+  --color-text-muted: var(--color-light-text-secondary);
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  #root {
+    width: 100%;
+    max-width: 100%;
+    text-align: left;
+    border: none;
+  }
+
+  body {
+    @apply font-inter antialiased;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    transition: background-color 0.3s ease, color 0.2s ease;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sora font-semibold;
+    color: var(--color-text);
+  }
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar             { width: 6px; height: 6px; }
+::-webkit-scrollbar-track       { background: transparent; }
+::-webkit-scrollbar-thumb       { background: var(--color-border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+
+/* ─── Components ─────────────────────────────────────────────────────────────── */
+@layer components {
+  .btn-primary {
+    @apply flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-white
+           transition-all active:scale-95;
+    background: linear-gradient(135deg, #6366f1, #3b82f6);
+    box-shadow: 0 4px 18px rgba(99,102,241,0.35);
+  }
+  .btn-primary:hover { opacity: 0.92; }
+
+  .btn-ghost {
+    @apply flex items-center gap-2 px-3 py-2 rounded-xl font-medium transition-all active:scale-95;
+    color:  var(--color-text-muted);
+    border: 1px solid var(--color-border);
+  }
+  .btn-ghost:hover { background: var(--color-surface); color: var(--color-text); }
+
+  .panel {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    @apply rounded-2xl;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 rounded-xl text-sm focus:outline-none transition-colors;
+    background: var(--color-bg);
+    border:     1px solid var(--color-border);
+    color:      var(--color-text);
+  }
+  .input-field:focus { border-color: rgba(99,102,241,0.5); }
+
+  .tag {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold;
+  }
+}
+
+/* ─── React Flow ─────────────────────────────────────────────────────────────── */
+.react-flow,
+.react-flow__pane,
+.react-flow__viewport,
+.react-flow__background {
+  background-color: transparent !important;
+}
+.react-flow__background pattern rect { fill: transparent !important; }
+
+/* Edges */
+.react-flow__edge-path {
+  stroke-width: 2.5;
+  stroke: #6366f1;
+  opacity: 0.7;
+}
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: #6366f1;
+  opacity: 1;
+  stroke-width: 3;
+}
+
+/* Selection box */
+.react-flow__selection {
+  background: rgba(99,102,241,0.06) !important;
+  border: 1.5px dashed rgba(99,102,241,0.4) !important;
+}
+
+/* Controls */
+.react-flow__controls {
+  background-color: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+}
+.react-flow__controls-button {
+  border-color: var(--color-border) !important;
+  fill: var(--color-text) !important;
+  background-color: var(--color-surface) !important;
+  transition: background-color 0.15s ease !important;
+}
+.react-flow__controls-button:hover {
+  background-color: var(--color-bg) !important;
+  fill: var(--color-primary) !important;
+}
+
+/* Minimap */
+.react-flow__minimap {
+  background-color: var(--color-surface) !important;
+  border: 1px solid var(--color-border);
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+.react-flow__minimap-mask { fill: var(--color-bg) !important; opacity: 0.6; }
+
+/* Attribution */
+.react-flow__attribution { display: none !important; }
+
+/* Connection line */
+.react-flow__connection-path {
+  stroke: #6366f1 !important;
+  stroke-width: 2.5 !important;
+  stroke-dasharray: 6 3;
+  opacity: 0.8;
+}
+
+/* Handle hover rings */
+.react-flow__handle {
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+.react-flow__handle:hover {
+  transform: scale(1.4) !important;
+}
+
+/* ─── Canvas dot grid ─────────────────────────────────────────────────────────── */
+.flowml-canvas {
+  background-image: radial-gradient(circle, var(--dot-color, #1a2236) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ─── Utility ─────────────────────────────────────────────────────────────────── */
+.text-primary   { color: var(--color-primary);   }
+.text-success   { color: var(--color-success);   }
+.text-warning   { color: var(--color-warning);   }
+.text-danger    { color: var(--color-danger);    }
+.bg-primary-10  { background: rgba(99,102,241,0.10); }
+.bg-success-10  { background: rgba(34,197,94,0.10);  }
