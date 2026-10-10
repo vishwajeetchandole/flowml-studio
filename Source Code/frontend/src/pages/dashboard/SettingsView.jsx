@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../theme/ThemeProvider';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import {
-  Settings, User, Shield, Key, Sun, Moon, LogOut,
+  Settings, User, Shield, Key, LogOut,
   CheckCircle2, AlertCircle, Sparkles, Terminal, Copy, Check,
 } from 'lucide-react';
 
 export default function SettingsView() {
-  const { user, signOut, isDevMode, firebaseStatus } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { user, signOut, isDevMode } = useAuth();
   const { showToast } = useOutletContext();
   const navigate = useNavigate();
 
@@ -74,15 +72,19 @@ export default function SettingsView() {
             </p>
 
             <div className="flex items-center gap-2 pt-1">
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-slate-300">
+              <span
+                className="text-[10px] font-mono px-2 py-0.5 rounded-md"
+                style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text-muted)' }}
+              >
                 UID: {user?.uid || 'dev-user-demo'}
               </span>
               <button
                 onClick={handleCopyUid}
-                className="p-1 text-slate-400 hover:text-white transition-colors"
+                className="p-1 transition-colors"
+                style={{ color: 'var(--color-text-muted)' }}
                 title="Copy UID"
               >
-                {copiedKey ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedKey ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
           </div>
@@ -136,11 +138,11 @@ export default function SettingsView() {
           <div className="p-3 border-b text-[10px] uppercase font-bold tracking-wider" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}>
             Teammate Firebase SDK Environment Keys
           </div>
-          <div className="divide-y divide-white/5 font-mono text-[11px]">
+          <div className="divide-y text-[11px] font-mono" style={{ borderColor: 'var(--color-border)' }}>
             {envVars.map((e) => (
               <div key={e.key} className="p-3 flex items-center justify-between">
-                <span className="text-slate-300 font-semibold">{e.key}</span>
-                <span className={e.status.includes('Configured') ? 'text-emerald-400' : 'text-slate-400'}>
+                <span className="font-semibold" style={{ color: 'var(--color-text)' }}>{e.key}</span>
+                <span className={e.status.includes('Configured') ? 'text-emerald-600' : 'text-slate-400'}>
                   {e.status}
                 </span>
               </div>
@@ -169,22 +171,16 @@ export default function SettingsView() {
                 Interface Theme
               </div>
               <div className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
-                Switch between high-contrast dark mode and clean daylight theme
+                FlowML uses a clean light theme optimised for focus
               </div>
             </div>
 
-            <button
-              onClick={toggleTheme}
-              className="px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition-colors"
-              style={{
-                background: 'var(--color-bg)',
-                borderColor: 'var(--color-border)',
-                color: 'var(--color-text)',
-              }}
+            <span
+              className="px-3 py-1.5 rounded-xl border text-xs font-semibold"
+              style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}
             >
-              {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-warning" /> : <Moon className="w-3.5 h-3.5 text-primary" />}
-              {theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
-            </button>
+              Light Mode
+            </span>
           </div>
 
           <div className="flex items-center justify-between py-2">

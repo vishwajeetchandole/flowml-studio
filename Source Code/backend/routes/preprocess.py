@@ -54,19 +54,20 @@ async def preprocess(
         ext = orig_name.rsplit(".", 1)[-1].lower()
         processed_name = f"processed_{orig_name}"
 
-        with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as tmp:
-            tmp_path = tmp.name
+        tmp_dataset = os.path.join(tempfile.gettempdir(), f"{processed_id}_{processed_name}")
+        try:
+            if ext == "csv":
+                processed_df.to_csv(tmp_dataset, index=False)
+            else:
+                processed_df.to_excel(tmp_dataset, index=False)
+            store.save_dataset(uid, processed_id, tmp_dataset)
+        finally:
+            if os.path.exists(tmp_dataset):
+                try:
+                    os.unlink(tmp_dataset)
+                except Exception:
+                    pass
 
-        if ext == "csv":
-            processed_df.to_csv(tmp_path, index=False)
-        else:
-            processed_df.to_excel(tmp_path, index=False)
-
-        named_tmp = pathlib.Path(tmp_path).parent / processed_name
-        os.rename(tmp_path, named_tmp)
-
-        store.save_dataset(uid, processed_id, str(named_tmp))
-        os.unlink(named_tmp)
         store.update_dataset_meta(uid, processed_id, {
             "dataset_id": processed_id,
             "original_name": processed_name,
@@ -77,10 +78,16 @@ async def preprocess(
         })
 
         # Save transformers for inference reuse (under a model_id = processed_id)
-        with tempfile.NamedTemporaryFile(suffix=".joblib", delete=False) as tmp:
-            joblib.dump(transformers, tmp.name)
-            store.save_artifact(uid, processed_id, "preprocessors.joblib", tmp.name)
-            os.unlink(tmp.name)
+        tmp_joblib = os.path.join(tempfile.gettempdir(), f"prep_{uuid.uuid4().hex}.joblib")
+        try:
+            joblib.dump(transformers, tmp_joblib)
+            store.save_artifact(uid, processed_id, "preprocessors.joblib", tmp_joblib)
+        finally:
+            if os.path.exists(tmp_joblib):
+                try:
+                    os.unlink(tmp_joblib)
+                except Exception:
+                    pass
 
         log_event(f"[{uid}] Preprocessing OK → processed_dataset_id={processed_id}")
         return {

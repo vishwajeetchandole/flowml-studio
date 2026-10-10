@@ -1,7 +1,5 @@
 import React, { useState, useRef } from 'react';
-/* eslint-disable no-unused-vars */
 import { motion, AnimatePresence } from 'framer-motion';
-/* eslint-enable no-unused-vars */
 import {
   X, Settings, Upload, Table, Wrench, Layers, Zap, FileText,
   Loader2, CheckCircle2, AlertCircle, ChevronDown, Trophy,

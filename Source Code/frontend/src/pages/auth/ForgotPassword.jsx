@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../theme/ThemeProvider';
 import {
   Cpu, Mail, ArrowRight, Loader2, AlertCircle,
-  CheckCircle2, Sun, Moon, ArrowLeft, KeyRound,
+  CheckCircle2, ArrowLeft, KeyRound,
 } from 'lucide-react';
 
 export default function ForgotPassword() {
   const { resetPassword } = useAuth();
-  const { theme, toggleTheme } = useTheme();
 
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -57,19 +55,6 @@ export default function ForgotPassword() {
             FlowML
           </span>
         </Link>
-
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-xl transition-colors flex items-center gap-2 text-xs font-semibold"
-          style={{
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            color: 'var(--color-text-muted)',
-          }}
-        >
-          {theme === 'dark' ? <Sun className="w-4 h-4 text-warning" /> : <Moon className="w-4 h-4 text-primary" />}
-          <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
-        </button>
       </div>
 
       <motion.div

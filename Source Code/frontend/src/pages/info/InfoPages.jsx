@@ -962,3 +962,96 @@ export function TermsPage() {
     </PageLayout>
   );
 }
+
+/* ─── 7. Features Page ───────────────────────────────────────────────────────── */
+export function FeaturesPage() {
+  const navigate = useNavigate();
+
+  const featureCards = [
+    {
+      title: 'Visual DAG Pipeline Studio',
+      description: 'Design end-to-end machine learning workflows with drag-and-drop ease. Inspect shapes, intermediate outputs, and execution states at each node.',
+      icon: Layers,
+      tag: 'Visual Canvas',
+    },
+    {
+      title: 'Automated Model Comparison',
+      description: 'Train Random Forest, SVM, Logistic Regression, KNN, and KMeans simultaneously. View leaderboard rankings with automated metric selection.',
+      icon: Cpu,
+      tag: 'AutoML',
+    },
+    {
+      title: 'Sandboxed Python Studio',
+      description: 'Execute bespoke Python scripts in hardened execution sandboxes with resource limits and pre-installed NumPy, Pandas, Scikit-learn, and Matplotlib.',
+      icon: Code2,
+      tag: 'Code Execution',
+    },
+    {
+      title: 'SHAP Explainability & Attribution',
+      description: 'Understand every prediction with global and local feature importance attributions, transparent decision boundaries, and model explainability.',
+      icon: Sparkles,
+      tag: 'Interpretability',
+    },
+    {
+      title: 'Per-User Isolated Storage',
+      description: 'Strict filesystem boundary preventing path traversal and cross-user data leakage. Complete GDPR wipe and account management capabilities.',
+      icon: Shield,
+      tag: 'Enterprise Security',
+    },
+    {
+      title: 'Export & Production Reports',
+      description: 'Download self-contained HTML execution summaries, serialized trained model joblibs, and batch prediction CSV files with 1 click.',
+      icon: Database,
+      tag: 'Export Ready',
+    },
+  ];
+
+  return (
+    <PageLayout
+      title="Platform Features"
+      subtitle="Comprehensive tools for visual machine learning, automated evaluation, and secure Python script execution."
+      badge="FlowML Capabilities"
+      icon={Sparkles}
+    >
+      <div className="space-y-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {featureCards.map((f) => {
+            const FIcon = f.icon;
+            return (
+              <div
+                key={f.title}
+                className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                    <FIcon className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                    {f.tag}
+                  </span>
+                </div>
+                <h3 className="font-sora font-bold text-base text-slate-900">{f.title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">{f.description}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="p-8 rounded-2xl bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 text-center space-y-4">
+          <h3 className="text-xl font-bold font-sora text-slate-900">Ready to build your first model?</h3>
+          <p className="text-sm text-slate-600 max-w-xl mx-auto">
+            Choose from ready-made workflow blueprints or upload a CSV dataset to train models in seconds.
+          </p>
+          <button
+            onClick={() => navigate('/studio')}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 transition-all active:scale-95"
+          >
+            Launch Studio Canvas
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </PageLayout>
+  );
+}
+

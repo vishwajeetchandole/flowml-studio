@@ -126,6 +126,17 @@
   - `test_security.py`: File size 413 limit, rate limiting 429, secure error masking, GDPR account & data wipe.
   - `test_admin.py`: Role guard, user management, metrics, limit updates, audit log queries.
   - `test_multi_user.py`: 3 and 5 simulated concurrent users with dataset privacy, account isolation, failing code, and crash recovery.
-  - `test_executor.py`, `test_queue.py`, `test_nodes.py`: Core DAG pipeline and worker queue.
-- [x] Production frontend build: `npm run build` completed cleanly without errors.
+---
 
+## Phase 4: Fix Errors, Clean Routing, Redesign UI (In Progress)
+
+### 1. Error Audit and Fixes ✓
+- [x] **Frontend ESLint & Build**: Resolved all 53 errors across components, views, and layout. `npm run lint` yields 0 errors, `npm run build` generates production bundle in 2.7s.
+- [x] **Backend Pytest & Modernized API Tests**:
+  - `backend/pytest.ini` configured with `testpaths = tests` to isolate unit/integration test discovery.
+  - All 60/60 pytest tests pass cleanly in 42s.
+  - `test_api.py` upgraded for Phase 1-4 authenticated architecture; runs complete end-to-end flow (upload -> analyze -> preprocess -> train -> visualizations -> predict) with 100% success.
+- [x] **Windows File Locking (WinError 32)**: Fixed `tempfile.NamedTemporaryFile` process locking in `routes/preprocess.py` and `routes/upload.py` by using Windows-safe named paths and `os.replace`.
+- [x] **Error Boundaries & Consistent Error Interceptor**:
+  - Created `ErrorBoundary.jsx` with recovery UI and wrapped application in `main.jsx`.
+  - Upgraded Axios response interceptor in `services/api.js` to normalize status codes (401, 403, 413, 429, 500) into user-friendly messages with no raw stack traces.

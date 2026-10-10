@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import {
   getProjects, saveProject, deleteProject, duplicateProject,
 } from '../../services/api';
@@ -10,13 +10,13 @@ import {
   CheckCircle2, ArrowRight,
 } from 'lucide-react';
 
-export default function ProjectsView() {
+export default function ProjectsView({ initialCreateOpen = false }) {
   const { showToast } = useOutletContext();
   const navigate = useNavigate();
 
-  const [projects, setProjects] = useState([]);
+  const [projects, setProjects] = useState(() => getProjects());
   const [search, setSearch] = useState('');
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(initialCreateOpen);
   const [renameTarget, setRenameTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
@@ -32,10 +32,6 @@ export default function ProjectsView() {
   const refreshProjects = () => {
     setProjects(getProjects());
   };
-
-  useEffect(() => {
-    refreshProjects();
-  }, []);
 
   const handleCreate = (e) => {
     e.preventDefault();
@@ -88,7 +84,7 @@ export default function ProjectsView() {
   };
 
   const handleOpenStudio = (id) => {
-    navigate(`/studio?project=${id}`);
+    navigate(`/studio/${id}`);
   };
 
   const filtered = projects.filter((p) =>

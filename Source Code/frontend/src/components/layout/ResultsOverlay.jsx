@@ -269,7 +269,8 @@ function ActualVsPredTab({ results }) {
       let actual = p;
       // Synthesize minor variance for realistic comparison visual
       if (!isClassification) {
-        const delta = (Math.random() - 0.48) * (Number(p) * 0.1 || 2);
+        const pseudoRand = ((idx * 9301 + 49297) % 233280) / 233280;
+        const delta = (pseudoRand - 0.48) * (Number(p) * 0.1 || 2);
         actual = Number((Number(p) + delta).toFixed(2));
       }
       return { index: idx, actual, predicted: p };
@@ -388,7 +389,7 @@ function ExplainabilityTab({ results }) {
 
 /* ─── Predictions Tab ────────────────────────────────────────────────────────── */
 function PredictionsTab({ results }) {
-  const { predResult, trainResult } = results;
+  const { predResult } = results;
   const preds    = predResult?.predictions ?? [];
   const [q, setQ]       = useState('');
   const [page, setPage] = useState(0);

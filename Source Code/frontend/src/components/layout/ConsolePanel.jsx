@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-/* eslint-disable no-unused-vars */
 import { motion, AnimatePresence } from 'framer-motion';
-/* eslint-enable no-unused-vars */
 import { X, Terminal, Trash2, RotateCcw } from 'lucide-react';
 import { LOG_SSE_URL } from '../../services/api';
 

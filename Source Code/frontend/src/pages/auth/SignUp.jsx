@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../theme/ThemeProvider';
 import {
   Cpu, Mail, Lock, User, ArrowRight, Loader2, AlertCircle,
-  Sparkles, Sun, Moon, Check,
+  Sparkles, Check,
 } from 'lucide-react';
 
 export default function SignUp() {
   const { signUp } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
@@ -79,19 +77,6 @@ export default function SignUp() {
             FlowML
           </span>
         </Link>
-
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-xl transition-colors flex items-center gap-2 text-xs font-semibold"
-          style={{
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            color: 'var(--color-text-muted)',
-          }}
-        >
-          {theme === 'dark' ? <Sun className="w-4 h-4 text-warning" /> : <Moon className="w-4 h-4 text-primary" />}
-          <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
-        </button>
       </div>
 
       <motion.div

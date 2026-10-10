@@ -39,7 +39,6 @@ function Leaderboard({ trainResult }) {
   });
 
   const metricKey = taskType === 'regression' ? 'r2' : 'accuracy';
-  const metricLbl = taskType === 'regression' ? 'R²' : 'Accuracy';
 
   return (
     <div>
@@ -303,7 +302,7 @@ export default function ResultsPanel({ pipelineState, steps, results, onClose, o
   const isError   = pipelineState === 'error';
   const isRunning = pipelineState === 'running';
 
-  const { trainResult, predResult, vizResult, uploadResult, targetColumn, taskType } = results ?? {};
+  const { trainResult, predResult, vizResult, targetColumn, taskType } = results ?? {};
   const bestModel = trainResult?.best_model;
   const bestEntry = trainResult?.models?.find((m) => m.model_name === bestModel);
   const metric    = taskType === 'classification'

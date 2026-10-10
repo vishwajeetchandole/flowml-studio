@@ -78,7 +78,7 @@ export default function DatasetsView() {
     setUploading(true);
     setUploadProgress(20);
     try {
-      const res = await uploadDataset(uploadFile, (p) => {
+      await uploadDataset(uploadFile, (p) => {
         if (p.total) {
           setUploadProgress(Math.round((p.loaded * 100) / p.total));
         }
@@ -87,8 +87,8 @@ export default function DatasetsView() {
       setIsUploadOpen(false);
       setUploadFile(null);
       fetchDatasets();
-    } catch (err) {
-      showToast(err.message || 'Upload failed.', 'error');
+    } catch (_err) {
+      showToast(_err.message || 'Upload failed.', 'error');
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -102,7 +102,8 @@ export default function DatasetsView() {
     try {
       const data = await getDatasetPreview(ds.dataset_id);
       setPreviewData(data);
-    } catch (err) {
+    } catch (e) {
+      console.warn('Dataset preview fallback:', e);
       // Generate synthetic preview for demo fallback
       setPreviewData({
         dataset_id: ds.dataset_id,

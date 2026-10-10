@@ -76,7 +76,8 @@ export default function RunsView() {
     try {
       const detail = await getRun(runId);
       setRunDetail(detail);
-    } catch (err) {
+    } catch (e) {
+      console.warn('Run detail fallback:', e);
       setRunDetail({
         run_id: runId,
         state: 'Completed',
@@ -106,12 +107,12 @@ export default function RunsView() {
       await stopRun(runId);
       showToast(`Stop request sent for run ${runId}.`, 'info');
       fetchRuns();
-    } catch (err) {
-      showToast(err.message || 'Failed to stop run.', 'error');
+    } catch (_err) {
+      showToast(_err.message || 'Failed to stop run.', 'error');
     }
   };
 
-  const handleRerun = (runId) => {
+  const handleRerun = (_runId) => {
     navigate('/studio');
     showToast('Workflow loaded in Studio Canvas.', 'info');
   };

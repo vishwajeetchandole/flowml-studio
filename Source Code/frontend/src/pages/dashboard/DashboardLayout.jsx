@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../theme/ThemeProvider';
 import { checkHealth } from '../../services/api';
 import Toast from '../../components/common/Toast';
 import {
   FolderKanban, Database, Layers, PlayCircle, LayoutTemplate,
-  Settings, LogOut, Cpu, Sun, Moon, Plus, Sparkles, ExternalLink,
+  Settings, LogOut, Cpu, Plus, Sparkles, ExternalLink,
   ChevronRight, Activity, Bell, Search, ShieldCheck, Terminal, Code,
 } from 'lucide-react';
 
 export default function DashboardLayout() {
   const { user, signOut, isDevMode } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -42,10 +40,7 @@ export default function DashboardLayout() {
   ];
 
   return (
-    <div
-      className="min-h-screen flex text-slate-100 font-sans"
-      style={{ background: 'var(--color-bg)' }}
-    >
+    <div className="min-h-screen flex text-slate-800 font-sans bg-slate-50">
       {/* Toast notification */}
       <Toast toast={toast} onClose={() => setToast(null)} />
 
@@ -123,22 +118,13 @@ export default function DashboardLayout() {
                 to={item.to}
                 className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   active
-                    ? 'text-white shadow-md'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
-                style={
-                  active
-                    ? {
-                        background: 'rgba(99, 102, 241, 0.16)',
-                        color: '#818cf8',
-                        border: '1px solid rgba(99, 102, 241, 0.3)',
-                      }
-                    : {}
-                }
               >
-                <Icon className={`w-4 h-4 ${active ? 'text-primary' : 'text-slate-400'}`} />
+                <Icon className={`w-4 h-4 ${active ? 'text-indigo-600' : 'text-slate-400'}`} />
                 <span>{item.label}</span>
-                {active && <ChevronRight className="w-3.5 h-3.5 ml-auto text-primary" />}
+                {active && <ChevronRight className="w-3.5 h-3.5 ml-auto text-indigo-600" />}
               </NavLink>
             );
           })}
@@ -146,21 +132,18 @@ export default function DashboardLayout() {
 
         {/* User Card & Sign Out */}
         <div className="p-3 border-t" style={{ borderColor: 'var(--color-border)' }}>
-          <div
-            className="p-3 rounded-2xl flex items-center gap-3 transition-colors"
-            style={{ background: 'var(--color-bg)' }}
-          >
+          <div className="p-3 rounded-2xl flex items-center gap-3 bg-slate-100/70 border border-slate-200/60">
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs text-white shrink-0 shadow-md"
-              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs text-white shrink-0 shadow-sm"
+              style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
             >
               {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-bold truncate leading-tight" style={{ color: 'var(--color-text)' }}>
+              <div className="text-xs font-bold truncate leading-tight text-slate-900">
                 {user?.displayName || 'FlowML Engineer'}
               </div>
-              <div className="text-[10px] truncate" style={{ color: 'var(--color-text-muted)' }}>
+              <div className="text-[10px] truncate text-slate-500">
                 {user?.email || 'dev@flowml.studio'}
               </div>
             </div>
@@ -170,7 +153,7 @@ export default function DashboardLayout() {
                 navigate('/signin');
               }}
               title="Sign Out"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
             >
               <LogOut className="w-3.5 h-3.5" />
             </button>
@@ -195,20 +178,6 @@ export default function DashboardLayout() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-xl border transition-colors flex items-center gap-1.5 text-xs font-medium"
-              style={{
-                borderColor: 'var(--color-border)',
-                background: 'var(--color-bg)',
-                color: 'var(--color-text-muted)',
-              }}
-              title="Toggle Theme"
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4 text-warning" /> : <Moon className="w-4 h-4 text-primary" />}
-            </button>
-
             {/* Dev Mode Badge */}
             <div
               className="px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold flex items-center gap-1.5"

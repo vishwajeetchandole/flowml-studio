@@ -1,17 +1,15 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ThemeProvider } from './theme/ThemeProvider';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import Workflow from './pages/Workflow';
 import Sidebar from './components/layout/Sidebar';
 import PipelinePanel from './components/layout/PipelinePanel';
 import ResultsOverlay from './components/layout/ResultsOverlay';
 import {
-  Cpu, Play, RotateCcw, Sun, Moon, Save, Download,
+  Cpu, Play, RotateCcw, Save, Download,
   CheckCircle2, AlertCircle, Loader2, Zap, BarChart3, X,
   LayoutTemplate, Undo2, Redo2, Square, ArrowLeft, ShieldAlert,
 } from 'lucide-react';
-import { useTheme } from './theme/ThemeProvider';
 import {
   uploadDataset, analyzeDataset, preprocessDataset,
   trainModels, runPredictions, getVisualizations,
@@ -45,10 +43,9 @@ function topoSort(nodes, edges) {
 
 /* ─── Inner App ──────────────────────────────────────────────────────────────── */
 function AppInner() {
-  const { theme, toggleTheme } = useTheme();
-  const navigate = useNavigate();
+  const { projectId: routeProjectId } = useParams();
   const [searchParams] = useSearchParams();
-  const projectId = searchParams.get('project') || 'proj-default';
+  const projectId = routeProjectId || searchParams.get('project') || 'proj-default';
 
   const [workflowName, setWorkflowName] = useState(() => {
     const projs = getProjects();
@@ -277,7 +274,11 @@ function AppInner() {
       }
 
       if (!vizResult && uploadResult) {
-        try { vizResult = await getVisualizations(uploadResult.file_name); } catch (_) {}
+        try {
+          vizResult = await getVisualizations(uploadResult.file_name);
+        } catch (e) {
+          console.warn('Fallback visualization failed:', e);
+        }
       }
 
       setResults({ uploadResult, preprocessResult, trainResult, predResult, vizResult, targetColumn, taskType });
@@ -339,8 +340,6 @@ function AppInner() {
     <div className="flex flex-col h-screen overflow-hidden" style={{ background: 'var(--color-bg)', color: 'var(--color-text)' }}>
       {/* ── Top Bar ─────────────────────────────────────────────────────────── */}
       <TopBar
-        theme={theme}
-        toggleTheme={toggleTheme}
         isRunning={isRunning}
         pipelineState={pipelineState}
         workflowName={workflowName}
@@ -438,7 +437,7 @@ function AppInner() {
 
 /* ─── Top Bar ────────────────────────────────────────────────────────────────── */
 function TopBar({
-  theme, toggleTheme, isRunning, pipelineState,
+  isRunning, pipelineState,
   workflowName, setWorkflowName, saveStatus,
   onRun, onStop, onSave, onExport, onUndo, onRedo,
   hasResults, showResults, onToggleResults,
@@ -455,7 +454,7 @@ function TopBar({
         <button
           onClick={() => navigate('/app/projects')}
           title="Back to Dashboard"
-          className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+          className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
@@ -473,11 +472,11 @@ function TopBar({
               type="text"
               value={workflowName}
               onChange={(e) => setWorkflowName(e.target.value)}
-              className="font-sora font-bold text-sm bg-transparent hover:bg-white/5 px-2 py-0.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary transition-colors max-w-[200px] truncate"
+              className="font-sora font-bold text-sm bg-transparent hover:bg-slate-100 px-2 py-0.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors max-w-[200px] truncate"
               style={{ color: 'var(--color-text)' }}
             />
-            <div className="text-[10px] text-slate-400 flex items-center gap-1.5 px-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <div className="text-[10px] text-slate-500 flex items-center gap-1.5 px-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span>{saveStatus === 'saving' ? 'Saving…' : 'Autosaved'}</span>
             </div>
           </div>
@@ -488,14 +487,14 @@ function TopBar({
       <div className="hidden sm:flex items-center gap-1 p-1 rounded-xl border" style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg)' }}>
         <button
           onClick={onUndo}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
           title="Undo (Ctrl+Z)"
         >
           <Undo2 className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={onRedo}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
           title="Redo (Ctrl+Y)"
         >
           <Redo2 className="w-3.5 h-3.5" />
@@ -509,9 +508,9 @@ function TopBar({
             onClick={onToggleResults}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border"
             style={{
-              background: showResults ? 'rgba(99,102,241,0.15)' : 'var(--color-bg)',
+              background: showResults ? 'rgba(99,102,241,0.1)' : 'var(--color-bg)',
               borderColor: showResults ? '#6366f1' : 'var(--color-border)',
-              color: showResults ? '#818cf8' : 'var(--color-text-muted)',
+              color: showResults ? '#4f46e5' : 'var(--color-text-muted)',
             }}
           >
             <BarChart3 className="w-3.5 h-3.5" />
@@ -521,7 +520,7 @@ function TopBar({
 
         <button
           onClick={onSave}
-          className="p-2 rounded-xl border text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+          className="p-2 rounded-xl border text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
           style={{ borderColor: 'var(--color-border)' }}
           title="Save Project"
         >
@@ -530,7 +529,7 @@ function TopBar({
 
         <button
           onClick={onExport}
-          className="p-2 rounded-xl border text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+          className="p-2 rounded-xl border text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
           style={{ borderColor: 'var(--color-border)' }}
           title="Export Workflow JSON"
         >
@@ -565,15 +564,6 @@ function TopBar({
             )}
           </button>
         )}
-
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-xl border text-slate-400 hover:text-white transition-colors ml-1"
-          style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg)' }}
-          title="Toggle Theme"
-        >
-          {theme === 'dark' ? <Sun className="w-4 h-4 text-warning" /> : <Moon className="w-4 h-4 text-primary" />}
-        </button>
       </div>
     </header>
   );
@@ -581,9 +571,5 @@ function TopBar({
 
 /* ─── Root ───────────────────────────────────────────────────────────────────── */
 export default function App() {
-  return (
-    <ThemeProvider>
-      <AppInner />
-    </ThemeProvider>
-  );
+  return <AppInner />;
 }

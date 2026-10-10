@@ -25,16 +25,39 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ── Normalise backend error shapes into plain Error objects ───────────────────
+// ── Normalise backend error shapes into user-friendly Error objects ───────────
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    const detail = err.response?.data?.detail;
-    const msg =
-      (typeof detail === 'object' ? detail?.error || detail?.message : detail) ||
-      err.message ||
-      'An unexpected error occurred';
-    return Promise.reject(new Error(String(msg)));
+    let msg = 'An unexpected error occurred';
+    if (err.response) {
+      const { status, data } = err.response;
+      const detail = data?.detail;
+      if (status === 401) {
+        msg = 'Your session has expired or authentication failed. Please sign in again.';
+      } else if (status === 403) {
+        msg = typeof detail === 'string' ? detail : 'Access forbidden. Administrator permissions may be required.';
+      } else if (status === 413) {
+        msg = typeof detail === 'string' ? detail : 'File exceeds maximum upload size (50MB).';
+      } else if (status === 429) {
+        msg = typeof detail === 'string' ? detail : 'Too many requests. Please wait a moment and try again.';
+      } else if (typeof detail === 'object' && detail !== null) {
+        msg = detail.error || detail.message || detail.details || 'Server processed request with errors.';
+      } else if (typeof detail === 'string') {
+        msg = detail;
+      } else if (data?.message) {
+        msg = data.message;
+      } else {
+        msg = `Server request failed (Status ${status})`;
+      }
+    } else if (err.request) {
+      msg = 'Unable to reach backend API server. Please check your network or server status.';
+    } else {
+      msg = err.message || msg;
+    }
+    const cleanError = new Error(String(msg));
+    cleanError.status = err.response?.status;
+    return Promise.reject(cleanError);
   }
 );
 

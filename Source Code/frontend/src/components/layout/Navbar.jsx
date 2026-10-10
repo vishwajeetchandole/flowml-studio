@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import {
-  Play, Save, Download, Terminal, Sun, Moon, Cpu,
+  Play, Save, Download, Terminal, Cpu,
   Loader2, CheckCircle2, AlertCircle, Zap,
   GitBranch, LayoutGrid, Settings, Bell,
 } from 'lucide-react';
-import { useTheme } from '../../theme/ThemeProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /* ─── Brand logo mark ────────────────────────────────────────────────────────── */
@@ -110,7 +109,6 @@ const Div = () => (
 const Navbar = ({
   toggleConsole, isConsoleOpen, onRunPipeline, isRunning, pipelineStatus, onSave, onExport,
 }) => {
-  const { theme, toggleTheme } = useTheme();
   const [showNotif, setShowNotif] = useState(false);
 
   const NOTIFS = [
@@ -196,35 +194,6 @@ const Navbar = ({
         </div>
 
         <IconBtn icon={Settings} label="Settings" onClick={() => {}} id="settings-btn" />
-
-        <Div />
-
-        {/* Theme toggle */}
-        <motion.button
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.92 }}
-          onClick={toggleTheme}
-          id="theme-toggle-btn"
-          title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
-          className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-          style={{
-            background: 'var(--color-bg)',
-            border:     '1px solid var(--color-border)',
-            color:      'var(--color-text-muted)',
-          }}
-        >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={theme}
-              initial={{ rotate: -90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: 90, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </motion.div>
-          </AnimatePresence>
-        </motion.button>
       </div>
     </nav>
   );

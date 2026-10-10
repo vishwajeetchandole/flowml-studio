@@ -229,7 +229,9 @@ export default function PythonEditor({
         await stopPythonCode(currentRunId);
         setStderr((prev) => prev + '\n[Aborted] Execution stopped by user.');
         setStatus('failed');
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Execution stop request failed:', e);
+      }
     }
     setIsRunning(false);
   };

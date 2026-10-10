@@ -8,6 +8,8 @@ import {
   TreePine, Network, Zap, CheckCircle2,
 } from 'lucide-react';
 
+const generateTemplateId = () => `proj-tpl-${Date.now()}`;
+
 export default function TemplatesView() {
   const { showToast } = useOutletContext();
   const navigate = useNavigate();
@@ -93,7 +95,7 @@ export default function TemplatesView() {
   ];
 
   const handleUseTemplate = (tpl) => {
-    const newId = `proj-tpl-${Date.now()}`;
+    const newId = generateTemplateId();
     const newProject = {
       id: newId,
       name: tpl.title,
@@ -110,7 +112,7 @@ export default function TemplatesView() {
     );
 
     showToast(`Template "${tpl.title}" initialized!`, 'success');
-    navigate(`/studio?project=${newId}`);
+    navigate(`/studio/${newId}`);
   };
 
   return (

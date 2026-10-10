@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../theme/ThemeProvider';
 import {
   Cpu, Mail, Lock, ArrowRight, Loader2, AlertCircle,
-  CheckCircle2, Sparkles, ShieldCheck, Sun, Moon,
+  CheckCircle2, Sparkles, ShieldCheck,
 } from 'lucide-react';
 
 export default function SignIn() {
-  const { signIn, isDevMode, user } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { signIn, isDevMode } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -81,19 +79,6 @@ export default function SignIn() {
             FlowML
           </span>
         </Link>
-
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-xl transition-colors flex items-center gap-2 text-xs font-semibold"
-          style={{
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            color: 'var(--color-text-muted)',
-          }}
-        >
-          {theme === 'dark' ? <Sun className="w-4 h-4 text-warning" /> : <Moon className="w-4 h-4 text-primary" />}
-          <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
-        </button>
       </div>
 
       {/* Card */}
@@ -198,7 +183,7 @@ export default function SignIn() {
         </form>
 
         {/* Demo Fast Access Button */}
-        <div className="mt-6 pt-5 border-t border-slate-700/30">
+        <div className="mt-6 pt-5 border-t" style={{ borderColor: 'var(--color-border)' }}>
           <button
             type="button"
             onClick={handleQuickDemo}

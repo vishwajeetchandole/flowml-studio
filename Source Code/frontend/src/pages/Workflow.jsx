@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useTheme } from '../theme/ThemeProvider';
 import ReactFlow, {
   addEdge,
   Controls,
@@ -130,7 +129,6 @@ const initialEdges = [
 
 // Inner component — must be inside ReactFlowProvider
 const WorkflowInner = ({ onNodeClick, actionsRef }) => {
-  const { theme } = useTheme();
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get('project');
 
@@ -197,8 +195,8 @@ const WorkflowInner = ({ onNodeClick, actionsRef }) => {
     return true;
   }, [nodes, edges, setNodes, setEdges]);
 
-  const dotColor = theme === 'dark' ? '#1a2236' : '#dde3ed';
-  const canvasBg  = theme === 'dark' ? '#080c14' : '#f0f4f8';
+  const dotColor = '#dde3ed';
+  const canvasBg  = '#f0f4f8';
 
   // Expose workflow actions to parent (App.jsx) via ref
   useEffect(() => {
@@ -224,7 +222,8 @@ const WorkflowInner = ({ onNodeClick, actionsRef }) => {
       clearValidationErrors: () => {
         setNodes((nds) =>
           nds.map((n) => {
-            const { validationError, ...restData } = n.data || {};
+            const restData = { ...(n.data || {}) };
+            delete restData.validationError;
             return { ...n, data: restData };
           })
         );
@@ -304,7 +303,7 @@ const WorkflowInner = ({ onNodeClick, actionsRef }) => {
   );
 
   return (
-    <div className="w-full h-full relative" ref={reactFlowWrapper}>
+    <div className="w-full h-full relative">
       <div
         className="w-full h-full"
         style={{
@@ -353,7 +352,7 @@ const WorkflowInner = ({ onNodeClick, actionsRef }) => {
               };
               return COLORS[n.type] ?? '#6366f1';
             }}
-            maskColor={theme === 'dark' ? 'rgba(8,12,20,0.8)' : 'rgba(240,244,248,0.8)'}
+            maskColor="rgba(240,244,248,0.8)"
             style={{ borderRadius: 12 }}
           />
         </ReactFlow>

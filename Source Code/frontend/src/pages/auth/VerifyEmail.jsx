@@ -101,7 +101,7 @@ export default function VerifyEmail() {
           </button>
         </div>
 
-        <div className="mt-6 pt-5 border-t border-slate-700/30 flex items-center justify-center">
+        <div className="mt-6 pt-5 border-t flex items-center justify-center" style={{ borderColor: 'var(--color-border)' }}>
           <button
             onClick={signOut}
             className="text-xs font-medium text-slate-400 hover:text-red-400 flex items-center gap-1.5 transition-colors"

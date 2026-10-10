@@ -106,7 +106,7 @@ function Navbar({ onLaunch }) {
 
   const links = [
     { label: 'Home', href: '#hero', onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
-    { label: 'Features', href: '#features' },
+    { label: 'Features', href: '/features', isRoute: true },
     { label: 'Documentation', href: '/docs', isRoute: true },
     { label: 'Tutorials', href: '/tutorials', isRoute: true },
     { label: 'About', href: '/about', isRoute: true },
@@ -525,16 +525,17 @@ function InteractiveHeroPipeline({ onLaunch }) {
 }
 
 /* ─── HERO ───────────────────────────────────────────────────────────────────── */
+const WORDS = ['Simpler', 'Faster', 'Intelligent', 'Production-Ready'];
+
 function Hero({ onLaunch }) {
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 500], [0, 80]);
   const opacity = useTransform(scrollY, [0, 400], [1, 0.2]);
 
-  const words = ['Simpler', 'Faster', 'Intelligent', 'Production-Ready'];
   const [wordIdx, setWordIdx] = useState(0);
 
   useEffect(() => {
-    const t = setInterval(() => setWordIdx((i) => (i + 1) % words.length), 2600);
+    const t = setInterval(() => setWordIdx((i) => (i + 1) % WORDS.length), 2600);
     return () => clearInterval(t);
   }, []);
 
@@ -586,7 +587,7 @@ function Hero({ onLaunch }) {
                   WebkitTextFillColor: 'transparent',
                 }}
               >
-                {words[wordIdx]}
+                {WORDS[wordIdx]}
               </motion.span>
             </AnimatePresence>
           </span>
@@ -1606,7 +1607,7 @@ function CTA({ onLaunch }) {
 }
 
 /* ─── FOOTER ─────────────────────────────────────────────────────────────────── */
-function Footer({ onLaunch }) {
+function Footer() {
   const navigate = useNavigate();
 
   return (

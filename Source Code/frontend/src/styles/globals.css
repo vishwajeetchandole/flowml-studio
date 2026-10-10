@@ -11,42 +11,35 @@
   --font-sora: "Sora", sans-serif;
   --font-inter: "Inter", sans-serif;
 
-  /* Dark palette */
-  --color-dark-background: #080c14;
-  --color-dark-card:       #0e1420;
-  --color-dark-border:     #1a2236;
-  --color-dark-text:       #f0f4ff;
-  --color-dark-text-secondary: #8892a4;
-
-  /* Light palette */
-  --color-light-background: #f0f4f8;
+  /* Clean Light palette */
+  --color-light-background: #f8fafc;
   --color-light-card:       #ffffff;
-  --color-light-border:     #dde3ed;
-  --color-light-text:       #0d1117;
-  --color-light-text-secondary: #4a5568;
+  --color-light-border:     #e2e8f0;
+  --color-light-text:       #0f172a;
+  --color-light-text-secondary: #64748b;
 
   /* Brand */
-  --color-primary:   #6366F1;
-  --color-secondary: #3B82F6;
-  --color-success:   #22C55E;
-  --color-warning:   #F59E0B;
-  --color-danger:    #EF4444;
+  --color-primary:   #4f46e5;
+  --color-secondary: #2563eb;
+  --color-success:   #16a34a;
+  --color-warning:   #d97706;
+  --color-danger:    #dc2626;
 
-  /* Semantic (default = dark) */
-  --color-bg:         var(--color-dark-background);
-  --color-surface:    var(--color-dark-card);
-  --color-border:     var(--color-dark-border);
-  --color-text:       var(--color-dark-text);
-  --color-text-muted: var(--color-dark-text-secondary);
+  /* Semantic tokens — Pure Light Mode */
+  --color-bg:         #f8fafc;
+  --color-surface:    #ffffff;
+  --color-border:     #e2e8f0;
+  --color-text:       #0f172a;
+  --color-text-muted: #64748b;
 }
 
-/* ─── Light mode ─────────────────────────────────────────────────────────────── */
-.light {
-  --color-bg:         var(--color-light-background);
-  --color-surface:    var(--color-light-card);
-  --color-border:     var(--color-light-border);
-  --color-text:       var(--color-light-text);
-  --color-text-muted: var(--color-light-text-secondary);
+/* ─── Light Mode Defaults ────────────────────────────────────────────────────── */
+:root, .light {
+  --color-bg:         #f8fafc;
+  --color-surface:    #ffffff;
+  --color-border:     #e2e8f0;
+  --color-text:       #0f172a;
+  --color-text-muted: #64748b;
 }
 
 /* ─── Base ───────────────────────────────────────────────────────────────────── */
@@ -200,7 +193,7 @@
 
 /* ─── Canvas dot grid ─────────────────────────────────────────────────────────── */
 .flowml-canvas {
-  background-image: radial-gradient(circle, var(--dot-color, #1a2236) 1px, transparent 1px);
+  background-image: radial-gradient(circle, var(--dot-color, #cbd5e1) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 

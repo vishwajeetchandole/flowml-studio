@@ -50,7 +50,7 @@ async def upload_dataset(
         dataset_id = uuid.uuid4().hex
         # Rename temp file to original name so store preserves it
         named_tmp = pathlib.Path(tmp_path).parent / original_name
-        os.rename(tmp_path, named_tmp)
+        os.replace(tmp_path, named_tmp)
 
         store.save_dataset(uid, dataset_id, str(named_tmp))
         os.unlink(named_tmp)
