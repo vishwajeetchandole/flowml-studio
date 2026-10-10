@@ -1,8 +1,14 @@
 import os
+import uuid
 import asyncio
-from fastapi import APIRouter
+import tempfile
+import joblib
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Optional
+
+from auth import get_current_user
+from services.store import StoreBackend, get_store
 from services.data_loader import load_dataset
 from services.model_trainer import train_models
 from utils.helpers import raise_http_exception
@@ -12,35 +18,36 @@ router = APIRouter()
 
 
 class TrainRequest(BaseModel):
-    file_name: str
-    processed_file_name: Optional[str] = None   # Use preprocessed file when available
+    dataset_id: str
+    processed_dataset_id: Optional[str] = None
     target_column: str
-    task_type: str = "classification"           # "classification" | "regression"
+    task_type: str = "classification"   # "classification" | "regression"
 
 
 @router.post("/train")
-async def train(request: TrainRequest):
+async def train(
+    request: TrainRequest,
+    uid: str = Depends(get_current_user),
+    store: StoreBackend = Depends(get_store),
+):
     """
-    Train multiple ML models on the uploaded (or preprocessed) dataset.
-
-    Priority: preprocessed file → raw uploaded file.
-    Training runs in a thread-pool executor so the async event loop is never blocked,
-    allowing log-streaming (SSE) and health-check endpoints to remain responsive
-    during potentially long training runs.
+    Train multiple ML models. Uses processed_dataset_id if provided, else dataset_id.
+    Returns leaderboard + model_id (key for subsequent predict/download calls).
     """
-    # Resolve which file to train on
-    candidate_names = [request.processed_file_name, request.file_name]
+    # Resolve training file (prefer preprocessed)
     file_path: Optional[str] = None
-    for name in candidate_names:
-        if name:
-            p = os.path.join("uploads", name)
-            if os.path.exists(p):
-                file_path = p
-                log_event(f"Training on file: {name}")
+    used_dataset_id: Optional[str] = None
+    for ds_id in [request.processed_dataset_id, request.dataset_id]:
+        if ds_id:
+            try:
+                file_path = store.get_dataset_path(uid, ds_id)
+                used_dataset_id = ds_id
                 break
+            except Exception:
+                pass
 
     if file_path is None:
-        raise_http_exception(404, "File not found", "Neither the processed nor the raw dataset file could be located.")
+        raise_http_exception(404, "Dataset not found", "Neither dataset could be located.")
 
     try:
         df = load_dataset(file_path)
@@ -50,22 +57,66 @@ async def train(request: TrainRequest):
     if request.target_column not in df.columns:
         raise_http_exception(
             400, "Invalid target column",
-            f"Column '{request.target_column}' does not exist in the dataset. "
-            f"Available columns: {df.columns.tolist()}"
+            f"Column '{request.target_column}' not in dataset. Available: {df.columns.tolist()}"
         )
 
     X = df.drop(columns=[request.target_column])
     y = df[request.target_column]
 
+    # Detect preprocessors for this dataset (if preprocessed)
+    preprocessors_path: Optional[str] = None
+    if request.processed_dataset_id:
+        try:
+            preprocessors_path = store.get_artifact_path(
+                uid, request.processed_dataset_id, "preprocessors.joblib"
+            )
+        except Exception:
+            pass
+
+    model_id = uuid.uuid4().hex
+
     try:
-        # Run blocking training in a thread-pool so the event loop stays free
         loop = asyncio.get_running_loop()
         results = await loop.run_in_executor(
             None,
             lambda: train_models(X, y, request.task_type)
         )
-        return results
-
     except Exception as exc:
-        log_event(f"Training error: {exc}", level="ERROR")
+        log_event(f"[{uid}] Training error: {exc}", level="ERROR")
         raise_http_exception(500, "Error training models", str(exc))
+
+    # Artifacts are written to legacy save dir by train_models; re-save into store
+    legacy_save_dir = "models/saved_models"
+    artifact_files = [
+        "best_model.joblib", "features.joblib", "task_type.joblib",
+        "target_encoder.joblib", "feature_encoders.joblib",
+        "fallback_imputer.joblib", "test_data.joblib", "model_results.joblib",
+    ]
+    for fname in artifact_files:
+        src = os.path.join(legacy_save_dir, fname)
+        if os.path.exists(src):
+            store.save_artifact(uid, model_id, fname, src)
+
+    # Copy preprocessors into the model store too (for inference)
+    if preprocessors_path and os.path.exists(preprocessors_path):
+        store.save_artifact(uid, model_id, "preprocessors.joblib", preprocessors_path)
+
+    # Save lightweight metadata — use delete=False + explicit close before copy (Windows-safe)
+    meta_tmp = tempfile.mktemp(suffix=".joblib")
+    try:
+        joblib.dump({
+            "model_id": model_id,
+            "target_column": request.target_column,
+            "task_type": request.task_type,
+            "dataset_id": used_dataset_id,
+            "best_model": results["best_model"],
+        }, meta_tmp)
+        store.save_artifact(uid, model_id, "model_meta.joblib", meta_tmp)
+    finally:
+        try:
+            os.unlink(meta_tmp)
+        except OSError:
+            pass
+
+    log_event(f"[{uid}] Training OK → model_id={model_id}, best={results['best_model']}")
+    return {**results, "model_id": model_id}

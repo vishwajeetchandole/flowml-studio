@@ -13,17 +13,25 @@ PREPROCESSORS_DIR = "models/saved_models"
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
 
-def preprocess_data(df: pd.DataFrame, config: dict, save_preprocessors: bool = True) -> pd.DataFrame:
+def preprocess_data(
+    df: pd.DataFrame,
+    config: dict,
+    save_preprocessors: bool = False,
+    save_path: str | None = None,
+) -> tuple[pd.DataFrame, dict]:
     """
-    Applies preprocessing based on config dict and optionally saves fitted
-    transformer objects so they can be reloaded at prediction time.
+    Applies preprocessing based on config dict.
+
+    Returns (processed_df, transformers) always.
+    If save_preprocessors=True and save_path is given, saves to save_path;
+    otherwise falls back to the legacy global PREPROCESSORS_DIR (kept for
+    backward-compat with old pipeline executor path).
 
     config keys:
-        missing_values  : "mean" | "median" | "most_frequent" | "constant" | "drop"
+        missing_values       : "mean" | "median" | "most_frequent" | "constant" | "drop"
         categorical_encoding : "label" | "onehot"
-        scaling         : "standard" | "minmax" | "none"
-        target_column   : str  (excluded from imputation/scaling so transformers
-                                are feature-only and can be reused at inference)
+        scaling              : "standard" | "minmax" | "none"
+        target_column        : str  (excluded from imputation/scaling)
     """
     log_event("Starting data preprocessing...")
     processed_df = df.copy()
@@ -46,15 +54,14 @@ def preprocess_data(df: pd.DataFrame, config: dict, save_preprocessors: bool = T
     transformers["config"] = config
     transformers["final_columns"] = list(processed_df.columns)
 
-    # Persist transformers for prediction reuse
     if save_preprocessors:
-        os.makedirs(PREPROCESSORS_DIR, exist_ok=True)
-        path = os.path.join(PREPROCESSORS_DIR, "preprocessors.joblib")
-        joblib.dump(transformers, path)
-        log_event(f"Preprocessors saved → {path}")
+        dest = save_path or os.path.join(PREPROCESSORS_DIR, "preprocessors.joblib")
+        os.makedirs(os.path.dirname(dest) or ".", exist_ok=True)
+        joblib.dump(transformers, dest)
+        log_event(f"Preprocessors saved → {dest}")
 
     log_event(f"Preprocessing complete. Output shape: {processed_df.shape}")
-    return processed_df
+    return processed_df, transformers
 
 
 def apply_transformers(df: pd.DataFrame, transformers: dict) -> pd.DataFrame:

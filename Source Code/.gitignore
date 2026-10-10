@@ -42,5 +42,8 @@ VERSION
 .vscode/
 .idea/
 .DS_Store
-Thumbs.db
-
+# Storage & Model Artifacts
+storage/
+models/
+*.joblib
+*.pkl

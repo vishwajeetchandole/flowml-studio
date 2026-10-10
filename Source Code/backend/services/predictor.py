@@ -119,3 +119,83 @@ def _apply_fallback_imputation(df: pd.DataFrame) -> None:
     # Assign safely without dtype issues
     result = pd.DataFrame(arr, columns=cols, index=df.index)
     df[cols] = result[cols]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Store-aware prediction (multi-user)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def predict_with_store(
+    df: pd.DataFrame,
+    uid: str,
+    model_id: str,
+    store,
+    target_column: str | None = None,
+) -> dict:
+    """
+    Load artifacts from the per-user model store and run inference.
+    The store parameter is a StoreBackend instance.
+    """
+    log_event(f"[{uid}] Starting prediction (model_id={model_id})")
+
+    def _get(fname: str) -> str | None:
+        try:
+            return store.get_artifact_path(uid, model_id, fname)
+        except Exception:
+            return None
+
+    model_path = _get("best_model.joblib")
+    if not model_path:
+        raise FileNotFoundError(f"No trained model found for model_id='{model_id}'.")
+
+    model = joblib.load(model_path)
+    df_pred = df.copy()
+
+    # 1. Drop target column
+    if target_column and target_column in df_pred.columns:
+        df_pred = df_pred.drop(columns=[target_column])
+        log_event(f"[{uid}] Dropped target column '{target_column}' from inference data.")
+
+    # 2. Apply transformers
+    preprocessors_path = _get("preprocessors.joblib")
+    if preprocessors_path:
+        from services.preprocessing import apply_transformers
+        transformers = joblib.load(preprocessors_path)
+        df_pred = apply_transformers(df_pred, transformers)
+    else:
+        feature_encoders_path = _get("feature_encoders.joblib")
+        if feature_encoders_path:
+            feature_encoders = joblib.load(feature_encoders_path)
+            for col, le in feature_encoders.items():
+                if col in df_pred.columns:
+                    known = set(le.classes_)
+                    df_pred[col] = df_pred[col].astype(str).apply(
+                        lambda x: int(le.transform([x])[0]) if x in known else -1
+                    )
+
+    # 3. Align features
+    features_path = _get("features.joblib")
+    if features_path:
+        features = joblib.load(features_path)
+        for col in features:
+            if col not in df_pred.columns:
+                df_pred[col] = 0
+        df_pred = df_pred[[c for c in features if c in df_pred.columns]]
+
+    # Final safety: replace any NaN/inf
+    df_pred = df_pred.replace([np.inf, -np.inf], 0).fillna(0)
+
+    # 4. Predict
+    raw_preds = model.predict(df_pred)
+
+    # Decode labels
+    target_encoder_path = _get("target_encoder.joblib")
+    if target_encoder_path:
+        target_encoder = joblib.load(target_encoder_path)
+        try:
+            raw_preds = target_encoder.inverse_transform(raw_preds.astype(int))
+        except Exception as exc:
+            log_event(f"[{uid}] Label decoding failed (non-critical): {exc}", level="WARNING")
+
+    log_event(f"[{uid}] Prediction complete — {len(raw_preds)} samples.")
+    return {"predictions": raw_preds.tolist()}

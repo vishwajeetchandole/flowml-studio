@@ -103,18 +103,7 @@ def generate_feature_importance(model, feature_names: list) -> str:
         coef = model.coef_
         importances = np.abs(coef).mean(axis=0) if coef.ndim > 1 else np.abs(coef)
 
-    else:
-        # Permutation-importance fallback using saved test data
-        try:
-            import joblib, os
-            test_path = os.path.join("models", "saved_models", "test_data.joblib")
-            if os.path.exists(test_path):
-                from sklearn.inspection import permutation_importance
-                X_test, y_test = joblib.load(test_path)
-                r = permutation_importance(model, X_test, y_test, n_repeats=5, random_state=42)
-                importances = r.importances_mean
-        except Exception as exc:
-            log_event(f"Permutation importance failed: {exc}", level="WARNING")
+    # Note: permutation importance requires test data passed explicitly (no global path)
 
     if importances is None or len(importances) != len(feature_names):
         log_event("Feature importance not available for this model.", level="WARNING")
@@ -160,4 +149,73 @@ def generate_confusion_matrix(model, X_test, y_test) -> str:
         return _fig_to_b64(fig)
     except Exception as exc:
         log_event(f"Confusion matrix generation failed: {exc}", level="WARNING")
+        return ""
+
+
+def generate_actual_vs_predicted(model, X_test, y_test) -> str:
+    """Scatter plot of actual vs predicted values for regression models."""
+    log_event("Generating actual-vs-predicted plot…")
+    try:
+        preds = model.predict(X_test)
+        fig, ax = plt.subplots(figsize=(7, 6))
+        ax.scatter(y_test, preds, alpha=0.5, color="#4F8EF7", edgecolors="white", linewidths=0.4, s=40)
+        # Perfect prediction line
+        lo = min(float(np.min(y_test)), float(np.min(preds)))
+        hi = max(float(np.max(y_test)), float(np.max(preds)))
+        ax.plot([lo, hi], [lo, hi], "r--", linewidth=1.5, label="Perfect fit")
+        ax.set_xlabel("Actual", fontsize=12)
+        ax.set_ylabel("Predicted", fontsize=12)
+        ax.set_title("Actual vs Predicted", fontsize=14, fontweight="bold", pad=15)
+        ax.legend()
+        ax.grid(alpha=0.3)
+        plt.tight_layout()
+        return _fig_to_b64(fig)
+    except Exception as exc:
+        log_event(f"Actual-vs-predicted plot failed: {exc}", level="WARNING")
+        return ""
+
+
+def generate_model_comparison(model_results: list) -> str:
+    """
+    Horizontal bar chart comparing all trained models by their primary metric.
+    model_results: list of dicts from train_models() — each has model_name + metric fields.
+    """
+    log_event("Generating model comparison chart…")
+    if not model_results:
+        return ""
+    try:
+        names, scores = [], []
+        # Detect metric: accuracy for classification, r2 for regression
+        first = {k: v for k, v in model_results[0].items() if k != "model_name" and "error" not in k}
+        metric = "accuracy" if "accuracy" in first else ("r2" if "r2" in first else next(iter(first), None))
+        if not metric:
+            return ""
+
+        for m in model_results:
+            if metric in m:
+                names.append(m["model_name"])
+                scores.append(m[metric])
+
+        if not names:
+            return ""
+
+        sorted_pairs = sorted(zip(scores, names))
+        s_scores, s_names = zip(*sorted_pairs)
+
+        fig, ax = plt.subplots(figsize=(10, max(4, len(names) * 0.6)))
+        colors = ["#22c55e" if v == max(s_scores) else "#4F8EF7" for v in s_scores]
+        bars = ax.barh(s_names, s_scores, color=colors, edgecolor="white")
+        for bar, val in zip(bars, s_scores):
+            ax.text(
+                bar.get_width() + max(s_scores) * 0.01,
+                bar.get_y() + bar.get_height() / 2,
+                f"{val:.4f}", va="center", ha="left", fontsize=9,
+            )
+        ax.set_xlabel(metric.replace("_", " ").title())
+        ax.set_title(f"Model Comparison — {metric.replace('_', ' ').title()}", fontsize=14, fontweight="bold", pad=15)
+        ax.grid(axis="x", alpha=0.3)
+        plt.tight_layout()
+        return _fig_to_b64(fig)
+    except Exception as exc:
+        log_event(f"Model comparison chart failed: {exc}", level="WARNING")
         return ""

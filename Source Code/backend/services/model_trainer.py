@@ -178,6 +178,9 @@ def train_models(X: pd.DataFrame, y: pd.Series, task_type: str, test_size: float
     # Save test data for post-training visualisations (confusion matrix etc.)
     joblib.dump((X_test, y_test), os.path.join(SAVE_DIR, "test_data.joblib"))
 
+    # Save model results for comparison chart
+    joblib.dump(results, os.path.join(SAVE_DIR, "model_results.joblib"))
+
     log_event(f"All artefacts saved to {SAVE_DIR}")
 
     return {

@@ -1,7 +1,14 @@
 import os
-from fastapi import APIRouter
+import uuid
+import joblib
+import tempfile
+import pathlib
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Any, Dict, Optional
+
+from auth import get_current_user
+from services.store import StoreBackend, get_store
 from services.data_loader import load_dataset
 from services.preprocessing import preprocess_data
 from utils.helpers import raise_http_exception
@@ -11,51 +18,79 @@ router = APIRouter()
 
 
 class PreprocessRequest(BaseModel):
-    file_name: str
+    dataset_id: str
     config: Dict[str, Any]
-    target_column: Optional[str] = None  # Excluded from scaling
+    target_column: Optional[str] = None
 
 
 @router.post("/preprocess")
-async def preprocess(request: PreprocessRequest):
+async def preprocess(
+    request: PreprocessRequest,
+    uid: str = Depends(get_current_user),
+    store: StoreBackend = Depends(get_store),
+):
     """
-    Preprocess the uploaded dataset.
-
-    The preprocessed result is saved as ``processed_<file_name>`` under uploads/.
-    Fitted transformer objects are saved to models/saved_models/ so they can be
-    reapplied consistently at prediction time.
+    Preprocess a dataset and save results + transformers under the caller's model store.
+    Returns: processed_dataset_id (the new dataset to train on) and shape info.
     """
-    file_path = os.path.join("uploads", request.file_name)
-    if not os.path.exists(file_path):
-        raise_http_exception(404, "File not found", f"No upload found: {request.file_name}")
+    try:
+        file_path = store.get_dataset_path(uid, request.dataset_id)
+    except Exception:
+        raise_http_exception(404, "Dataset not found", f"Dataset '{request.dataset_id}' not found.")
 
     try:
         df = load_dataset(file_path)
 
-        # Merge target_column into config so scaler skips it
         config = dict(request.config)
         if request.target_column:
             config["target_column"] = request.target_column
 
-        processed_df = preprocess_data(df, config, save_preprocessors=True)
+        processed_df, transformers = preprocess_data(df, config, save_preprocessors=False)
 
-        # Persist processed dataset
-        processed_name = f"processed_{request.file_name}"
-        processed_path = os.path.join("uploads", processed_name)
-        if request.file_name.lower().endswith(".csv"):
-            processed_df.to_csv(processed_path, index=False)
+        # Save processed dataset as a new dataset entry
+        processed_id = "processed_" + uuid.uuid4().hex[:8]
+        orig_meta = store.get_dataset_meta(uid, request.dataset_id)
+        orig_name = orig_meta.get("original_name", "dataset.csv")
+        ext = orig_name.rsplit(".", 1)[-1].lower()
+        processed_name = f"processed_{orig_name}"
+
+        with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as tmp:
+            tmp_path = tmp.name
+
+        if ext == "csv":
+            processed_df.to_csv(tmp_path, index=False)
         else:
-            processed_df.to_excel(processed_path, index=False)
+            processed_df.to_excel(tmp_path, index=False)
 
-        log_event(f"Processed file saved → {processed_path}")
+        named_tmp = pathlib.Path(tmp_path).parent / processed_name
+        os.rename(tmp_path, named_tmp)
+
+        store.save_dataset(uid, processed_id, str(named_tmp))
+        os.unlink(named_tmp)
+        store.update_dataset_meta(uid, processed_id, {
+            "dataset_id": processed_id,
+            "original_name": processed_name,
+            "source_dataset_id": request.dataset_id,
+            "rows": int(processed_df.shape[0]),
+            "columns": int(processed_df.shape[1]),
+            "column_names": processed_df.columns.tolist(),
+        })
+
+        # Save transformers for inference reuse (under a model_id = processed_id)
+        with tempfile.NamedTemporaryFile(suffix=".joblib", delete=False) as tmp:
+            joblib.dump(transformers, tmp.name)
+            store.save_artifact(uid, processed_id, "preprocessors.joblib", tmp.name)
+            os.unlink(tmp.name)
+
+        log_event(f"[{uid}] Preprocessing OK → processed_dataset_id={processed_id}")
         return {
             "message": "Data preprocessed successfully.",
-            "processed_file": processed_name,
+            "processed_dataset_id": processed_id,
             "rows": int(processed_df.shape[0]),
             "columns": int(processed_df.shape[1]),
             "column_names": processed_df.columns.tolist(),
         }
 
     except Exception as exc:
-        log_event(f"Preprocessing error: {exc}", level="ERROR")
+        log_event(f"[{uid}] Preprocessing error: {exc}", level="ERROR")
         raise_http_exception(500, "Error preprocessing dataset", str(exc))
