@@ -136,7 +136,7 @@ flowml/
 
 # 🚀 Getting Started
 
-## 1. Clone or Extract Zip
+## 1. Clone Repository
 
 ```bash
 git clone https://github.com/vishwajeetchandole/flowml-studio.git
@@ -145,107 +145,122 @@ cd flowml-studio
 
 ---
 
-## 2. Backend Setup (FastAPI)
+## 2. Backend Setup (FastAPI & ML Engine)
 
-In a terminal, navigate to the backend directory and set up Python:
+In your first terminal:
 
 ```bash
 cd "Source Code/backend"
 
-# (Optional but recommended) create a virtual environment
+# Create and activate virtual environment
 python -m venv venv
 
-# Activate virtual environment:
 # Windows:
 .\venv\Scripts\activate
 # macOS / Linux:
 # source venv/bin/activate
 
-# Install dependencies
+# Install dependencies (FastAPI, Scikit-Learn, Pandas, NumPy, Uvicorn, Matplotlib, Pytest)
 pip install -r requirements.txt
+pip install pytest httpx
 
-# Start backend server
+# Start backend API server with auto-reload
 uvicorn app:app --reload --port 8000
 ```
 
-Backend will be running at:
-```
-http://localhost:8000
-```
+Backend will be running at: `http://localhost:8000` (Interactive Swagger docs: `http://localhost:8000/docs`)
+
+### Environment Variables (.env)
+
+| Variable | Default | Description |
+|---|---|---|
+| `DEV_AUTH` | `1` | Enable local dev authentication bypass (no Firebase keys needed) |
+| `DEV_UID` | `dev_user_123` | Default UID issued in development mode |
+| `ADMIN_UIDS` | `dev_user_123,admin_user` | Comma-separated list of UIDs granted Admin Ops privileges |
+| `EXECUTION_TIMEOUT_SECONDS` | `15` | Default watchdog timeout for custom Python executions |
+| `MAX_EXECUTION_MEMORY_MB` | `256` | Maximum allowed resident memory for Python worker sandboxes |
+| `MAX_UPLOAD_SIZE_MB` | `25` | Maximum upload size for datasets (returns HTTP 413 if exceeded) |
+| `DOCKER_WORKER_IMAGE` | `flowml-worker:latest` | Docker image tag for containerized Python execution |
 
 ---
 
-## 3. Frontend Setup (React + Vite)
+## 3. Worker Container Setup (Docker Sandbox)
 
-In a **second terminal**, navigate to the frontend directory:
+FlowML executes all user-authored code in an isolated container sandbox with zero network access and strict resource boundaries:
+
+```bash
+cd "Source Code"
+
+# Build isolated Python 3.10 worker image:
+docker build -t flowml-worker:latest -f docker/Dockerfile.worker .
+```
+
+> **Note:** If Docker is not running or unavailable in local environments, FlowML automatically falls back to an isolated child process sandbox with active memory monitoring and timeout enforcement.
+
+---
+
+## 4. Frontend Setup (React 19 + Vite)
+
+In a second terminal:
 
 ```bash
 cd "Source Code/frontend"
 
-# Install node dependencies
+# Install node packages
 npm install
 
 # Start Vite dev server
 npm run dev
 ```
 
-Frontend will be running at:
-```
-http://localhost:5173
-```
-
+Frontend will be running at: `http://localhost:5173`
 
 ---
 
-# API Endpoints
+## 5. Running the Test Suite
 
-## Upload Dataset
+Execute the comprehensive automated test suite (60 tests covering DAG compilation, isolated sandboxes, memory limits, rate limiting, and multi-user concurrency):
 
-```
-POST /api/upload
-```
-
-## Analyze Dataset
-
-```
-POST /api/analyze
+```bash
+cd "Source Code/backend"
+python -m pytest tests/ -v
 ```
 
-## Preprocess Data
+---
 
-```
-POST /api/preprocess
-```
+# 🔌 API Endpoint Reference
 
-## Train Models
+### Authentication & Account
+* `POST /api/account` - User registration / status check
+* `DELETE /api/account` - Delete account and purge all user artifacts (GDPR)
+* `DELETE /api/account/data` - Wipe all datasets and trained models for authenticated user
 
-```
-POST /api/train
-```
+### Datasets & Profiling
+* `POST /api/upload` - Ingest CSV, Excel, or JSON files (enforces 25MB limit)
+* `GET /api/datasets` - List user-owned datasets with dimensions and status
+* `GET /api/datasets/{id}/preview` - Dataset schema, dtypes, nulls, and duplicate profiling
+* `DELETE /api/datasets/{id}` - Delete user dataset
 
-## Model Comparison
+### Preprocessing & Pipelines
+* `POST /api/preprocess` - Execute imputation, scaling, label encoding, column filtering
+* `POST /api/runs` - Compile and submit visual DAG pipeline for asynchronous execution
+* `GET /api/runs` - List user execution runs with status and duration
+* `GET /api/runs/{id}` - Inspect run status, live logs, node state, and metrics
+* `POST /api/runs/{id}/stop` - Abort active pipeline execution
 
-```
-GET /api/models
-```
+### Isolated Python Code Studio
+* `POST /api/code/run` - Execute Python script in isolated Docker / sandbox worker
+* `POST /api/code/runs/{run_id}/stop` - Abort active running Python worker
+* `GET /api/code/history` - Retrieve previous execution logs and durations
 
-## Visualizations
-
-```
-GET /api/visualizations
-```
-
-## Predict
-
-```
-POST /api/predict
-```
-
-## Download Model
-
-```
-GET /api/download-model
-```
+### Admin Operations & Security Center (`/app/admin`)
+* `GET /api/admin/users` - View all registered accounts, storage usage, and active status
+* `POST /api/admin/users/{uid}/status` - Activate or deactivate user accounts
+* `GET /api/admin/jobs` - Global job queue overview (queued, active, completed, failed)
+* `GET /api/admin/system` - Live CPU, RAM, and disk storage metrics
+* `GET /api/admin/limits` - Retrieve system timeouts, memory caps, and upload limits
+* `POST /api/admin/limits` - Update system execution limits and quotas
+* `GET /api/admin/audit-logs` - Inspect security audit trail and access alerts
 
 ---
 

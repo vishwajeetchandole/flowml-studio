@@ -94,6 +94,7 @@ function Pill({ children, color = '#6366f1' }) {
 
 /* ─── NAVBAR ─────────────────────────────────────────────────────────────────── */
 function Navbar({ onLaunch }) {
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -104,13 +105,12 @@ function Navbar({ onLaunch }) {
   }, []);
 
   const links = [
-    { label: 'Demo', href: '#demo' },
+    { label: 'Home', href: '#hero', onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
     { label: 'Features', href: '#features' },
-    { label: 'Blueprints', href: '#blueprints' },
-    { label: 'Algorithms', href: '#models' },
-    { label: 'Compare', href: '#compare' },
-    { label: 'Pricing', href: '#pricing' },
-    { label: 'FAQ', href: '#faq' },
+    { label: 'Documentation', href: '/docs', isRoute: true },
+    { label: 'Tutorials', href: '/tutorials', isRoute: true },
+    { label: 'About', href: '/about', isRoute: true },
+    { label: 'Contact', href: '/contact', isRoute: true },
   ];
 
   return (
@@ -153,35 +153,55 @@ function Navbar({ onLaunch }) {
         </div>
 
         {/* Desktop links */}
-        <div className="hidden lg:flex items-center gap-7">
-          {links.map((l) => (
-            <a
-              key={l.label}
-              href={l.href}
-              className="text-sm font-medium transition-all"
-              style={{ color: 'rgba(240, 244, 255, 0.65)' }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(240, 244, 255, 0.65)')}
-            >
-              {l.label}
-            </a>
-          ))}
+        <div className="hidden lg:flex items-center gap-6">
+          {links.map((l) =>
+            l.isRoute ? (
+              <button
+                key={l.label}
+                onClick={() => navigate(l.href)}
+                className="text-sm font-medium transition-all text-slate-300 hover:text-white"
+              >
+                {l.label}
+              </button>
+            ) : (
+              <a
+                key={l.label}
+                href={l.href}
+                onClick={l.onClick}
+                className="text-sm font-medium transition-all text-slate-300 hover:text-white"
+              >
+                {l.label}
+              </a>
+            )
+          )}
         </div>
 
-        {/* CTA */}
+        {/* CTA & Auth */}
         <div className="hidden sm:flex items-center gap-3">
+          <button
+            onClick={() => navigate('/signin')}
+            className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all"
+          >
+            Sign In
+          </button>
           <motion.button
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
-            onClick={onLaunch}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-shadow"
+            onClick={() => navigate('/signup')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white transition-shadow"
             style={{
               background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
-              boxShadow: '0 4px 20px rgba(99, 102, 241, 0.4)',
+              boxShadow: '0 4px 16px rgba(99, 102, 241, 0.4)',
             }}
           >
-            Launch Studio <ArrowRight className="w-4 h-4" />
+            Get Started <ArrowRight className="w-3.5 h-3.5" />
           </motion.button>
+          <button
+            onClick={onLaunch}
+            className="px-3 py-2 rounded-xl text-xs font-semibold text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 transition-all"
+          >
+            Studio
+          </button>
         </div>
 
         {/* Mobile menu toggle */}
@@ -209,27 +229,56 @@ function Navbar({ onLaunch }) {
             }}
           >
             <div className="px-6 py-5 space-y-3">
-              {links.map((l) => (
-                <a
-                  key={l.label}
-                  href={l.href}
-                  className="block text-base font-medium py-2"
-                  style={{ color: 'rgba(240, 244, 255, 0.8)' }}
-                  onClick={() => setOpen(false)}
+              {links.map((l) =>
+                l.isRoute ? (
+                  <button
+                    key={l.label}
+                    onClick={() => {
+                      setOpen(false);
+                      navigate(l.href);
+                    }}
+                    className="block w-full text-left text-base font-medium py-2 text-slate-300 hover:text-white"
+                  >
+                    {l.label}
+                  </button>
+                ) : (
+                  <a
+                    key={l.label}
+                    href={l.href}
+                    className="block text-base font-medium py-2 text-slate-300 hover:text-white"
+                    onClick={(e) => {
+                      setOpen(false);
+                      if (l.onClick) {
+                        e.preventDefault();
+                        l.onClick();
+                      }
+                    }}
+                  >
+                    {l.label}
+                  </a>
+                )
+              )}
+              <div className="pt-2 border-t border-white/10 flex flex-col gap-2">
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    navigate('/signin');
+                  }}
+                  className="w-full py-2.5 rounded-xl text-sm font-semibold text-slate-200 bg-white/5"
                 >
-                  {l.label}
-                </a>
-              ))}
-              <button
-                onClick={() => {
-                  setOpen(false);
-                  onLaunch();
-                }}
-                className="w-full mt-3 py-3 rounded-xl text-base font-bold text-white flex items-center justify-center gap-2"
-                style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
-              >
-                Launch Studio <ArrowRight className="w-4 h-4" />
-              </button>
+                  Sign In
+                </button>
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    navigate('/signup');
+                  }}
+                  className="w-full py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2"
+                  style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+                >
+                  Get Started <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
@@ -1558,6 +1607,8 @@ function CTA({ onLaunch }) {
 
 /* ─── FOOTER ─────────────────────────────────────────────────────────────────── */
 function Footer({ onLaunch }) {
+  const navigate = useNavigate();
+
   return (
     <footer className="py-16 border-t" style={{ background: '#080c14', borderColor: 'rgba(255, 255, 255, 0.06)' }}>
       <div className="max-w-7xl mx-auto px-6">
@@ -1591,23 +1642,23 @@ function Footer({ onLaunch }) {
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-4">Product</h4>
             <ul className="space-y-2.5 text-sm text-slate-400">
-              <li><button onClick={onLaunch} className="hover:text-white transition-colors">Studio Canvas</button></li>
-              <li><a href="#features" className="hover:text-white transition-colors">Auto-ML Engine</a></li>
-              <li><a href="#blueprints" className="hover:text-white transition-colors">Pre-built Blueprints</a></li>
-              <li><a href="#models" className="hover:text-white transition-colors">Algorithm Benchmarks</a></li>
-              <li><a href="#pricing" className="hover:text-white transition-colors">Pricing Plans</a></li>
+              <li><button onClick={() => navigate('/studio')} className="hover:text-white transition-colors">Studio Canvas</button></li>
+              <li><button onClick={() => navigate('/app')} className="hover:text-white transition-colors">Workspace Dashboard</button></li>
+              <li><button onClick={() => navigate('/app/templates')} className="hover:text-white transition-colors">Pre-built Blueprints</button></li>
+              <li><button onClick={() => navigate('/signup')} className="hover:text-white transition-colors">Create Free Account</button></li>
             </ul>
           </div>
 
           {/* Resources links */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-4">Resources</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-4">Resources & Legal</h4>
             <ul className="space-y-2.5 text-sm text-slate-400">
-              <li><a href="#compare" className="hover:text-white transition-colors">Code vs Visual</a></li>
-              <li><a href="#faq" className="hover:text-white transition-colors">Documentation & FAQ</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">API Reference</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">GitHub Repository</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
+              <li><button onClick={() => navigate('/docs')} className="hover:text-white transition-colors">Documentation</button></li>
+              <li><button onClick={() => navigate('/tutorials')} className="hover:text-white transition-colors">Tutorials</button></li>
+              <li><button onClick={() => navigate('/about')} className="hover:text-white transition-colors">About FlowML</button></li>
+              <li><button onClick={() => navigate('/contact')} className="hover:text-white transition-colors">Contact Support</button></li>
+              <li><button onClick={() => navigate('/privacy')} className="hover:text-white transition-colors">Privacy Policy</button></li>
+              <li><button onClick={() => navigate('/terms')} className="hover:text-white transition-colors">Terms of Service</button></li>
             </ul>
           </div>
         </div>
@@ -1615,12 +1666,11 @@ function Footer({ onLaunch }) {
         <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <p>© 2026 FlowML Studio. All rights reserved.</p>
           <div className="flex items-center gap-6">
-            <span>Built with React Flow & Scikit-Learn</span>
+            <button onClick={() => navigate('/privacy')} className="hover:text-slate-400 transition-colors">Privacy</button>
             <span>•</span>
-            <span className="text-emerald-400 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse" />
-              All Systems Operational
-            </span>
+            <button onClick={() => navigate('/terms')} className="hover:text-slate-400 transition-colors">Terms</button>
+            <span>•</span>
+            <button onClick={() => navigate('/contact')} className="hover:text-slate-400 transition-colors">Contact</button>
           </div>
         </div>
       </div>

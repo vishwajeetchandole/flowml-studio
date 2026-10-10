@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTheme } from '../theme/ThemeProvider';
 import ReactFlow, {
   addEdge,
@@ -14,6 +15,7 @@ import 'reactflow/dist/style.css';
 import {
   UploadNode,
   PreprocessNode,
+  CustomPythonNode,
   ModelNode,
   AIDecisionNode,
   OutputNode,
@@ -21,17 +23,34 @@ import {
 } from '../components/nodes/CustomNodes';
 
 const nodeTypes = {
+  // Data
   upload: UploadNode,
   loadCsv: UploadNode,
   preview: PreviewNode,
+  removeDuplicates: PreprocessNode,
+  selectColumns: PreprocessNode,
+
+  // Preprocessing
   fillMissing: PreprocessNode,
   encode: PreprocessNode,
   scale: PreprocessNode,
+  splitData: PreprocessNode,
+  customPython: CustomPythonNode,
+
+  // Models
   randomForest: ModelNode,
   linearRegression: ModelNode,
   decisionTree: ModelNode,
+  logisticRegression: ModelNode,
+  knn: ModelNode,
+  svm: ModelNode,
+  kmeans: ModelNode,
+
+  // AI & Explainability
   aiDecision: AIDecisionNode,
   explainableAi: AIDecisionNode,
+
+  // Output
   prediction: OutputNode,
   report: OutputNode,
 };
@@ -40,12 +59,20 @@ const LABEL_MAP = {
   upload: 'Upload Dataset',
   loadCsv: 'Load CSV',
   preview: 'Preview Dataset',
+  removeDuplicates: 'Remove Duplicates',
+  selectColumns: 'Select Columns',
   fillMissing: 'Fill Missing',
   encode: 'Encode Labels',
   scale: 'Scale Features',
+  splitData: 'Split Train/Test',
+  customPython: 'Custom Python',
   randomForest: 'Random Forest',
   linearRegression: 'Linear Regression',
   decisionTree: 'Decision Tree',
+  logisticRegression: 'Logistic Regression',
+  knn: 'K-Nearest Neighbors',
+  svm: 'Support Vector Machine',
+  kmeans: 'K-Means Clustering',
   aiDecision: 'AI Decision',
   explainableAi: 'Explainable AI',
   prediction: 'Prediction',
@@ -53,17 +80,24 @@ const LABEL_MAP = {
 };
 
 const DESC_MAP = {
-  upload: 'CSV, JSON, SQL — primary data source',
-  loadCsv: 'Load a local CSV file',
+  upload: 'CSV, Excel — primary data source',
+  loadCsv: 'Load a local tabular file',
   preview: 'Inspect data as a table',
+  removeDuplicates: 'Drop duplicate rows based on keys',
+  selectColumns: 'Keep or drop specific feature columns',
   fillMissing: 'Mean, Median, or Constant strategy',
   encode: 'One-hot or Label encoding',
   scale: 'Normalize or Standardize features',
+  splitData: 'Train / Validation set partition',
   randomForest: 'Ensemble learning model',
   linearRegression: 'Baseline regression model',
-  decisionTree: 'Recursive partitioning',
+  decisionTree: 'Recursive partitioning tree',
+  logisticRegression: 'Linear classification estimator',
+  knn: 'Neighborhood vote classification',
+  svm: 'Maximum margin classification hyperplane',
+  kmeans: 'Unsupervised clustering grouping',
   aiDecision: 'Autonomous reasoning engine',
-  explainableAi: 'Feature importance & SHAP',
+  explainableAi: 'Feature importance & SHAP maps',
   prediction: 'Run model inference',
   report: 'Generate PDF / HTML report',
 };
@@ -72,14 +106,14 @@ const initialNodes = [
   {
     id: 'node-1',
     type: 'upload',
-    data: { label: 'Upload Dataset', description: 'CSV, JSON, SQL — primary data source' },
-    position: { x: 80, y: 120 },
+    data: { label: 'Upload Dataset', description: 'CSV, Excel — primary data source' },
+    position: { x: 80, y: 140 },
   },
   {
     id: 'node-2',
     type: 'randomForest',
     data: { label: 'Random Forest', description: 'Ensemble learning model' },
-    position: { x: 400, y: 120 },
+    position: { x: 420, y: 140 },
   },
 ];
 
@@ -97,10 +131,71 @@ const initialEdges = [
 // Inner component — must be inside ReactFlowProvider
 const WorkflowInner = ({ onNodeClick, actionsRef }) => {
   const { theme } = useTheme();
-  const reactFlowWrapper = useRef(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [searchParams] = useSearchParams();
+  const projectId = searchParams.get('project');
+
+  // Load from local project workflow key if exists
+  const getSavedWorkflow = () => {
+    if (projectId) {
+      try {
+        const raw = localStorage.getItem(`flowml_workflow_${projectId}`);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.nodes && parsed.edges) return parsed;
+        }
+      } catch (err) {
+        console.warn('Could not load project workflow:', err);
+      }
+    }
+    return { nodes: initialNodes, edges: initialEdges };
+  };
+
+  const saved = getSavedWorkflow();
+  const [nodes, setNodes, onNodesChange] = useNodesState(saved.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(saved.edges);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
+
+  // Undo / Redo history stacks
+  const historyRef = useRef({
+    past: [],
+    future: [],
+  });
+
+  const pushHistory = useCallback(() => {
+    historyRef.current.past.push({
+      nodes: JSON.parse(JSON.stringify(nodes)),
+      edges: JSON.parse(JSON.stringify(edges)),
+    });
+    // Cap history size to 30 states
+    if (historyRef.current.past.length > 30) {
+      historyRef.current.past.shift();
+    }
+    historyRef.current.future = [];
+  }, [nodes, edges]);
+
+  const undo = useCallback(() => {
+    if (!historyRef.current.past.length) return false;
+    const previous = historyRef.current.past.pop();
+    historyRef.current.future.push({
+      nodes: JSON.parse(JSON.stringify(nodes)),
+      edges: JSON.parse(JSON.stringify(edges)),
+    });
+    setNodes(previous.nodes);
+    setEdges(previous.edges);
+    return true;
+  }, [nodes, edges, setNodes, setEdges]);
+
+  const redo = useCallback(() => {
+    if (!historyRef.current.future.length) return false;
+    const next = historyRef.current.future.pop();
+    historyRef.current.past.push({
+      nodes: JSON.parse(JSON.stringify(nodes)),
+      edges: JSON.parse(JSON.stringify(edges)),
+    });
+    setNodes(next.nodes);
+    setEdges(next.edges);
+    return true;
+  }, [nodes, edges, setNodes, setEdges]);
 
   const dotColor = theme === 'dark' ? '#1a2236' : '#dde3ed';
   const canvasBg  = theme === 'dark' ? '#080c14' : '#f0f4f8';
@@ -110,18 +205,58 @@ const WorkflowInner = ({ onNodeClick, actionsRef }) => {
     if (!actionsRef) return;
     actionsRef.current = {
       getWorkflowData: () => ({ nodes, edges }),
+      setWorkflowData: (data) => {
+        if (data.nodes) setNodes(data.nodes);
+        if (data.edges) setEdges(data.edges);
+      },
       updateNode: (nodeId, newData) => {
+        pushHistory();
         setNodes((nds) =>
           nds.map((n) =>
             n.id === nodeId ? { ...n, data: { ...n.data, ...newData } } : n
           )
         );
       },
+      undo,
+      redo,
+      canUndo: () => historyRef.current.past.length > 0,
+      canRedo: () => historyRef.current.future.length > 0,
+      clearValidationErrors: () => {
+        setNodes((nds) =>
+          nds.map((n) => {
+            const { validationError, ...restData } = n.data || {};
+            return { ...n, data: restData };
+          })
+        );
+      },
+      setValidationError: (nodeId, errorMsg) => {
+        setNodes((nds) =>
+          nds.map((n) =>
+            n.id === nodeId ? { ...n, data: { ...n.data, validationError: errorMsg } } : n
+          )
+        );
+      },
+      setNodeStatus: (nodeId, status) => {
+        setNodes((nds) =>
+          nds.map((n) =>
+            n.id === nodeId ? { ...n, data: { ...n.data, status } } : n
+          )
+        );
+      },
+      resetNodeStatuses: () => {
+        setNodes((nds) =>
+          nds.map((n) => ({
+            ...n,
+            data: { ...n.data, status: null, validationError: null },
+          }))
+        );
+      },
     };
-  }, [nodes, edges, actionsRef, setNodes]);
+  }, [nodes, edges, actionsRef, setNodes, setEdges, undo, redo, pushHistory]);
 
   const onConnect = useCallback(
-    (params) =>
+    (params) => {
+      pushHistory();
       setEdges((eds) =>
         addEdge(
           {
@@ -132,8 +267,9 @@ const WorkflowInner = ({ onNodeClick, actionsRef }) => {
           },
           eds
         )
-      ),
-    [setEdges]
+      );
+    },
+    [setEdges, pushHistory]
   );
 
   const onDragOver = useCallback((event) => {
@@ -147,6 +283,7 @@ const WorkflowInner = ({ onNodeClick, actionsRef }) => {
       const type = event.dataTransfer.getData('application/reactflow');
       if (!type || !reactFlowInstance) return;
 
+      pushHistory();
       const position = reactFlowInstance.screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
@@ -163,11 +300,11 @@ const WorkflowInner = ({ onNodeClick, actionsRef }) => {
       };
       setNodes((nds) => nds.concat(newNode));
     },
-    [reactFlowInstance, setNodes]
+    [reactFlowInstance, setNodes, pushHistory]
   );
 
   return (
-    <div className="w-full h-full" ref={reactFlowWrapper}>
+    <div className="w-full h-full relative" ref={reactFlowWrapper}>
       <div
         className="w-full h-full"
         style={{
@@ -193,7 +330,7 @@ const WorkflowInner = ({ onNodeClick, actionsRef }) => {
           fitViewOptions={{ padding: 0.3 }}
           snapToGrid
           snapGrid={[20, 20]}
-          minZoom={0.3}
+          minZoom={0.25}
           maxZoom={2}
           defaultEdgeOptions={{
             animated: true,
@@ -205,7 +342,15 @@ const WorkflowInner = ({ onNodeClick, actionsRef }) => {
           <Controls />
           <MiniMap
             nodeColor={(n) => {
-              const COLORS = { upload: '#3b82f6', loadCsv: '#0ea5e9', preview: '#06b6d4', fillMissing: '#8b5cf6', encode: '#a855f7', scale: '#d946ef', randomForest: '#f59e0b', linearRegression: '#f97316', decisionTree: '#ef4444', aiDecision: '#22c55e', explainableAi: '#10b981', prediction: '#ec4899', report: '#f43f5e' };
+              const COLORS = {
+                upload: '#3b82f6', loadCsv: '#0ea5e9', preview: '#06b6d4',
+                removeDuplicates: '#0284c7', selectColumns: '#0369a1',
+                fillMissing: '#8b5cf6', encode: '#a855f7', scale: '#d946ef', splitData: '#7c3aed',
+                randomForest: '#f59e0b', linearRegression: '#f97316', decisionTree: '#ef4444',
+                logisticRegression: '#ea580c', knn: '#d97706', svm: '#b45309', kmeans: '#059669',
+                aiDecision: '#22c55e', explainableAi: '#10b981',
+                prediction: '#ec4899', report: '#f43f5e',
+              };
               return COLORS[n.type] ?? '#6366f1';
             }}
             maskColor={theme === 'dark' ? 'rgba(8,12,20,0.8)' : 'rgba(240,244,248,0.8)'}

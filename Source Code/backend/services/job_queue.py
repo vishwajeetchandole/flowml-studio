@@ -143,6 +143,10 @@ class InProcessQueue:
                 if j.uid == uid
             ]
 
+    def list_all_jobs(self) -> list[dict]:
+        with self._lock:
+            return [j.to_dict() for j in self._jobs.values()]
+
     # ── Internal ──────────────────────────────────────────────────────────────
 
     def _run_job(self, job: JobRecord, fn: Callable):
@@ -176,3 +180,5 @@ _queue = InProcessQueue()
 def get_queue() -> InProcessQueue:
     """FastAPI dependency."""
     return _queue
+
+get_job_queue = get_queue

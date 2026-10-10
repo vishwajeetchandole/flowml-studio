@@ -120,3 +120,50 @@ async def train(
 
     log_event(f"[{uid}] Training OK → model_id={model_id}, best={results['best_model']}")
     return {**results, "model_id": model_id}
+
+
+@router.get("/models")
+async def list_user_models(
+    uid: str = Depends(get_current_user),
+    store: StoreBackend = Depends(get_store),
+):
+    """List all trained models for the caller with algorithm, version, and metadata."""
+    models = store.list_models(uid)
+    enriched = []
+    for m in models:
+        mid = m["model_id"]
+        meta_info = {
+            "model_id": mid,
+            "algorithm": "Unknown",
+            "task_type": "classification",
+            "target_column": None,
+            "dataset_id": None,
+            "artifacts": m.get("artifacts", []),
+            "version": "1.0.0",
+        }
+        try:
+            meta_path = store.get_artifact_path(uid, mid, "model_meta.joblib")
+            if os.path.exists(meta_path):
+                data = joblib.load(meta_path)
+                meta_info.update(data)
+                meta_info["algorithm"] = data.get("best_model", "Trained Model")
+        except Exception:
+            pass
+        enriched.append(meta_info)
+    return enriched
+
+
+@router.delete("/models/{model_id}")
+async def delete_user_model(
+    model_id: str,
+    uid: str = Depends(get_current_user),
+    store: StoreBackend = Depends(get_store),
+):
+    """Delete a trained model artifact directory."""
+    m_dir = store._safe_path(uid, "models", model_id)
+    if not m_dir.exists():
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Model '{model_id}' not found.")
+    shutil.rmtree(m_dir)
+    return {"status": "deleted", "model_id": model_id}
+

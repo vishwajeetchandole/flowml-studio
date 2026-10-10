@@ -6,44 +6,72 @@ import {
   Trash2, Table, CheckCircle2, Clock, AlertCircle,
   Loader2, TreePine, Activity, Network, SquareFunction,
   Gauge, BrainCircuit, FlaskConical, ScanSearch,
+  CopyCheck, SlidersHorizontal, GitFork, Users,
+  Divide, Shapes, ShieldAlert, Code,
 } from 'lucide-react';
 
 /* ─── Node type → visual config ─────────────────────────────────────────────── */
 const NODE_CONFIG = {
-  upload:          { label: 'Upload Dataset',   Icon: Database,      color: '#3b82f6', category: 'Data'       },
-  loadCsv:         { label: 'Load CSV',          Icon: FileText,      color: '#0ea5e9', category: 'Data'       },
-  preview:         { label: 'Preview Dataset',   Icon: ScanSearch,    color: '#06b6d4', category: 'Data'       },
-  fillMissing:     { label: 'Fill Missing',       Icon: Activity,      color: '#8b5cf6', category: 'Processing' },
-  encode:          { label: 'Encode Labels',      Icon: SquareFunction,color: '#a855f7', category: 'Processing' },
-  scale:           { label: 'Scale Features',     Icon: Gauge,         color: '#d946ef', category: 'Processing' },
-  randomForest:    { label: 'Random Forest',      Icon: TreePine,      color: '#f59e0b', category: 'Model'      },
-  linearRegression:{ label: 'Linear Regression',  Icon: Activity,      color: '#f97316', category: 'Model'      },
-  decisionTree:    { label: 'Decision Tree',      Icon: Network,       color: '#ef4444', category: 'Model'      },
-  aiDecision:      { label: 'AI Decision',        Icon: BrainCircuit,  color: '#22c55e', category: 'AI'         },
-  explainableAi:   { label: 'Explainable AI',     Icon: FlaskConical,  color: '#10b981', category: 'AI'         },
-  prediction:      { label: 'Prediction',         Icon: Zap,           color: '#ec4899', category: 'Output'     },
-  report:          { label: 'Report',             Icon: FileText,      color: '#f43f5e', category: 'Output'     },
+  // Data
+  upload:             { label: 'Upload Dataset',    Icon: Database,          color: '#3b82f6', category: 'Data'       },
+  loadCsv:            { label: 'Load CSV',           Icon: FileText,          color: '#0ea5e9', category: 'Data'       },
+  preview:            { label: 'Preview Dataset',    Icon: ScanSearch,        color: '#06b6d4', category: 'Data'       },
+  removeDuplicates:   { label: 'Remove Duplicates',  Icon: CopyCheck,         color: '#0284c7', category: 'Data'       },
+  selectColumns:      { label: 'Select Columns',     Icon: SlidersHorizontal, color: '#0369a1', category: 'Data'       },
+
+  // Processing
+  fillMissing:        { label: 'Fill Missing',        Icon: Activity,          color: '#8b5cf6', category: 'Processing' },
+  encode:             { label: 'Encode Labels',       Icon: SquareFunction,    color: '#a855f7', category: 'Processing' },
+  scale:              { label: 'Scale Features',      Icon: Gauge,             color: '#d946ef', category: 'Processing' },
+  splitData:          { label: 'Split Train/Test',    Icon: GitFork,           color: '#7c3aed', category: 'Processing' },
+  customPython:       { label: 'Custom Python',       Icon: Code,              color: '#6366f1', category: 'Processing' },
+
+  // Models
+  randomForest:       { label: 'Random Forest',       Icon: TreePine,          color: '#f59e0b', category: 'Model'      },
+  linearRegression:   { label: 'Linear Regression',   Icon: Activity,          color: '#f97316', category: 'Model'      },
+  decisionTree:       { label: 'Decision Tree',       Icon: Network,           color: '#ef4444', category: 'Model'      },
+  logisticRegression: { label: 'Logistic Regression', Icon: Activity,          color: '#ea580c', category: 'Model'      },
+  knn:                { label: 'K-Nearest Neighbors', Icon: Users,             color: '#d97706', category: 'Model'      },
+  svm:                { label: 'Support Vector Machine',Icon: Divide,          color: '#b45309', category: 'Model'      },
+  kmeans:             { label: 'K-Means Clustering',  Icon: Shapes,            color: '#059669', category: 'Model'      },
+
+  // AI & Explainability
+  aiDecision:         { label: 'AI Decision',         Icon: BrainCircuit,      color: '#22c55e', category: 'AI'         },
+  explainableAi:      { label: 'Explainable AI',      Icon: FlaskConical,      color: '#10b981', category: 'AI'         },
+
+  // Output
+  prediction:         { label: 'Prediction',          Icon: Zap,               color: '#ec4899', category: 'Output'     },
+  report:             { label: 'Report',              Icon: FileText,          color: '#f43f5e', category: 'Output'     },
 };
 
 const STATUS_CFG = {
-  uploaded:  { label: 'Uploaded',  color: '#22c55e', Icon: CheckCircle2, pulse: false },
-  analyzed:  { label: 'Analyzed',  color: '#22c55e', Icon: CheckCircle2, pulse: false },
-  processed: { label: 'Processed', color: '#22c55e', Icon: CheckCircle2, pulse: false },
-  trained:   { label: 'Trained',   color: '#22c55e', Icon: CheckCircle2, pulse: false },
-  predicted: { label: 'Predicted', color: '#22c55e', Icon: CheckCircle2, pulse: false },
-  running:   { label: 'Running…',  color: '#6366f1', Icon: Loader2,      pulse: true  },
-  error:     { label: 'Error',     color: '#ef4444', Icon: AlertCircle,  pulse: false },
+  // Live pipeline statuses
+  pending:   { label: 'Pending',   color: '#8892a4', Icon: Clock,         pulse: false },
+  running:   { label: 'Running…',  color: '#6366f1', Icon: Loader2,       pulse: true  },
+  completed: { label: 'Completed', color: '#22c55e', Icon: CheckCircle2,  pulse: false },
+  failed:    { label: 'Failed',    color: '#ef4444', Icon: AlertCircle,   pulse: false },
+
+  // Backward compatibility
+  uploaded:  { label: 'Uploaded',  color: '#22c55e', Icon: CheckCircle2,  pulse: false },
+  analyzed:  { label: 'Analyzed',  color: '#22c55e', Icon: CheckCircle2,  pulse: false },
+  processed: { label: 'Processed', color: '#22c55e', Icon: CheckCircle2,  pulse: false },
+  trained:   { label: 'Trained',   color: '#22c55e', Icon: CheckCircle2,  pulse: false },
+  predicted: { label: 'Predicted', color: '#22c55e', Icon: CheckCircle2,  pulse: false },
+  error:     { label: 'Error',     color: '#ef4444', Icon: AlertCircle,   pulse: false },
 };
 
 /* ─── Base node ──────────────────────────────────────────────────────────────── */
 const BaseNode = memo(({ id, data, type, selected }) => {
   const { setNodes, setEdges } = useReactFlow();
-  const cfg    = NODE_CONFIG[type] ?? { label: data.label ?? type, Icon: Database, color: '#6366f1', category: '' };
+  const cfg = NODE_CONFIG[type] ?? { label: data.label ?? type, Icon: Database, color: '#6366f1', category: 'Node' };
   const { Icon, color, category } = cfg;
-  const label  = data.label ?? cfg.label;
+  const label = data.label ?? cfg.label;
 
-  const statusCfg = data.status ? STATUS_CFG[data.status] : null;
+  const rawStatus = (data.status || '').toLowerCase();
+  const statusCfg = STATUS_CFG[rawStatus] || null;
   const StatusIcon = statusCfg?.Icon;
+
+  const hasValidationError = Boolean(data.validationError);
 
   const onDelete = (e) => {
     e.stopPropagation();
@@ -51,7 +79,6 @@ const BaseNode = memo(({ id, data, type, selected }) => {
     setEdges((eds) => eds.filter((e) => e.source !== id && e.target !== id));
   };
 
-  // Source types never need a target handle, output types never need a source handle
   const isSource = ['upload', 'loadCsv'].includes(type);
   const isSink   = ['prediction', 'report'].includes(type);
 
@@ -61,7 +88,7 @@ const BaseNode = memo(({ id, data, type, selected }) => {
       animate={{ scale: 1, opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 22 }}
       className="relative group"
-      style={{ minWidth: 200 }}
+      style={{ minWidth: 210 }}
     >
       {/* Target handle (left) */}
       {!isSource && (
@@ -82,15 +109,27 @@ const BaseNode = memo(({ id, data, type, selected }) => {
       <div
         className="rounded-2xl overflow-hidden transition-all duration-200"
         style={{
-          background:   'var(--color-surface)',
-          border:       `1.5px solid ${selected ? color : 'var(--color-border)'}`,
-          boxShadow:    selected
+          background: 'var(--color-surface)',
+          border: hasValidationError
+            ? '2px solid #ef4444'
+            : `1.5px solid ${selected ? color : 'var(--color-border)'}`,
+          boxShadow: hasValidationError
+            ? '0 0 16px rgba(239, 68, 68, 0.4)'
+            : selected
             ? `0 0 0 3px ${color}20, 0 8px 24px rgba(0,0,0,0.15)`
             : '0 4px 12px rgba(0,0,0,0.1)',
         }}
       >
         {/* Top color bar */}
-        <div className="h-0.5 w-full" style={{ background: color }} />
+        <div className="h-0.5 w-full" style={{ background: hasValidationError ? '#ef4444' : color }} />
+
+        {/* Validation Error Banner */}
+        {hasValidationError && (
+          <div className="bg-red-500/15 border-b border-red-500/25 px-3 py-1 flex items-center gap-1.5 text-[9px] font-semibold text-red-400">
+            <ShieldAlert className="w-3 h-3 shrink-0" />
+            <span className="truncate">{data.validationError}</span>
+          </div>
+        )}
 
         {/* Body */}
         <div className="px-3.5 pt-3 pb-3">
@@ -104,10 +143,10 @@ const BaseNode = memo(({ id, data, type, selected }) => {
                 <Icon className="w-4 h-4" style={{ color }} />
               </div>
               <div>
-                <p className="text-[8px] font-bold uppercase tracking-widest" style={{ color: color + 'a0' }}>
+                <p className="text-[8px] font-bold uppercase tracking-widest" style={{ color: color + 'c0' }}>
                   {category}
                 </p>
-                <p className="text-sm font-bold leading-tight" style={{ color: 'var(--color-text)' }}>
+                <p className="text-xs font-bold leading-tight" style={{ color: 'var(--color-text)' }}>
                   {label}
                 </p>
               </div>
@@ -128,12 +167,12 @@ const BaseNode = memo(({ id, data, type, selected }) => {
 
           {/* Description */}
           {data.description && (
-            <p className="text-[10px] leading-snug mb-2.5 line-clamp-2" style={{ color: 'var(--color-text-muted)' }}>
+            <p className="text-[10px] leading-snug mb-2 line-clamp-2" style={{ color: 'var(--color-text-muted)' }}>
               {data.description}
             </p>
           )}
 
-          {/* File info badge */}
+          {/* Config / File badge */}
           {data.file_name && (
             <div
               className="px-2 py-1 rounded-lg text-[9px] font-mono truncate mb-2"
@@ -143,7 +182,7 @@ const BaseNode = memo(({ id, data, type, selected }) => {
             </div>
           )}
 
-          {/* Status footer */}
+          {/* Status footer with Live badge */}
           <div
             className="flex items-center justify-between pt-2"
             style={{ borderTop: '1px solid var(--color-border)' }}
@@ -195,17 +234,21 @@ const BaseNode = memo(({ id, data, type, selected }) => {
 
 BaseNode.displayName = 'BaseNode';
 
-/* ─── Typed exports (all use BaseNode now with type prop) ────────────────────── */
+/* ─── Typed exports ──────────────────────────────────────────────────────────── */
 export const UploadNode        = memo((p) => <BaseNode {...p} />);
 export const PreviewNode       = memo((p) => <BaseNode {...p} />);
 export const PreprocessNode    = memo((p) => <BaseNode {...p} />);
+export const CustomPythonNode  = memo((p) => <BaseNode {...p} />);
 export const ModelNode         = memo((p) => <BaseNode {...p} />);
 export const AIDecisionNode    = memo((p) => <BaseNode {...p} />);
 export const OutputNode        = memo((p) => <BaseNode {...p} />);
 
-UploadNode.displayName     = 'UploadNode';
-PreviewNode.displayName    = 'PreviewNode';
-PreprocessNode.displayName = 'PreprocessNode';
-ModelNode.displayName      = 'ModelNode';
-AIDecisionNode.displayName = 'AIDecisionNode';
-OutputNode.displayName     = 'OutputNode';
+UploadNode.displayName       = 'UploadNode';
+PreviewNode.displayName      = 'PreviewNode';
+PreprocessNode.displayName   = 'PreprocessNode';
+CustomPythonNode.displayName = 'CustomPythonNode';
+ModelNode.displayName        = 'ModelNode';
+AIDecisionNode.displayName   = 'AIDecisionNode';
+OutputNode.displayName       = 'OutputNode';
+
+export default BaseNode;

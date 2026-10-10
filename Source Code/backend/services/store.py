@@ -114,6 +114,10 @@ class LocalDiskStore(StoreBackend):
     def __init__(self, root: str = _BASE_STORAGE_ROOT):
         self._root = Path(root).resolve()
 
+    @property
+    def base_dir(self) -> str:
+        return str(self._root)
+
     # ── internal helpers ──────────────────────────────────────────────────────
 
     def _user_root(self, uid: str) -> Path:

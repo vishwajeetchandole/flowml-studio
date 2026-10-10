@@ -5,6 +5,8 @@ import {
   Search, Cpu, Activity, BarChart2,
   TreePine, FlaskConical, BrainCircuit,
   SquareFunction, ScanSearch, Gauge, Network,
+  CopyCheck, SlidersHorizontal, GitFork, Users,
+  Divide, Shapes, Code,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -14,35 +16,43 @@ const NODE_CATEGORIES = [
     id: 'data', title: 'Data',
     icon: Database, color: '#3b82f6',
     items: [
-      { type: 'upload',  label: 'Upload Dataset',  desc: 'CSV, Excel, JSON',  icon: Database,       color: '#3b82f6' },
-      { type: 'loadCsv', label: 'Load CSV',         desc: 'Local file loader', icon: FileText,       color: '#0ea5e9' },
-      { type: 'preview', label: 'Preview Dataset',  desc: 'Analyze & explore', icon: ScanSearch,     color: '#06b6d4' },
+      { type: 'upload',           label: 'Upload Dataset',    desc: 'CSV, Excel, JSON',        icon: Database,          color: '#3b82f6' },
+      { type: 'loadCsv',          label: 'Load CSV',           desc: 'Local file loader',       icon: FileText,          color: '#0ea5e9' },
+      { type: 'preview',          label: 'Preview Dataset',    desc: 'Analyze & explore',       icon: ScanSearch,        color: '#06b6d4' },
+      { type: 'removeDuplicates', label: 'Remove Duplicates',  desc: 'Drop duplicate rows',     icon: CopyCheck,         color: '#0284c7' },
+      { type: 'selectColumns',    label: 'Select Columns',     desc: 'Keep or drop features',   icon: SlidersHorizontal, color: '#0369a1' },
     ],
   },
   {
     id: 'processing', title: 'Processing',
     icon: Wrench, color: '#8b5cf6',
     items: [
-      { type: 'fillMissing', label: 'Fill Missing',    desc: 'Mean · Median · Mode',    icon: Activity,       color: '#8b5cf6' },
-      { type: 'encode',      label: 'Encode Labels',   desc: 'One-hot · Label enc.',    icon: SquareFunction, color: '#a855f7' },
-      { type: 'scale',       label: 'Scale Features',  desc: 'Standard · MinMax',       icon: Gauge,          color: '#d946ef' },
+      { type: 'fillMissing',  label: 'Fill Missing',      desc: 'Mean · Median · Mode',    icon: Activity,       color: '#8b5cf6' },
+      { type: 'encode',       label: 'Encode Labels',     desc: 'One-hot · Label enc.',    icon: SquareFunction, color: '#a855f7' },
+      { type: 'scale',        label: 'Scale Features',    desc: 'Standard · MinMax',       icon: Gauge,          color: '#d946ef' },
+      { type: 'splitData',    label: 'Split Train/Test',  desc: 'Train / Validation split',icon: GitFork,        color: '#7c3aed' },
+      { type: 'customPython', label: 'Custom Python',     desc: 'Code transformation',     icon: Code,           color: '#6366f1' },
     ],
   },
   {
     id: 'models', title: 'Models',
     icon: Layers, color: '#f59e0b',
     items: [
-      { type: 'randomForest',     label: 'Random Forest',      desc: 'Classification / Reg.', icon: TreePine,     color: '#f59e0b' },
-      { type: 'linearRegression', label: 'Linear Regression',  desc: 'Baseline regression',   icon: Activity,     color: '#f97316' },
-      { type: 'decisionTree',     label: 'Decision Tree',      desc: 'Recursive split',        icon: Network,      color: '#ef4444' },
+      { type: 'randomForest',       label: 'Random Forest',          desc: 'Ensemble forest',        icon: TreePine, color: '#f59e0b' },
+      { type: 'logisticRegression', label: 'Logistic Regression',    desc: 'Linear classification',  icon: Activity, color: '#ea580c' },
+      { type: 'linearRegression',   label: 'Linear Regression',      desc: 'Baseline regression',    icon: Activity, color: '#f97316' },
+      { type: 'decisionTree',       label: 'Decision Tree',          desc: 'Recursive split',        icon: Network,  color: '#ef4444' },
+      { type: 'knn',                label: 'K-Nearest Neighbors',    desc: 'Neighborhood classifier',icon: Users,    color: '#d97706' },
+      { type: 'svm',                label: 'Support Vector Machine', desc: 'Max-margin hyperplane',  icon: Divide,   color: '#b45309' },
+      { type: 'kmeans',             label: 'K-Means Clustering',     desc: 'Unsupervised cohorts',   icon: Shapes,   color: '#059669' },
     ],
   },
   {
     id: 'ai', title: 'AI Intelligence',
     icon: BrainCircuit, color: '#22c55e',
     items: [
-      { type: 'aiDecision',   label: 'AI Decision',     desc: 'Auto model selection', icon: Cpu,         color: '#22c55e' },
-      { type: 'explainableAi', label: 'Explainable AI', desc: 'SHAP / Feature maps',  icon: FlaskConical, color: '#10b981' },
+      { type: 'aiDecision',    label: 'AI Decision',     desc: 'Auto model selection', icon: BrainCircuit,  color: '#22c55e' },
+      { type: 'explainableAi', label: 'Explainable AI',  desc: 'SHAP / Feature maps',  icon: FlaskConical,  color: '#10b981' },
     ],
   },
   {

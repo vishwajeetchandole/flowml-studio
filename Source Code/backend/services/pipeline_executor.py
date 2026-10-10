@@ -44,6 +44,7 @@ NODE_OUTPUT_TYPE: dict[str, str] = {
     "removeDuplicates": "dataframe",
     "selectColumns":   "dataframe",
     "splitData":       "split",
+    "customPython":    "dataframe",
     "fillMissing":     "dataframe",
     "encode":          "dataframe",
     "scale":           "dataframe",
@@ -61,7 +62,7 @@ NODE_OUTPUT_TYPE: dict[str, str] = {
 
 # Nodes that REQUIRE a dataframe upstream
 REQUIRES_DATAFRAME = {
-    "preview", "removeDuplicates", "selectColumns", "splitData",
+    "preview", "removeDuplicates", "selectColumns", "splitData", "customPython",
     "fillMissing", "encode", "scale",
     "randomForest", "linearRegression", "decisionTree", "knn", "svm", "kmeans",
     "aiDecision", "explainableAi", "prediction", "report",
@@ -69,11 +70,11 @@ REQUIRES_DATAFRAME = {
 
 # Nodes that produce a dataframe as input for model nodes
 DATAFRAME_PRODUCERS = {"upload", "loadCsv", "preview", "removeDuplicates",
-                        "selectColumns", "fillMissing", "encode", "scale"}
+                        "selectColumns", "customPython", "fillMissing", "encode", "scale"}
 
 UPLOAD_TYPES    = {"upload", "loadCsv"}
 PREVIEW_TYPES   = {"preview"}
-PROCESS_TYPES   = {"fillMissing", "encode", "scale", "removeDuplicates", "selectColumns", "splitData"}
+PROCESS_TYPES   = {"fillMissing", "encode", "scale", "removeDuplicates", "selectColumns", "splitData", "customPython"}
 MODEL_TYPES     = {"randomForest", "linearRegression", "decisionTree", "knn", "svm", "kmeans", "aiDecision"}
 OUTPUT_TYPES    = {"prediction", "report"}
 EXPLAINER_TYPES = {"explainableAi"}
@@ -401,6 +402,9 @@ def execute_pipeline(
                     file_path = store.get_dataset_path(uid, dataset_id)
                     ctx["df"] = load_dataset(file_path)
                     ctx["dataset_id"] = dataset_id
+                elif node_data.get("file_path"):
+                    ctx["df"] = load_dataset(node_data["file_path"])
+                    ctx["file_name"] = os.path.basename(node_data["file_path"])
                 elif file_name:
                     file_path = os.path.join("uploads", file_name)
                     ctx["df"] = load_dataset(file_path)
@@ -473,6 +477,43 @@ def execute_pipeline(
                 ctx["X_test"] = X_test
                 ctx["y_test"] = y_test
                 result_msg = f"Split: {len(X_train):,} train / {len(X_test):,} test (test_size={test_size})"
+
+            # ── Custom Python ─────────────────────────────────────────────────
+            elif node_type == "customPython":
+                if ctx["df"] is None:
+                    raise ValueError("No dataset in context.")
+                code = node_data.get("code", "")
+                if not code or not code.strip():
+                    raise ValueError("customPython node requires Python code.")
+
+                with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_in:
+                    tmp_in_path = tmp_in.name
+                ctx["df"].to_csv(tmp_in_path, index=False)
+
+                try:
+                    from services.code_executor import execute_python_code
+                    timeout_val = int(node_data.get("timeout", 15))
+                    exec_res = execute_python_code(
+                        uid=uid or "system",
+                        code=code,
+                        input_data_path=tmp_in_path,
+                        timeout_seconds=timeout_val,
+                    )
+                    if exec_res.get("status") != "completed":
+                        err_msg = exec_res.get("stderr") or exec_res.get("traceback") or "Custom Python script failed."
+                        raise ValueError(f"customPython execution error: {err_msg}")
+
+                    out_df = exec_res.get("output_df")
+                    if out_df is not None and isinstance(out_df, pd.DataFrame):
+                        ctx["df"] = out_df
+
+                    result_msg = f"Python code executed successfully in {exec_res.get('duration_ms')}ms."
+                finally:
+                    if os.path.exists(tmp_in_path):
+                        try:
+                            os.remove(tmp_in_path)
+                        except Exception:
+                            pass
 
             # ── Preprocessing ─────────────────────────────────────────────────
             elif node_type in {"fillMissing", "encode", "scale"}:

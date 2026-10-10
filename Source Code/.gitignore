@@ -47,3 +47,9 @@ storage/
 models/
 *.joblib
 *.pkl
+backend/audit_events.jsonl
+backend/system_limits.json
+backend/simulated_user_*
+backend/test_user_*
+backend/crash_recovery_user
+backend/iris.csv

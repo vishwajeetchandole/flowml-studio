@@ -1,29 +1,31 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeProvider } from './theme/ThemeProvider';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Workflow from './pages/Workflow';
+import Sidebar from './components/layout/Sidebar';
 import PipelinePanel from './components/layout/PipelinePanel';
 import ResultsOverlay from './components/layout/ResultsOverlay';
 import {
   Cpu, Play, RotateCcw, Sun, Moon, Save, Download,
   CheckCircle2, AlertCircle, Loader2, Zap, BarChart3, X,
-  LayoutTemplate,
+  LayoutTemplate, Undo2, Redo2, Square, ArrowLeft, ShieldAlert,
 } from 'lucide-react';
 import { useTheme } from './theme/ThemeProvider';
 import {
   uploadDataset, analyzeDataset, preprocessDataset,
   trainModels, runPredictions, getVisualizations,
+  getProjects, saveProject,
 } from './services/api';
 
 /* ─── Node type groupings ────────────────────────────────────────────────────── */
-const UPLOAD_TYPES     = ['upload', 'loadCsv'];
-const PREPROCESS_TYPES = ['fillMissing', 'encode', 'scale'];
-const MODEL_TYPES      = ['randomForest', 'linearRegression', 'decisionTree', 'aiDecision'];
+const UPLOAD_TYPES     = ['upload', 'loadCsv', 'preview'];
+const PREPROCESS_TYPES = ['fillMissing', 'encode', 'scale', 'removeDuplicates', 'selectColumns', 'splitData'];
+const MODEL_TYPES      = ['randomForest', 'linearRegression', 'decisionTree', 'logisticRegression', 'knn', 'svm', 'kmeans', 'aiDecision'];
 const OUTPUT_TYPES     = ['prediction', 'report'];
 const VIZ_TYPES        = ['explainableAi'];
 
-/* ─── Topological sort ───────────────────────────────────────────────────────── */
+/* ─── Topological sort & Cycle check ─────────────────────────────────────────── */
 function topoSort(nodes, edges) {
   const adj = {}, indegree = {};
   nodes.forEach((n) => { adj[n.id] = []; indegree[n.id] = 0; });
@@ -44,6 +46,15 @@ function topoSort(nodes, edges) {
 /* ─── Inner App ──────────────────────────────────────────────────────────────── */
 function AppInner() {
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const projectId = searchParams.get('project') || 'proj-default';
+
+  const [workflowName, setWorkflowName] = useState(() => {
+    const projs = getProjects();
+    const p = projs.find((x) => x.id === projectId);
+    return p ? p.name : 'Untitled Pipeline';
+  });
 
   const [selectedNode,   setSelectedNode]   = useState(null);
   const [showPanel,      setShowPanel]      = useState(false);
@@ -52,7 +63,10 @@ function AppInner() {
   const [results,        setResults]        = useState(null);
   const [showResults,    setShowResults]    = useState(false);
   const [toast,          setToast]          = useState(null);
+  const [saveStatus,     setSaveStatus]     = useState('saved'); // 'saved' | 'saving' | 'unsaved'
+
   const workflowRef = useRef(null);
+  const isStoppedRef = useRef(false);
 
   const showToast = useCallback((msg, type = 'success') => {
     setToast({ msg, type });
@@ -69,13 +83,106 @@ function AppInner() {
     setPipelineSteps((p) => p.map((s) => s.id === id ? { ...s, ...patch } : s));
   }, []);
 
+  /* ─── Keyboard Shortcuts for Undo / Redo ─────────────────────────────────── */
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          workflowRef.current?.redo();
+        } else {
+          e.preventDefault();
+          workflowRef.current?.undo();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault();
+        workflowRef.current?.redo();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  /* ─── Autosave (Debounced 2s) ────────────────────────────────────────────── */
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const wf = workflowRef.current?.getWorkflowData();
+      if (wf?.nodes?.length) {
+        localStorage.setItem(`flowml_workflow_${projectId}`, JSON.stringify(wf));
+        saveProject({
+          id: projectId,
+          name: workflowName,
+          nodesCount: wf.nodes.length,
+          lastModified: new Date().toISOString(),
+        });
+        setSaveStatus('saved');
+      }
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [projectId, workflowName]);
+
+  /* ─── Pre-run Validation ─────────────────────────────────────────────────── */
+  const validateGraph = (nodes, edges) => {
+    if (!nodes.length) {
+      showToast('Add at least one node to the canvas!', 'error');
+      return false;
+    }
+
+    workflowRef.current?.clearValidationErrors();
+
+    // 1. Cycle detection
+    const sorted = topoSort(nodes, edges);
+    if (sorted.length < nodes.length) {
+      showToast('Cycle detected! Pipelines must be a Directed Acyclic Graph (DAG).', 'error');
+      // Find nodes not in sorted and flag them
+      const sortedIds = new Set(sorted.map((n) => n.id));
+      nodes.filter((n) => !sortedIds.has(n.id)).forEach((n) => {
+        workflowRef.current?.setValidationError(n.id, 'Cyclic loop dependency');
+      });
+      return false;
+    }
+
+    // 2. Data source node presence
+    const hasSource = nodes.some((n) => UPLOAD_TYPES.includes(n.type));
+    if (!hasSource) {
+      showToast('Missing data source! Add an Upload Dataset node first.', 'error');
+      return false;
+    }
+
+    // 3. Unattached file check on upload node
+    let hasValidFile = false;
+    for (const n of nodes) {
+      if (UPLOAD_TYPES.includes(n.type)) {
+        if (!n.data?._uploadedFile && !n.data?.file_name) {
+          workflowRef.current?.setValidationError(n.id, 'Attach a dataset file');
+        } else {
+          hasValidFile = true;
+        }
+      }
+    }
+
+    if (!hasValidFile) {
+      showToast('Upload node has no dataset file attached.', 'error');
+      return false;
+    }
+
+    return true;
+  };
+
   /* ─── Run Pipeline ───────────────────────────────────────────────────────── */
   const handleRun = useCallback(async () => {
     if (pipelineState === 'running') return;
     const wf = workflowRef.current?.getWorkflowData();
-    if (!wf?.nodes?.length) { showToast('Add at least one node to the canvas first!', 'error'); return; }
+    if (!wf?.nodes?.length) return;
 
+    if (!validateGraph(wf.nodes, wf.edges)) return;
+
+    isStoppedRef.current = false;
     const ordered = topoSort(wf.nodes, wf.edges);
+
+    // Set all nodes to pending
+    ordered.forEach((n) => workflowRef.current?.setNodeStatus(n.id, 'pending'));
+
     setPipelineSteps([]);
     setResults(null);
     setPipelineState('running');
@@ -88,27 +195,33 @@ function AppInner() {
 
     try {
       for (const node of ordered) {
+        if (isStoppedRef.current) {
+          addStep('Pipeline Stopped', 'warning', 'Execution halted by user.');
+          setPipelineState('idle');
+          return;
+        }
+
         const t = node.type;
+        workflowRef.current?.setNodeStatus(node.id, 'running');
 
         /* 1 ─ Upload */
         if (UPLOAD_TYPES.includes(t)) {
           const sid = addStep('Upload Dataset', 'running', 'Reading file…');
-          if (!node.data._uploadedFile && !node.data.file_name) {
-            updateStep(sid, { status: 'warning', detail: 'No file attached — skipping' }); continue;
-          }
           if (node.data._uploadedFile) {
             const r = await uploadDataset(node.data._uploadedFile);
             uploadResult = r;
-            updateStep(sid, { status: 'done', detail: `${r.file_name}  ·  ${r.rows?.toLocaleString()} rows  ·  ${r.columns} cols` });
+            updateStep(sid, { status: 'done', detail: `${r.file_name} · ${r.rows?.toLocaleString()} rows · ${r.columns} cols` });
           } else {
             uploadResult = { file_name: node.data.file_name };
             updateStep(sid, { status: 'done', detail: `Using ${node.data.file_name}` });
           }
-          const asid = addStep('Analyse Dataset', 'running', 'Detecting column types & target…');
+
+          const asid = addStep('Analyze Dataset', 'running', 'Inferring schema & target…');
           const analysis = await analyzeDataset(uploadResult.file_name);
           targetColumn = analysis.suggested_target;
           taskType     = analysis.suggested_task_type ?? 'classification';
-          updateStep(asid, { status: 'done', detail: `Target: "${targetColumn}"  ·  Task: ${taskType}  ·  ${analysis.total_rows?.toLocaleString()} rows` });
+          updateStep(asid, { status: 'done', detail: `Target: "${targetColumn}" · Task: ${taskType}` });
+          workflowRef.current?.setNodeStatus(node.id, 'completed');
         }
 
         /* 2 ─ Preprocess */
@@ -122,13 +235,14 @@ function AppInner() {
           };
           const r = await preprocessDataset(uploadResult.file_name, cfg, targetColumn);
           preprocessResult = r;
-          updateStep(sid, { status: 'done', detail: `${r.rows?.toLocaleString()} rows  ·  ${r.columns} features` });
+          updateStep(sid, { status: 'done', detail: `${r.rows?.toLocaleString()} rows · ${r.columns} features` });
+          workflowRef.current?.setNodeStatus(node.id, 'completed');
         }
 
-        /* 3 ─ Model */
+        /* 3 ─ Models */
         else if (MODEL_TYPES.includes(t)) {
           if (!uploadResult) { addStep('Train Models', 'skipped', 'No dataset available'); continue; }
-          const sid = addStep('Train Models', 'running', 'Running 6 algorithms…');
+          const sid = addStep('Train Models', 'running', 'Fitting ML estimators…');
           const src = preprocessResult?.processed_file ?? uploadResult.file_name;
           const r   = await trainModels(uploadResult.file_name, targetColumn, taskType, src !== uploadResult.file_name ? src : null);
           trainResult = { ...r, targetColumn, taskType };
@@ -136,37 +250,39 @@ function AppInner() {
           const metricStr = taskType === 'classification'
             ? `Acc ${(best?.accuracy * 100).toFixed(1)}%`
             : `R² ${best?.r2?.toFixed(3)}`;
-          updateStep(sid, { status: 'done', detail: `Best: ${r.best_model}  ·  ${metricStr}` });
+          updateStep(sid, { status: 'done', detail: `Optimal: ${r.best_model} (${metricStr})` });
+          workflowRef.current?.setNodeStatus(node.id, 'completed');
         }
 
         /* 4 ─ Prediction */
         else if (OUTPUT_TYPES.includes(t)) {
           if (!uploadResult || !trainResult) { addStep('Predictions', 'skipped', 'Train a model first'); continue; }
-          const sid = addStep('Run Predictions', 'running', 'Scoring all rows…');
+          const sid = addStep('Run Predictions', 'running', 'Generating inference predictions…');
           const src = preprocessResult?.processed_file ?? uploadResult.file_name;
           const r   = await runPredictions(src, targetColumn);
           predResult = r;
-          updateStep(sid, { status: 'done', detail: `${r.predictions?.length?.toLocaleString()} predictions generated` });
+          updateStep(sid, { status: 'done', detail: `${r.predictions?.length?.toLocaleString()} predictions ready` });
+          workflowRef.current?.setNodeStatus(node.id, 'completed');
         }
 
-        /* 5 ─ Explainable AI / Viz */
+        /* 5 ─ Explainable AI */
         else if (VIZ_TYPES.includes(t)) {
-          if (!uploadResult) { addStep('Visualisations', 'skipped', 'No dataset'); continue; }
-          const sid = addStep('Generate Charts', 'running', 'Building visualisations…');
+          if (!uploadResult) { addStep('Visualizations', 'skipped', 'No dataset'); continue; }
+          const sid = addStep('Explainability', 'running', 'Calculating SHAP feature attributions…');
           const r   = await getVisualizations(uploadResult.file_name);
           vizResult = r;
-          updateStep(sid, { status: 'done', detail: `${Object.keys(r).length} charts generated` });
+          updateStep(sid, { status: 'done', detail: `${Object.keys(r).length} diagnostic plots generated` });
+          workflowRef.current?.setNodeStatus(node.id, 'completed');
         }
       }
 
-      /* Always get viz if we have an upload */
       if (!vizResult && uploadResult) {
         try { vizResult = await getVisualizations(uploadResult.file_name); } catch (_) {}
       }
 
       setResults({ uploadResult, preprocessResult, trainResult, predResult, vizResult, targetColumn, taskType });
       setPipelineState('done');
-      addStep('Pipeline Complete', 'done', '🎉 All steps finished successfully');
+      addStep('Pipeline Complete', 'done', '🎉 All pipeline stages completed successfully');
       showToast('Pipeline complete!', 'success');
 
     } catch (err) {
@@ -176,79 +292,115 @@ function AppInner() {
     }
   }, [pipelineState, addStep, updateStep, showToast]);
 
-  const handleNodeClick    = useCallback((node) => { setSelectedNode(node); setShowPanel(!!node); }, []);
-  const handleSave         = useCallback(() => {
-    const wf = workflowRef.current?.getWorkflowData(); if (!wf) return;
-    localStorage.setItem('flowml_workflow', JSON.stringify(wf));
-    showToast('Workflow saved to browser storage');
-  }, [showToast]);
-  const handleExport       = useCallback(() => {
-    const wf = workflowRef.current?.getWorkflowData(); if (!wf) return;
-    const blob = new Blob([JSON.stringify(wf, null, 2)], { type: 'application/json' });
+  /* ─── Stop Pipeline ──────────────────────────────────────────────────────── */
+  const handleStop = () => {
+    isStoppedRef.current = true;
+    setPipelineState('idle');
+    showToast('Stopping pipeline…', 'info');
+  };
+
+  const handleNodeClick = useCallback((node) => {
+    setSelectedNode(node);
+    setShowPanel(!!node);
+  }, []);
+
+  const handleManualSave = useCallback(() => {
+    const wf = workflowRef.current?.getWorkflowData();
+    if (wf) {
+      localStorage.setItem(`flowml_workflow_${projectId}`, JSON.stringify(wf));
+      saveProject({
+        id: projectId,
+        name: workflowName,
+        nodesCount: wf.nodes.length,
+        lastModified: new Date().toISOString(),
+      });
+      setSaveStatus('saved');
+      showToast(`Saved "${workflowName}" successfully.`, 'success');
+    }
+  }, [projectId, workflowName, showToast]);
+
+  const handleExport = useCallback(() => {
+    const wf = workflowRef.current?.getWorkflowData();
+    if (!wf) return;
+    const json = JSON.stringify({ name: workflowName, ...wf }, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
     const url  = URL.createObjectURL(blob);
-    Object.assign(document.createElement('a'), { href: url, download: 'flowml_pipeline.json' }).click();
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `${workflowName.toLowerCase().replace(/\s+/g, '_')}_workflow.json`;
+    a.click();
     URL.revokeObjectURL(url);
-  }, []);
-  const handleUpdateNode   = useCallback((nodeId, newData) => {
-    workflowRef.current?.updateNode(nodeId, newData);
-    setSelectedNode((p) => p?.id === nodeId ? { ...p, data: { ...p.data, ...newData } } : p);
-  }, []);
+    showToast('Workflow JSON exported.', 'info');
+  }, [workflowName, showToast]);
 
   const isRunning = pipelineState === 'running';
 
   return (
     <div className="flex flex-col h-screen overflow-hidden" style={{ background: 'var(--color-bg)', color: 'var(--color-text)' }}>
-
-      {/* ── Navbar ──────────────────────────────────────────────────────────── */}
+      {/* ── Top Bar ─────────────────────────────────────────────────────────── */}
       <TopBar
-        theme={theme} toggleTheme={toggleTheme}
-        isRunning={isRunning} pipelineState={pipelineState}
-        onRun={handleRun} onSave={handleSave} onExport={handleExport}
-        hasResults={!!results} showResults={showResults}
+        theme={theme}
+        toggleTheme={toggleTheme}
+        isRunning={isRunning}
+        pipelineState={pipelineState}
+        workflowName={workflowName}
+        setWorkflowName={setWorkflowName}
+        saveStatus={saveStatus}
+        onRun={handleRun}
+        onStop={handleStop}
+        onSave={handleManualSave}
+        onExport={handleExport}
+        onUndo={() => workflowRef.current?.undo()}
+        onRedo={() => workflowRef.current?.redo()}
+        hasResults={!!results}
+        showResults={showResults}
         onToggleResults={() => setShowResults((v) => !v)}
       />
 
       {/* ── Workspace ───────────────────────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Left sidebar */}
-        <NodeLibrary />
+        {/* Left Sidebar */}
+        <Sidebar />
 
         {/* Canvas */}
         <div className="flex-1 relative overflow-hidden">
           <Workflow onNodeClick={handleNodeClick} actionsRef={workflowRef} />
 
-          {/* Canvas hint */}
+          {/* Canvas Bottom Hint */}
           <AnimatePresence>
             {!selectedNode && pipelineState === 'idle' && (
               <motion.div
                 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="absolute bottom-8 left-1/2 -translate-x-1/2 px-5 py-3 rounded-2xl pointer-events-none flex items-center gap-3"
+                className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-2xl pointer-events-none flex items-center gap-2.5 text-xs shadow-lg backdrop-blur-md"
                 style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-muted)' }}
               >
-                <LayoutTemplate className="w-4 h-4 shrink-0" />
-                <span className="text-sm">Drag nodes · Connect them · Click <strong className="text-primary">Run Pipeline</strong></span>
+                <LayoutTemplate className="w-3.5 h-3.5 text-primary" />
+                <span>Drag palette nodes · Connect pins · Click <strong className="text-primary">Run Pipeline</strong></span>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Node config drawer (slides in from right, over canvas) */}
+          {/* Node Config Drawer */}
           <AnimatePresence>
             {showPanel && selectedNode && !showResults && (
               <motion.div
                 key="panel"
                 initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
                 transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-                className="absolute inset-y-0 right-0 z-30 w-80"
-                style={{ background: 'var(--color-surface)', borderLeft: '1px solid var(--color-border)', boxShadow: '-8px 0 32px rgba(0,0,0,0.25)' }}
+                className="absolute inset-y-0 right-0 z-30"
               >
-                <PipelinePanel node={selectedNode} onClose={() => { setShowPanel(false); setSelectedNode(null); }} onUpdateNodeData={handleUpdateNode} />
+                <PipelinePanel
+                  node={selectedNode}
+                  onClose={() => { setShowPanel(false); setSelectedNode(null); }}
+                  onUpdateNodeData={(id, data) => workflowRef.current?.updateNode(id, data)}
+                />
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
 
-      {/* ── Full-screen Results Overlay ──────────────────────────────────────── */}
+      {/* ── Full-screen Results Overlay ─────────────────────────────────────── */}
       <AnimatePresence>
         {showResults && (
           <ResultsOverlay
@@ -261,19 +413,21 @@ function AppInner() {
         )}
       </AnimatePresence>
 
-      {/* ── Toast ───────────────────────────────────────────────────────────── */}
+      {/* ── Toast Notifications ─────────────────────────────────────────────── */}
       <AnimatePresence>
         {toast && (
           <motion.div
-            initial={{ opacity: 0, y: 60, x: '-50%' }} animate={{ opacity: 1, y: 0, x: '-50%' }} exit={{ opacity: 0, y: 40, x: '-50%' }}
-            className="fixed bottom-10 left-1/2 flex items-center gap-3 px-6 py-3.5 rounded-2xl shadow-2xl z-[999] text-base font-semibold"
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 30, x: '-50%' }}
+            className="fixed bottom-8 left-1/2 flex items-center gap-2.5 px-5 py-3 rounded-2xl shadow-2xl z-[999] text-xs font-semibold"
             style={{
-              background: toast.type === 'error' ? '#ef4444' : 'linear-gradient(135deg,#22c55e,#16a34a)',
+              background: toast.type === 'error' ? '#ef4444' : 'linear-gradient(135deg, #22c55e, #16a34a)',
               color: 'white',
-              boxShadow: toast.type === 'error' ? '0 12px 40px rgba(239,68,68,0.45)' : '0 12px 40px rgba(34,197,94,0.45)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
             }}
           >
-            {toast.type === 'error' ? <AlertCircle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
+            {toast.type === 'error' ? <AlertCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
             {toast.msg}
           </motion.div>
         )}
@@ -283,188 +437,145 @@ function AppInner() {
 }
 
 /* ─── Top Bar ────────────────────────────────────────────────────────────────── */
-function TopBar({ theme, toggleTheme, isRunning, pipelineState, onRun, onSave, onExport, hasResults, showResults, onToggleResults }) {
+function TopBar({
+  theme, toggleTheme, isRunning, pipelineState,
+  workflowName, setWorkflowName, saveStatus,
+  onRun, onStop, onSave, onExport, onUndo, onRedo,
+  hasResults, showResults, onToggleResults,
+}) {
   const navigate = useNavigate();
-  const statusMap = {
-    idle:    { dot: '#6366f1', label: 'Ready to run' },
-    running: { dot: '#f59e0b', label: 'Running pipeline…' },
-    done:    { dot: '#22c55e', label: 'Pipeline complete' },
-    error:   { dot: '#ef4444', label: 'Pipeline error' },
-  };
-  const s = statusMap[pipelineState] ?? statusMap.idle;
 
   return (
-    <header className="h-16 shrink-0 flex items-center justify-between px-6 z-50"
-      style={{ background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}>
-
-      {/* Brand */}
+    <header
+      className="h-16 shrink-0 flex items-center justify-between px-6 z-50 border-b select-none"
+      style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+    >
+      {/* Brand & Back Button & Name Input */}
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/')} title="Back to Home"
-          className="flex items-center gap-3 transition-opacity hover:opacity-80">
-          <div className="relative w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
-            style={{ background: 'linear-gradient(135deg,#6366f1,#3b82f6)' }}>
-            <Cpu className="w-5 h-5 text-white" />
-            <div className="absolute inset-0 rounded-xl" style={{ boxShadow: '0 0 16px rgba(99,102,241,0.5)' }} />
+        <button
+          onClick={() => navigate('/app/projects')}
+          title="Back to Dashboard"
+          className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md"
+            style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+          >
+            <Cpu className="w-4 h-4 text-white" />
           </div>
+
           <div>
-            <div className="font-sora font-bold text-lg leading-tight"
-              style={{ background: 'linear-gradient(90deg,#6366f1,#3b82f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              FlowML Studio
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: s.dot }} />
-              <span className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>{s.label}</span>
+            <input
+              type="text"
+              value={workflowName}
+              onChange={(e) => setWorkflowName(e.target.value)}
+              className="font-sora font-bold text-sm bg-transparent hover:bg-white/5 px-2 py-0.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary transition-colors max-w-[200px] truncate"
+              style={{ color: 'var(--color-text)' }}
+            />
+            <div className="text-[10px] text-slate-400 flex items-center gap-1.5 px-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span>{saveStatus === 'saving' ? 'Saving…' : 'Autosaved'}</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Center Actions: Undo / Redo */}
+      <div className="hidden sm:flex items-center gap-1 p-1 rounded-xl border" style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg)' }}>
+        <button
+          onClick={onUndo}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+          title="Undo (Ctrl+Z)"
+        >
+          <Undo2 className="w-3.5 h-3.5" />
+        </button>
+        <button
+          onClick={onRedo}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+          title="Redo (Ctrl+Y)"
+        >
+          <Redo2 className="w-3.5 h-3.5" />
         </button>
       </div>
 
-      {/* Right actions */}
-      <div className="flex items-center gap-2.5">
-        {/* Results toggle pill */}
+      {/* Right Actions */}
+      <div className="flex items-center gap-2">
         {hasResults && (
-          <motion.button whileTap={{ scale: 0.95 }} onClick={onToggleResults}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+          <button
+            onClick={onToggleResults}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border"
             style={{
               background: showResults ? 'rgba(99,102,241,0.15)' : 'var(--color-bg)',
-              border: `1px solid ${showResults ? 'rgba(99,102,241,0.4)' : 'var(--color-border)'}`,
-              color: showResults ? '#6366f1' : 'var(--color-text-muted)',
-            }}>
-            <BarChart3 className="w-4 h-4" />
+              borderColor: showResults ? '#6366f1' : 'var(--color-border)',
+              color: showResults ? '#818cf8' : 'var(--color-text-muted)',
+            }}
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
             {showResults ? 'Hide Results' : 'View Results'}
-          </motion.button>
+          </button>
         )}
 
-        <NavBtn icon={Save}     label="Save"    onClick={onSave}   />
-        <NavBtn icon={Download} label="Export"  onClick={onExport} />
+        <button
+          onClick={onSave}
+          className="p-2 rounded-xl border text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+          style={{ borderColor: 'var(--color-border)' }}
+          title="Save Project"
+        >
+          <Save className="w-3.5 h-3.5" />
+        </button>
 
-        <div className="w-px h-6 mx-1" style={{ background: 'var(--color-border)' }} />
+        <button
+          onClick={onExport}
+          className="p-2 rounded-xl border text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+          style={{ borderColor: 'var(--color-border)' }}
+          title="Export Workflow JSON"
+        >
+          <Download className="w-3.5 h-3.5" />
+        </button>
 
-        {/* RUN */}
-        <motion.button
-          whileHover={!isRunning ? { scale: 1.03 } : {}} whileTap={!isRunning ? { scale: 0.97 } : {}}
-          onClick={onRun} disabled={isRunning} id="run-pipeline-btn"
-          className="flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-base font-bold text-white transition-all"
-          style={{
-            background: isRunning ? 'linear-gradient(135deg,#6366f1,#3b82f6)'
-              : pipelineState === 'done'  ? 'linear-gradient(135deg,#22c55e,#16a34a)'
-              : pipelineState === 'error' ? 'linear-gradient(135deg,#ef4444,#dc2626)'
-              : 'linear-gradient(135deg,#6366f1,#3b82f6)',
-            boxShadow: '0 4px 20px rgba(99,102,241,0.4)',
-            opacity: isRunning ? 0.8 : 1,
-            cursor:  isRunning ? 'not-allowed' : 'pointer',
-          }}>
-          {isRunning ? <><Loader2 className="w-4 h-4 animate-spin" />Running…</>
-            : pipelineState === 'done'  ? <><RotateCcw className="w-4 h-4" />Run Again</>
-            : <><Play className="w-4 h-4 fill-current" />Run Pipeline</>}
-        </motion.button>
+        {/* STOP / RUN BUTTON */}
+        {isRunning ? (
+          <button
+            onClick={onStop}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-red-500 hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+          >
+            <Square className="w-3.5 h-3.5 fill-current" />
+            Stop
+          </button>
+        ) : (
+          <button
+            onClick={onRun}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-lg shadow-primary/30 active:scale-95 transition-all"
+            style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+          >
+            {pipelineState === 'done' ? (
+              <>
+                <RotateCcw className="w-3.5 h-3.5" />
+                Run Again
+              </>
+            ) : (
+              <>
+                <Play className="w-3.5 h-3.5 fill-current" />
+                Run Pipeline
+              </>
+            )}
+          </button>
+        )}
 
-        <div className="w-px h-6 mx-1" style={{ background: 'var(--color-border)' }} />
-
-        {/* Theme */}
-        <motion.button whileTap={{ scale: 0.9 }} onClick={toggleTheme} id="theme-toggle-btn"
-          className="w-10 h-10 rounded-xl flex items-center justify-center"
-          style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text-muted)' }}>
-          <AnimatePresence mode="wait">
-            <motion.div key={theme}
-              initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}
-              transition={{ duration: 0.15 }}>
-              {theme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
-            </motion.div>
-          </AnimatePresence>
-        </motion.button>
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-xl border text-slate-400 hover:text-white transition-colors ml-1"
+          style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg)' }}
+          title="Toggle Theme"
+        >
+          {theme === 'dark' ? <Sun className="w-4 h-4 text-warning" /> : <Moon className="w-4 h-4 text-primary" />}
+        </button>
       </div>
     </header>
-  );
-}
-
-function NavBtn({ icon: Icon, label, onClick }) {
-  return (
-    <motion.button whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }} onClick={onClick} title={label}
-      className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all"
-      style={{ color: 'var(--color-text-muted)', border: '1px solid transparent' }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-bg)'; e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text)'; }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}>
-      <Icon className="w-4 h-4" />
-      <span className="hidden lg:inline">{label}</span>
-    </motion.button>
-  );
-}
-
-/* ─── Node Library (left sidebar) ───────────────────────────────────────────── */
-const NODES = [
-  { section: 'Data',        color: '#3b82f6', items: [
-    { type: 'upload',           label: 'Upload Dataset',  hint: 'CSV · Excel · JSON'    },
-    { type: 'preview',          label: 'Preview Data',    hint: 'Explore & inspect'     },
-  ]},
-  { section: 'Processing',  color: '#8b5cf6', items: [
-    { type: 'fillMissing',      label: 'Fill Missing',    hint: 'Impute null values'    },
-    { type: 'encode',           label: 'Encode Labels',   hint: 'Label / One-hot'       },
-    { type: 'scale',            label: 'Scale Features',  hint: 'Standard / MinMax'     },
-  ]},
-  { section: 'Models',      color: '#f59e0b', items: [
-    { type: 'randomForest',     label: 'Random Forest',   hint: 'Class. + Regression'   },
-    { type: 'linearRegression', label: 'Linear Regr.',    hint: 'Baseline regression'   },
-    { type: 'decisionTree',     label: 'Decision Tree',   hint: 'Recursive split'       },
-  ]},
-  { section: 'AI & Output', color: '#22c55e', items: [
-    { type: 'explainableAi',    label: 'Explainable AI',  hint: 'SHAP · Charts'         },
-    { type: 'prediction',       label: 'Prediction',      hint: 'Run inference'         },
-  ]},
-];
-
-function NodeLibrary() {
-  const [q, setQ] = useState('');
-  const filtered = NODES.map((s) => ({ ...s, items: s.items.filter((it) => !q || it.label.toLowerCase().includes(q.toLowerCase())) })).filter((s) => s.items.length);
-
-  return (
-    <aside className="w-60 shrink-0 flex flex-col h-full"
-      style={{ background: 'var(--color-surface)', borderRight: '1px solid var(--color-border)' }}>
-
-      <div className="px-4 py-4" style={{ borderBottom: '1px solid var(--color-border)' }}>
-        <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--color-text-muted)' }}>
-          Node Library
-        </p>
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search nodes…"
-          className="w-full px-3 py-2 text-sm rounded-xl focus:outline-none transition-colors"
-          style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-5">
-        {filtered.map((sec) => (
-          <div key={sec.section}>
-            <p className="text-[11px] font-bold uppercase tracking-widest mb-2.5" style={{ color: sec.color }}>
-              {sec.section}
-            </p>
-            <div className="space-y-2">
-              {sec.items.map((it) => (
-                <motion.div key={it.type} whileHover={{ x: 3, scale: 1.01 }}
-                  draggable onDragStart={(e) => { e.dataTransfer.setData('application/reactflow', it.type); e.dataTransfer.effectAllowed = 'move'; }}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-grab active:cursor-grabbing transition-all"
-                  style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = sec.color + '55'; e.currentTarget.style.boxShadow = `0 2px 12px ${sec.color}18`; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none'; }}>
-                  <div className="w-2 h-7 rounded-full shrink-0" style={{ background: sec.color }} />
-                  <div>
-                    <p className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{it.label}</p>
-                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{it.hint}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="px-4 py-4" style={{ borderTop: '1px solid var(--color-border)' }}>
-        <div className="flex items-start gap-2.5 p-3 rounded-xl" style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.12)' }}>
-          <Zap className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
-          <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
-            Drag nodes to canvas, connect them, then hit <strong className="text-primary">Run Pipeline</strong>.
-          </p>
-        </div>
-      </div>
-    </aside>
   );
 }
 
