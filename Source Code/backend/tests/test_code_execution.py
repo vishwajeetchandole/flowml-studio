@@ -15,6 +15,7 @@ from fastapi.testclient import TestClient
 from app import app
 from services.code_executor import execute_python_code, validate_code_security
 from services.pipeline_executor import execute_pipeline
+from tests.conftest import auth_headers
 
 
 def test_ast_blocks_network_libraries():
@@ -81,9 +82,9 @@ def test_memory_bomb_is_killed():
     assert result["error_type"] in {"Killed", "Timeout"}
 
 
-def test_code_execution_api_endpoint():
+def test_code_execution_api_endpoint(monkeypatch, client):
     """Test POST /api/code/run works for legitimate data manipulation."""
-    client = TestClient(app)
+    monkeypatch.setenv("ENABLE_PYTHON_SANDBOX", "true")
     script = (
         "import numpy as np\n"
         "import pandas as pd\n"
@@ -102,6 +103,17 @@ def test_code_execution_api_endpoint():
     assert "DataFrame constructed successfully" in data["stdout"]
     assert data["output_preview"] is not None
     assert data["output_preview"]["rows"] == 3
+
+
+def test_code_execution_requires_explicit_sandbox_enablement(monkeypatch, client):
+    monkeypatch.setenv("ENABLE_PYTHON_SANDBOX", "false")
+    response = client.post(
+        "/api/code/run",
+        json={"code": "print('not executed')"},
+        headers=auth_headers("sandbox-test-user"),
+    )
+    assert response.status_code == 503
+    assert "Not available in this setup" in response.json()["detail"]
 
 
 def test_custom_python_dag_node(tmp_path):

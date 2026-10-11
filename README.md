@@ -66,7 +66,7 @@ Upload datasets, automate preprocessing, compare models, and generate insights �
 # 🖼️ UI Preview
 
 * Drag & Drop Pipeline
-* Light & Dark Theme
+* Light theme
 * Real-time Console
 * Node-Based Workflow
 * Modern AI SaaS UI
@@ -137,6 +137,54 @@ flowml/
 ```
 
 ---
+
+## Run locally on Windows
+
+The local development configuration uses DEV_AUTH and does not require Firebase credentials. Run the backend and frontend in separate PowerShell windows.
+
+### Backend
+
+```powershell
+cd "Source Code\backend"
+py -3.10 -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+Copy-Item .env.example .env
+uvicorn app:app --reload --host 127.0.0.1 --port 8000
+```
+
+The backend loads `Source Code\backend\.env` at startup. Keep `DEV_AUTH=1` for local development; never use DEV_AUTH in production. Python code execution is off by default. Do not enable `ENABLE_PYTHON_SANDBOX` unless the isolated worker setup has been reviewed and configured.
+
+### Frontend
+
+```powershell
+cd "Source Code\frontend"
+npm ci
+Copy-Item .env.example .env.local
+npm run dev
+```
+
+Open the Vite URL printed in the terminal (normally `http://localhost:5173`). `VITE_DEV_AUTH=true` selects the local mock account flow. Use a unique email and password to sign up; the mock verification flow is local-only. To use Firebase instead, configure the Firebase web values in `.env.local`, set `VITE_DEV_AUTH=false`, configure the backend service credentials privately, then restart both servers. Never commit `.env`, `.env.local`, or Firebase credential files.
+
+`VITE_API_BASE_URL` defaults to `http://localhost:8000`. Backend CORS defaults to the two local Vite origins and can be overridden with `CORS_ORIGINS`. The backend health check is available at `http://localhost:8000/api/health`.
+
+### Checks
+
+```powershell
+# Frontend
+cd "Source Code\frontend"
+npm run lint
+npm run build
+
+# Backend (in a second terminal)
+cd "Source Code\backend"
+.\venv\Scripts\Activate.ps1
+pytest
+python test_api.py
+```
+
+The backend test suite sets DEV_AUTH for tests. Use a fresh browser account for the local product walkthrough.
 
 # 🚀 Getting Started
 

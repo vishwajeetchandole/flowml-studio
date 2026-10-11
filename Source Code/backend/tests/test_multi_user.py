@@ -60,24 +60,27 @@ def simulate_user_session(user_id: int):
     return uid, dataset_id
 
 
-def test_three_simulated_users_concurrently():
+def test_three_simulated_users_concurrently(monkeypatch, tmp_storage):
     """Simulates 3 concurrent users with account separation."""
+    monkeypatch.setenv("ENABLE_PYTHON_SANDBOX", "true")
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         futures = [executor.submit(simulate_user_session, i) for i in range(1, 4)]
         results = [f.result() for f in futures]
     assert len(results) == 3
 
 
-def test_five_simulated_users_concurrently():
+def test_five_simulated_users_concurrently(monkeypatch, tmp_storage):
     """Simulates 5 concurrent users with private files and concurrent execution."""
+    monkeypatch.setenv("ENABLE_PYTHON_SANDBOX", "true")
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         futures = [executor.submit(simulate_user_session, i) for i in range(1, 6)]
         results = [f.result() for f in futures]
     assert len(results) == 5
 
 
-def test_worker_crash_recovery_and_failing_code():
+def test_worker_crash_recovery_and_failing_code(monkeypatch, tmp_storage):
     """Verifies server recovers gracefully after failing code and worker kill."""
+    monkeypatch.setenv("ENABLE_PYTHON_SANDBOX", "true")
     client = TestClient(app)
     uid = "crash_recovery_user"
 

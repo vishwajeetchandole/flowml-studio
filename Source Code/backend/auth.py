@@ -17,7 +17,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 _bearer = HTTPBearer(auto_error=True)
 
-DEV_AUTH: bool = os.getenv("DEV_AUTH", "1") == "1"
+DEV_AUTH: bool = os.getenv("DEV_AUTH", "0") == "1"
 
 
 def _get_deactivated_path() -> str:
@@ -121,10 +121,10 @@ async def get_current_user(
         return uid
     except HTTPException:
         raise
-    except Exception as exc:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid or expired token: {exc}",
+            detail="Invalid or expired authentication token.",
         )
 
 
@@ -164,8 +164,8 @@ async def get_current_admin(
         return uid
     except HTTPException:
         raise
-    except Exception as exc:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid or expired token: {exc}",
+            detail="Invalid or expired authentication token.",
         )

@@ -17,6 +17,22 @@ __pycache__/
 # Environment configs
 .env
 *.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Local runtime data and test artifacts
+/storage/
+/models/
+/audit_events.jsonl
+/system_limits.json
+/Source Code/backend/iris_test.csv
+/*/datasets/
+/*/models/
+/*/runs/
+/*/code_runs/
 
 # Build outputs
 dist/
@@ -43,4 +59,3 @@ VERSION
 .idea/
 .DS_Store
 Thumbs.db
-

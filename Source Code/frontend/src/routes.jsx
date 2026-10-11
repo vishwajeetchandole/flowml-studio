@@ -78,6 +78,7 @@ export default function AppRoutes() {
         <Route path="runs" element={<RunsView />} />
         <Route path="templates" element={<TemplatesView />} />
         <Route path="code" element={<CodeEditorView />} />
+        <Route path="admin" element={<AdminView />} />
         <Route path="settings" element={<SettingsView />} />
       </Route>
 
@@ -99,8 +100,8 @@ export default function AppRoutes() {
         }
       />
 
-      {/* ─── Admin (hidden route - not linked anywhere in UI) ──────────────── */}
-      <Route path="/admin" element={<AdminView />} />
+      {/* ─── Backwards-compatible admin route ──────────────────────────────── */}
+      <Route path="/admin" element={<Navigate to="/app/admin" replace />} />
 
       {/* ─── Error 404 ─────────────────────────────────────────────────────── */}
       <Route path="*" element={<NotFoundPage />} />

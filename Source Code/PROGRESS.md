@@ -1,7 +1,7 @@
 # FlowML Development Progress
 
 ## Phase 1: Backend Engine and Contracts ✓
-- [x] 1.1 `backend/auth.py` - get_current_user (Firebase verify + DEV_AUTH bypass, default DEV_AUTH="1")
+- [x] 1.1 `backend/auth.py` - get_current_user (Firebase verify + DEV_AUTH bypass, default DEV_AUTH="0")
 - [x] 1.2 `backend/services/store.py` - StoreBackend interface + LocalDiskStore (per-uid paths, path-traversal guard)
 - [x] 1.3 Rewrite `routes/upload.py` - uses uid, store.py, returns dataset_id; added GET /api/datasets, GET /preview, DELETE
 - [x] 1.4 Rewrite `routes/analyze.py` - uid-scoped dataset lookup
@@ -25,7 +25,7 @@
 - [x] `frontend/src/services/api.js`: Centralized Axios client attaching `Authorization: Bearer <token>` on all requests. CRUD endpoints for datasets, models, runs, pipelines, and project helpers.
 - [x] `frontend/src/components/auth/ProtectedRoute.jsx`: Protected route guard redirecting unauthenticated users to `/signin`.
 - [x] Auth screens:
-  - `SignIn.jsx`: Email/password login, demo engineer bypass button, link to reset password & sign up.
+  - `SignIn.jsx`: Email/password login, local-mode information, link to reset password & sign up.
   - `SignUp.jsx`: Name, email, password, confirm password, terms check, instant dev login.
   - `ForgotPassword.jsx`: Email recovery trigger & reset dispatch.
   - `VerifyEmail.jsx`: Email verification prompt, resend trigger, continue to workspace.
@@ -36,7 +36,7 @@
 - [x] `DatasetsView.jsx`: Dataset table, upload modal with file selector, preview modal (schema, rows, columns, nulls, duplicates), delete.
 - [x] `ModelsView.jsx`: Trained model catalog, task type, algorithm version, evaluation metrics badges (Accuracy, F1, R²), delete.
 - [x] `RunsView.jsx`: Run execution table, live status polling (`queued`, `running`, `completed`, `failed`, `stopped`), run logs modal, metrics inspect, stop run button, rerun action.
-- [x] `TemplatesView.jsx`: 3 production blueprints (Customer Churn, Real Estate Valuation, Customer Segmentation) that open directly in Studio canvas.
+- [x] `TemplatesView.jsx`: classification and regression templates preload their bundled sample datasets and open in Studio; clustering is disabled until the Studio runner supports real K-Means execution.
 - [x] `SettingsView.jsx`: Account settings, UID copy tool, Firebase config diagnostic table, dev auth switch.
 - [x] Common UI: `Toast.jsx` for alerts and feedback, animated loading skeletons, empty state illustrations.
 
@@ -177,5 +177,39 @@
 - [x] Added `frontend/src/components/FlowMLIcon.jsx` (animated inner chain only; no hover/click/float effects).
 - [x] Added `frontend/public/flowml-icon.svg` and wired `index.html` favicon to `/flowml-icon.svg`.
 - [x] Navbar, app shell, auth pages, landing hero/footer, loaders, and empty states use the new icon; old Cpu-in-box logo marks removed.
-- [x] FlowML wordmark uses Audiowide only (`--font-logo` / `font-logo` in `Logo.jsx`); headings stay Plus Jakarta Sans.
-- [x] Brand wordmark uses Audiowide at regular weight (400); navbar/auth icon sizes bumped; landing hero no longer shows the centered icon above the heading.
+- [x] FlowML wordmark uses the approved Plus Jakarta Sans / Inter / JetBrains Mono font system; headings stay Plus Jakarta Sans.
+- [x] Brand wordmark uses Plus Jakarta Sans; navbar/auth icon sizes bumped; landing hero no longer shows the centered icon above the heading.
+
+---
+
+## Current Local Audit Follow-up
+
+This section supersedes earlier completion claims for any flow not reverified in this audit. See the root `AUDIT.md` for the finding-by-finding disposition and continuation checklist.
+
+### Completed in this follow-up
+- [x] Studio callback initialization and lint blockers fixed; frontend lint and production build pass.
+- [x] Studio API helpers aligned to the existing backend dataset/model ID contracts.
+- [x] Python execution and history now use the request-scoped storage dependency, avoiding a global-store mismatch in isolated/concurrent runs.
+- [x] DEV_AUTH no longer creates an automatic demo session; local project/workflow data is user-scoped.
+- [x] Dataset/model/run dashboards no longer populate fake demo entries after empty or failed API responses; retryable errors and true empty states are shown.
+- [x] Python code execution is opt-in and off by default; disabled state is explained in Python Studio.
+- [x] CORS is environment-configurable, logs require authenticated per-user streams, upload size is checked while streaming, and auth error details are sanitized.
+- [x] `/app/admin` is part of the protected dashboard route tree and its navigation item is available.
+- [x] Windows setup documentation and backend/frontend `.env.example` files added; real `.env` or Firebase credentials were not created or edited.
+- [x] Legacy Sora/Audiowide font references removed; unused Sora package removed.
+- [x] Added a skippable three-step onboarding tour and first-workflow action for a user's empty project list.
+- [x] Browser route sweep: public/auth routes rendered; protected routes redirected to sign-in; zero console errors, page errors, and failed requests observed. `/api/health` returned running.
+- [x] Fresh local DEV_AUTH signup/verification, onboarding, housing upload, Studio training/results, and real model listing verified. The graph had no Prediction node, so no prediction output appeared; the execution did not create a Run History record.
+- [x] Classification/regression templates now use bundled Titanic/housing samples and create an uploaded dataset before opening Studio; both include a Prediction node. Clustering is disabled rather than claiming to execute correctly.
+- [x] Frontend lint and production build pass after template updates; build retains the existing large-chunk advisory.
+- [x] Removed dashboard API health/auth-provider badges and the Dr. Sarah Chen / VectorScale testimonial. The File/Edit/View/Insert/Runtime/Tools/Help strip was not found in FlowML source, so no unrelated editor/window chrome was changed.
+
+### Still to verify or complete
+- [x] Backend direct dependencies installed; full pytest suite passes 61/61 and standalone `test_api.py` upload-to-predict flow passes.
+- [ ] Connect Studio execution to Run History and complete a graph with a Prediction node; verify predicted output and metric values.
+- [ ] Browser-verify classification/regression template predictions; implement actual K-Means execution and verify it plus ML edge cases/metric alignment.
+- [ ] Exercise account deletion, all loading/empty/error/confirmation states, node availability, and Studio autosave/undo/stop/shortcuts.
+- [ ] Review npm advisories without applying broad dependency upgrades; obtain teammate review of placeholder legal copy and Firebase configuration.
+
+### Verification caveat
+The backend suite writes local runtime files and changed tracked files under `backend/models/saved_models/` during test runs. Runtime data is now ignored by `.gitignore`; tracked model-file changes are intentionally left untouched pending explicit review because destructive git/shell cleanup was prohibited.

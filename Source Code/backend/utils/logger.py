@@ -2,11 +2,13 @@ import logging
 import queue
 import json
 import asyncio
+import threading
 from datetime import datetime
 from sse_starlette.sse import ServerSentEvent
 
-# ─── In-memory queue for SSE log streaming ───────────────────────
-log_queue: queue.Queue = queue.Queue(maxsize=500)
+# ─── Per-user queues for authenticated SSE log streaming ──────────
+_log_subscribers: dict[int, tuple[str, queue.Queue]] = {}
+_subscriber_lock = threading.Lock()
 
 
 class QueueHandler(logging.Handler):
@@ -15,10 +17,15 @@ class QueueHandler(logging.Handler):
     def emit(self, record):
         try:
             msg = self.format(record)
-            # Non-blocking put — drop the message if queue is full
-            log_queue.put_nowait(msg)
-        except queue.Full:
-            pass
+            with _subscriber_lock:
+                subscribers = list(_log_subscribers.values())
+            for uid, subscriber in subscribers:
+                if f"[{uid}]" not in msg and f"[{uid}/" not in msg:
+                    continue
+                try:
+                    subscriber.put_nowait(msg)
+                except queue.Full:
+                    continue
         except Exception:
             self.handleError(record)
 
@@ -42,7 +49,7 @@ logger.addHandler(_queue_handler)
 
 
 # ─── Async SSE generator ──────────────────────────────────────────
-async def stream_logs():
+async def stream_logs(uid: str):
     """
     Async generator that streams log messages to an SSE client.
 
@@ -50,34 +57,35 @@ async def stream_logs():
     never blocks the asyncio event loop — without this, all other API
     requests would stall while a console client is connected.
     """
+    subscriber = queue.Queue(maxsize=250)
+    subscriber_id = id(subscriber)
+    with _subscriber_lock:
+        _log_subscribers[subscriber_id] = (uid, subscriber)
     loop = asyncio.get_running_loop()
-
-    # Handshake message
-    yield ServerSentEvent(
-        data=json.dumps(
-            {
-                "message": "Log streaming connected",
-                "level": "INFO",
-                "timestamp": datetime.now().isoformat(),
-            }
+    try:
+        yield ServerSentEvent(
+            data=json.dumps(
+                {
+                    "message": "Log streaming connected",
+                    "level": "INFO",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
         )
-    )
 
-    while True:
-        try:
-            # Run the blocking queue.get in a thread-pool so the event loop
-            # stays free to handle other HTTP requests concurrently.
-            log_msg = await loop.run_in_executor(
-                None, lambda: log_queue.get(timeout=2.0)
-            )
-            yield ServerSentEvent(
-                data=json.dumps(
-                    {"log": log_msg, "timestamp": datetime.now().isoformat()}
+        while True:
+            try:
+                log_msg = await loop.run_in_executor(
+                    None, lambda: subscriber.get(timeout=2.0)
                 )
-            )
-        except Exception:
-            # queue.Empty on timeout — send a keep-alive ping comment
-            yield ServerSentEvent(comment="ping")
+                yield ServerSentEvent(
+                    data=json.dumps({"log": log_msg, "timestamp": datetime.now().isoformat()})
+                )
+            except queue.Empty:
+                yield ServerSentEvent(comment="ping")
+    finally:
+        with _subscriber_lock:
+            _log_subscribers.pop(subscriber_id, None)
 
 
 # ─── Convenience logger ───────────────────────────────────────────

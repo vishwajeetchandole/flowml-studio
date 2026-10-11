@@ -20,6 +20,7 @@ import {
   OutputNode,
   PreviewNode,
 } from '../components/nodes/CustomNodes';
+import { workflowStorageKey } from '../services/api';
 
 const nodeTypes = {
   // Data
@@ -128,15 +129,15 @@ const initialEdges = [
 ];
 
 // Inner component — must be inside ReactFlowProvider
-const WorkflowInner = ({ onNodeClick, actionsRef }) => {
+const WorkflowInner = ({ onNodeClick, actionsRef, projectId: routeProjectId }) => {
   const [searchParams] = useSearchParams();
-  const projectId = searchParams.get('project');
+  const projectId = routeProjectId || searchParams.get('project');
 
   // Load from local project workflow key if exists
   const getSavedWorkflow = () => {
     if (projectId) {
       try {
-        const raw = localStorage.getItem(`flowml_workflow_${projectId}`);
+        const raw = localStorage.getItem(workflowStorageKey(projectId));
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed.nodes && parsed.edges) return parsed;
@@ -362,9 +363,9 @@ const WorkflowInner = ({ onNodeClick, actionsRef }) => {
 };
 
 // Wrap with provider so useReactFlow() works inside CustomNodes
-const Workflow = ({ onNodeClick, actionsRef }) => (
+const Workflow = ({ onNodeClick, actionsRef, projectId }) => (
   <ReactFlowProvider>
-    <WorkflowInner onNodeClick={onNodeClick} actionsRef={actionsRef} />
+    <WorkflowInner onNodeClick={onNodeClick} actionsRef={actionsRef} projectId={projectId} />
   </ReactFlowProvider>
 );
 

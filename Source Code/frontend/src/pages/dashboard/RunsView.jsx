@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { listRuns, getRun, stopRun } from '../../services/api';
 import {
   PlayCircle, RefreshCw, Clock, CheckCircle2, AlertCircle,
-  Loader2, X, Terminal, BarChart2, RotateCcw, StopCircle,
+  Loader2, X, Terminal, BarChart2, StopCircle,
   ArrowRight, Sparkles,
 } from 'lucide-react';
 import FlowMLIcon from '../../components/FlowMLIcon';
@@ -23,40 +23,21 @@ export default function RunsView() {
 
   const [runs, setRuns] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [runDetail, setRunDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState(null);
 
   const fetchRuns = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await listRuns();
-      if (Array.isArray(data) && data.length > 0) {
-        setRuns(data);
-      } else {
-        // Fallback seed demo runs
-        setRuns([
-          {
-            run_id: 'run_6a8e41bf',
-            state: 'Completed',
-            created: new Date(Date.now() - 3600000 * 2).toISOString(),
-            finished: new Date(Date.now() - 3600000 * 2 + 14000).toISOString(),
-            summary: 'Success',
-            duration: '14.2s',
-          },
-          {
-            run_id: 'run_1b9d72cc',
-            state: 'Completed',
-            created: new Date(Date.now() - 3600000 * 24).toISOString(),
-            finished: new Date(Date.now() - 3600000 * 24 + 21000).toISOString(),
-            summary: 'Success',
-            duration: '21.0s',
-          },
-        ]);
-      }
+      setRuns(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.warn('Runs fetch error:', err);
       setRuns([]);
+      setError(err.message || 'Unable to load run history. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -65,7 +46,14 @@ export default function RunsView() {
   useEffect(() => {
     fetchRuns();
     const timer = setInterval(() => {
-      listRuns().then((d) => Array.isArray(d) && setRuns(d)).catch(() => {});
+      listRuns()
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setRuns(data);
+            setError(null);
+          }
+        })
+        .catch((err) => setError(err.message || 'Unable to refresh run history.'));
     }, 8000);
     return () => clearInterval(timer);
   }, []);
@@ -74,29 +62,12 @@ export default function RunsView() {
     setSelectedRunId(runId);
     setDetailLoading(true);
     setRunDetail(null);
+    setDetailError(null);
     try {
       const detail = await getRun(runId);
       setRunDetail(detail);
     } catch (e) {
-      console.warn('Run detail fallback:', e);
-      setRunDetail({
-        run_id: runId,
-        state: 'Completed',
-        created: new Date().toISOString(),
-        logs: [
-          '[14:22:01] Initializing DAG execution graph…',
-          '[14:22:02] Node upload-1: Reading tabular CSV dataset',
-          '[14:22:04] Node preprocess-2: Applying StandardScaler & median imputation',
-          '[14:22:08] Node train-3: Training RandomForestClassifier (n_estimators=100)',
-          '[14:22:12] Model evaluation complete: Accuracy 0.945, F1 0.938',
-          '[14:22:15] Pipeline completed successfully in 14.2s',
-        ],
-        result: {
-          status: 'success',
-          best_model: 'RandomForestClassifier',
-          metrics: { accuracy: 0.945, precision: 0.95, recall: 0.94, f1: 0.938 },
-        },
-      });
+      setDetailError(e.message || 'Unable to load this run.');
     } finally {
       setDetailLoading(false);
     }
@@ -113,9 +84,8 @@ export default function RunsView() {
     }
   };
 
-  const handleRerun = (_runId) => {
+  const handleOpenStudio = () => {
     navigate('/studio');
-    showToast('Workflow loaded in Studio Canvas.', 'info');
   };
 
   return (
@@ -160,7 +130,12 @@ export default function RunsView() {
       </div>
 
       {/* Runs Table */}
-      {loading ? (
+      {error ? (
+        <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700 flex items-center justify-between gap-4">
+          <span>{error}</span>
+          <button onClick={fetchRuns} className="font-semibold underline">Retry</button>
+        </div>
+      ) : loading ? (
         <div className="p-16 flex flex-col items-center justify-center gap-3 text-slate-400">
           <FlowMLIcon size={56} />
           <p className="text-xs font-medium">Fetching job history…</p>
@@ -281,12 +256,11 @@ export default function RunsView() {
                           )}
 
                           <button
-                            onClick={() => handleRerun(r.run_id)}
+                            onClick={handleOpenStudio}
                             className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-white/5 flex items-center gap-1 transition-colors"
-                            title="Rerun in Studio"
+                            title="Open Studio"
                           >
-                            <RotateCcw className="w-3 h-3" />
-                            Rerun
+                            Open Studio
                           </button>
 
                           <button
@@ -348,6 +322,11 @@ export default function RunsView() {
                     <FlowMLIcon size={56} />
                     <p className="text-xs text-slate-400">Loading run logs and execution outputs…</p>
                   </div>
+                ) : detailError ? (
+                  <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center justify-between gap-4">
+                    <span>{detailError}</span>
+                    <button onClick={() => handleOpenDetail(selectedRunId)} className="font-semibold underline">Retry</button>
+                  </div>
                 ) : runDetail ? (
                   <>
                     {/* Status Pill & Summary */}
@@ -366,12 +345,11 @@ export default function RunsView() {
 
                       <div>
                         <button
-                          onClick={() => handleRerun(selectedRunId)}
+                          onClick={handleOpenStudio}
                           className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white flex items-center gap-1.5"
                           style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
                         >
-                          <RotateCcw className="w-3.5 h-3.5" />
-                          Rerun in Studio
+                          Open Studio
                         </button>
                       </div>
                     </div>

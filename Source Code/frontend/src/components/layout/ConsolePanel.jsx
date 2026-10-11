@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Terminal, Trash2, RotateCcw } from 'lucide-react';
+import { getCurrentIdToken } from '../../services/firebase';
 import { LOG_SSE_URL } from '../../services/api';
 
 const ConsolePanel = ({ isOpen, onClose }) => {
   const [logs, setLogs] = useState([]);
   const [connected, setConnected] = useState(false);
   const scrollRef = useRef(null);
-  const esRef = useRef(null);
+  const streamControllerRef = useRef(null);
 
   // Auto-scroll to bottom on new logs
   useEffect(() => {
@@ -16,80 +17,107 @@ const ConsolePanel = ({ isOpen, onClose }) => {
     }
   }, [logs]);
 
-  const addLog = (type, msg) => {
+  const addLog = useCallback((type, msg) => {
     const time = new Date().toLocaleTimeString('en-US', { hour12: false });
     setLogs((prev) => [...prev.slice(-300), { type, time, msg }]);
-  };
+  }, []);
 
   // Connect / disconnect SSE based on panel open state
   useEffect(() => {
     if (!isOpen) {
-      if (esRef.current) {
-        esRef.current.close();
-        esRef.current = null;
-      }
+      streamControllerRef.current?.abort();
+      streamControllerRef.current = null;
       return;
     }
 
     let retryTimeout = null;
+    let cancelled = false;
 
-    const connect = () => {
+    const handleEvent = (block) => {
+      const payload = block
+        .split('\n')
+        .filter((line) => line.startsWith('data:'))
+        .map((line) => line.slice(5).trim())
+        .join('\n');
+      if (!payload) return;
+      try {
+        const data = JSON.parse(payload);
+        if (data.message) {
+          addLog('info', data.message);
+        } else if (data.log) {
+          const parts = data.log.split(' - ');
+          const raw = parts.length >= 4 ? parts.slice(3).join(' - ') : data.log;
+          const logStr = data.log.toUpperCase();
+          const type = logStr.includes('ERROR')
+            ? 'error'
+            : logStr.includes('WARNING') || logStr.includes('WARN')
+            ? 'warning'
+            : 'info';
+          addLog(type, raw);
+        }
+      } catch {
+        addLog('error', 'Received an unreadable message from the log stream.');
+      }
+    };
+
+    const connect = async () => {
       addLog('info', 'FlowML Engine initialized — connecting to log stream…');
       try {
-        const es = new EventSource(LOG_SSE_URL);
-        esRef.current = es;
+        const token = await getCurrentIdToken();
+        if (!token) throw new Error('Sign in to connect to the log stream.');
+        const controller = new AbortController();
+        streamControllerRef.current = controller;
+        const response = await fetch(LOG_SSE_URL, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          const error = new Error(
+            response.status === 401 || response.status === 403
+              ? 'You are not authorized to view this log stream.'
+              : 'The log stream is temporarily unavailable.'
+          );
+          error.status = response.status;
+          throw error;
+        }
+        if (!response.body) throw new Error('The browser cannot read the log stream.');
 
-        es.onopen = () => {
-          setConnected(true);
-          addLog('success', 'Log stream connected.');
-        };
-
-        es.onmessage = (evt) => {
-          try {
-            const data = JSON.parse(evt.data);
-            if (data.message) {
-              addLog('info', data.message);
-            } else if (data.log) {
-              // Backend format: "timestamp - flowml - LEVEL - message"
-              const parts = data.log.split(' - ');
-              const raw = parts.length >= 4 ? parts.slice(3).join(' - ') : data.log;
-              const logStr = data.log.toUpperCase();
-              const type = logStr.includes('ERROR')
-                ? 'error'
-                : logStr.includes('WARNING') || logStr.includes('WARN')
-                ? 'warning'
-                : 'info';
-              addLog(type, raw);
-            }
-          } catch {
-            addLog('info', evt.data);
+        setConnected(true);
+        addLog('success', 'Log stream connected.');
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        while (!cancelled) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer = (buffer + decoder.decode(value, { stream: true })).replace(/\r\n/g, '\n');
+          let boundary = buffer.indexOf('\n\n');
+          while (boundary >= 0) {
+            handleEvent(buffer.slice(0, boundary));
+            buffer = buffer.slice(boundary + 2);
+            boundary = buffer.indexOf('\n\n');
           }
-        };
-
-        es.onerror = () => {
-          setConnected(false);
-          es.close();
-          esRef.current = null;
-          addLog('warning', 'Log stream disconnected — retrying in 4 s…');
-          retryTimeout = setTimeout(connect, 4000);
-        };
+        }
+        if (!cancelled) throw new Error('The log stream was closed.');
       } catch (err) {
+        if (cancelled || err.name === 'AbortError') return;
         setConnected(false);
-        addLog('error', 'Could not open SSE connection: ' + err.message);
+        addLog('error', err.message || 'Could not connect to the log stream.');
+        if (err.status === 401 || err.status === 403) return;
+        retryTimeout = setTimeout(connect, 4000);
       }
     };
 
     connect();
 
     return () => {
+      cancelled = true;
       clearTimeout(retryTimeout);
-      if (esRef.current) {
-        esRef.current.close();
-        esRef.current = null;
-      }
+      streamControllerRef.current?.abort();
+      streamControllerRef.current = null;
       setConnected(false);
     };
-  }, [isOpen]);
+  }, [isOpen, addLog]);
 
   const clearLogs = () => setLogs([]);
 

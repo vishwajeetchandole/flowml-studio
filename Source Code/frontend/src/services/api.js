@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { getCurrentIdToken } from './firebase';
+import { getCurrentIdToken, getCurrentUserId } from './firebase';
 
 // ── Base URL ──────────────────────────────────────────────────────────────────
-export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -18,7 +18,7 @@ api.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
     } catch (err) {
-      console.warn('[API Client] Could not resolve ID token for request:', err);
+      return Promise.reject(err);
     }
     return config;
   },
@@ -41,6 +41,8 @@ api.interceptors.response.use(
         msg = typeof detail === 'string' ? detail : 'File exceeds maximum upload size (50MB).';
       } else if (status === 429) {
         msg = typeof detail === 'string' ? detail : 'Too many requests. Please wait a moment and try again.';
+      } else if (status >= 500) {
+        msg = 'The server could not complete the request. Please try again shortly.';
       } else if (typeof detail === 'object' && detail !== null) {
         msg = detail.error || detail.message || detail.details || 'Server processed request with errors.';
       } else if (typeof detail === 'string') {
@@ -87,16 +89,16 @@ export const deleteDataset = (datasetId) =>
   api.delete(`/api/datasets/${datasetId}`).then((r) => r.data);
 
 /** POST /api/analyze */
-export const analyzeDataset = (fileName) =>
-  api.post('/api/analyze', { file_name: fileName }).then((r) => r.data);
+export const analyzeDataset = (datasetId) =>
+  api.post('/api/analyze', { dataset_id: datasetId }).then((r) => r.data);
 
 /**
  * POST /api/preprocess
  */
-export const preprocessDataset = (fileName, config, targetColumn = null) =>
+export const preprocessDataset = (datasetId, config, targetColumn = null) =>
   api
     .post('/api/preprocess', {
-      file_name: fileName,
+      dataset_id: datasetId,
       config,
       ...(targetColumn ? { target_column: targetColumn } : {}),
     })
@@ -105,13 +107,13 @@ export const preprocessDataset = (fileName, config, targetColumn = null) =>
 /**
  * POST /api/train
  */
-export const trainModels = (fileName, targetColumn, taskType = 'classification', processedFileName = null) =>
+export const trainModels = (datasetId, targetColumn, taskType = 'classification', processedDatasetId = null) =>
   api
     .post('/api/train', {
-      file_name: fileName,
+      dataset_id: datasetId,
       target_column: targetColumn,
       task_type: taskType,
-      ...(processedFileName ? { processed_file_name: processedFileName } : {}),
+      ...(processedDatasetId ? { processed_dataset_id: processedDatasetId } : {}),
     })
     .then((r) => r.data);
 
@@ -125,17 +127,18 @@ export const deleteModel = (modelId) =>
 /**
  * POST /api/predict
  */
-export const runPredictions = (fileName, targetColumn = null) =>
+export const runPredictions = (datasetId, targetColumn = null, modelId = null) =>
   api
     .post('/api/predict', {
-      file_name: fileName,
+      dataset_id: datasetId,
+      model_id: modelId,
       ...(targetColumn ? { target_column: targetColumn } : {}),
     })
     .then((r) => r.data);
 
-/** GET /api/visualizations?file_name=... */
-export const getVisualizations = (fileName) =>
-  api.get('/api/visualizations', { params: { file_name: fileName } }).then((r) => r.data);
+/** POST /api/visualizations */
+export const getVisualizations = (datasetId, modelId) =>
+  api.post('/api/visualizations', { dataset_id: datasetId, model_id: modelId }).then((r) => r.data);
 
 /** POST /api/pipeline — synchronous pipeline execution */
 export const runPipeline = (nodes, edges) =>
@@ -164,35 +167,14 @@ export const LOG_SSE_URL = `${BASE_URL}/api/logs`;
 
 // ── Projects Storage Helpers (Stored per-user in localStorage) ────────────────
 const PROJECTS_KEY = 'flowml_user_projects_v2';
+const projectsKey = () => `${PROJECTS_KEY}:${getCurrentUserId() || 'anonymous'}`;
+export const workflowStorageKey = (projectId) =>
+  `flowml_workflow_${getCurrentUserId() || 'anonymous'}_${projectId}`;
 
 export function getProjects() {
   try {
-    const raw = localStorage.getItem(PROJECTS_KEY);
-    if (!raw) {
-      // Seed default project
-      const initial = [
-        {
-          id: 'proj-churn-demo',
-          name: 'Customer Churn Intelligence',
-          description: 'End-to-end binary classification pipeline with Random Forest & SHAP analysis.',
-          created: new Date(Date.now() - 3600000 * 48).toISOString(),
-          lastModified: new Date(Date.now() - 3600000 * 2).toISOString(),
-          nodesCount: 5,
-          taskType: 'classification',
-        },
-        {
-          id: 'proj-house-demo',
-          name: 'Housing Valuation Engine',
-          description: 'Predict median house values using Ridge and Random Forest regressors.',
-          created: new Date(Date.now() - 3600000 * 72).toISOString(),
-          lastModified: new Date(Date.now() - 3600000 * 12).toISOString(),
-          nodesCount: 4,
-          taskType: 'regression',
-        },
-      ];
-      localStorage.setItem(PROJECTS_KEY, JSON.stringify(initial));
-      return initial;
-    }
+    const raw = localStorage.getItem(projectsKey());
+    if (!raw) return [];
     return JSON.parse(raw);
   } catch {
     return [];
@@ -216,14 +198,14 @@ export function saveProject(project) {
       lastModified: now,
     });
   }
-  localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+  localStorage.setItem(projectsKey(), JSON.stringify(projects));
   return project;
 }
 
 export function deleteProject(id) {
   const projects = getProjects().filter((p) => p.id !== id);
-  localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
-  localStorage.removeItem(`flowml_workflow_${id}`);
+  localStorage.setItem(projectsKey(), JSON.stringify(projects));
+  localStorage.removeItem(workflowStorageKey(id));
   return true;
 }
 
@@ -240,12 +222,12 @@ export function duplicateProject(id) {
     lastModified: new Date().toISOString(),
   };
   projects.unshift(copy);
-  localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+  localStorage.setItem(projectsKey(), JSON.stringify(projects));
 
   // Also duplicate workflow canvas data if saved
-  const wfData = localStorage.getItem(`flowml_workflow_${id}`);
+  const wfData = localStorage.getItem(workflowStorageKey(id));
   if (wfData) {
-    localStorage.setItem(`flowml_workflow_${newId}`, wfData);
+    localStorage.setItem(workflowStorageKey(newId), wfData);
   }
   return copy;
 }

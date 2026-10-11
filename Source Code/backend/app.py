@@ -1,7 +1,13 @@
-from fastapi import FastAPI, Request, HTTPException
+import os
+from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette.sse import EventSourceResponse
+
+load_dotenv()
+
+from auth import get_current_user
 
 # Import routers
 from routes import upload, analyze, preprocess, train, predict, visualize, pipeline
@@ -13,7 +19,14 @@ app = FastAPI(title="FlowML Backend")
 # Setup CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        origin.strip()
+        for origin in os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:5173,http://127.0.0.1:5173",
+        ).split(",")
+        if origin.strip()
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -58,9 +71,9 @@ async def health_check():
 
 
 @app.get("/api/logs")
-async def get_logs(request: Request):
+async def get_logs(uid: str = Depends(get_current_user)):
     """Real-time console logs streaming via Server-Sent Events."""
-    return EventSourceResponse(stream_logs())
+    return EventSourceResponse(stream_logs(uid))
 
 
 if __name__ == "__main__":

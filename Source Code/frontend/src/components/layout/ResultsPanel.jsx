@@ -22,12 +22,13 @@ const STEP_CFG = {
   warning: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  Icon: AlertTriangle, spin: false },
   skipped: { color: '#6b7280', bg: 'rgba(107,114,128,0.05)', Icon: Clock,         spin: false },
 };
+const EMPTY_LIST = [];
 
 const PAGE_SIZE = 25;
 
 /* ─── Model Leaderboard ──────────────────────────────────────────────────────── */
 function Leaderboard({ trainResult }) {
-  const models   = trainResult?.models ?? [];
+  const models   = trainResult?.models ?? EMPTY_LIST;
   const best     = trainResult?.best_model;
   const taskType = trainResult?.taskType ?? 'classification';
 
@@ -144,7 +145,7 @@ function PredTable({ predResult, trainResult }) {
   const [q, setQ]       = useState('');
   const [page, setPage] = useState(0);
 
-  const preds   = predResult?.predictions ?? [];
+  const preds   = predResult?.predictions ?? EMPTY_LIST;
   const taskType= trainResult?.taskType ?? 'classification';
 
   const classMap = useMemo(() => {

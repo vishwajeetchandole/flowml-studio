@@ -23,7 +23,7 @@ import threading
 import subprocess
 from typing import Dict, Any, Optional, List
 
-from services.store import get_store
+from services.store import StoreBackend, get_store
 
 # ── Security Configuration ───────────────────────────────────────────────────
 ALLOWED_ROOT_MODULES = {
@@ -135,6 +135,7 @@ def execute_python_code(
     timeout_seconds: int = 10,
     memory_limit_mb: int = 256,
     input_data_path: Optional[str] = None,
+    store: Optional[StoreBackend] = None,
 ) -> Dict[str, Any]:
     """
     Executes Python user code in an isolated worker process.
@@ -159,7 +160,7 @@ def execute_python_code(
         }
 
     # Step 2: Prepare isolated sandbox directory
-    store = get_store()
+    store = store or get_store()
     sandbox_dir = tempfile.mkdtemp(prefix=f"flowml_box_{run_id}_")
 
     resolved_input_path = input_data_path
@@ -354,7 +355,7 @@ def execute_python_code(
         }
 
     # Save execution run record in user's store
-    _save_run_history(uid, run_id, code, final_result)
+    _save_run_history(uid, run_id, code, final_result, store)
 
     # Cleanup temp sandbox directory
     shutil.rmtree(sandbox_dir, ignore_errors=True)
@@ -375,10 +376,16 @@ def stop_code_run(run_id: str) -> bool:
     return False
 
 
-def _save_run_history(uid: str, run_id: str, code: str, result: Dict[str, Any]):
+def _save_run_history(
+    uid: str,
+    run_id: str,
+    code: str,
+    result: Dict[str, Any],
+    store: Optional[StoreBackend] = None,
+):
     """Persists code execution metadata in user storage."""
     try:
-        store = get_store()
+        store = store or get_store()
         runs_dir = os.path.join(store.base_dir, uid, "code_runs")
         os.makedirs(runs_dir, exist_ok=True)
         rec = {
@@ -396,11 +403,11 @@ def _save_run_history(uid: str, run_id: str, code: str, result: Dict[str, Any]):
         pass
 
 
-def get_code_history(uid: str) -> List[Dict[str, Any]]:
+def get_code_history(uid: str, store: Optional[StoreBackend] = None) -> List[Dict[str, Any]]:
     """Retrieves list of past Python code runs for user."""
     history = []
     try:
-        store = get_store()
+        store = store or get_store()
         runs_dir = os.path.join(store.base_dir, uid, "code_runs")
         if os.path.exists(runs_dir):
             for fname in sorted(os.listdir(runs_dir), reverse=True):

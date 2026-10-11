@@ -3,7 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { listModels, deleteModel } from '../../services/api';
 import {
-  Search, Trash2, Edit2, Play, Sparkles, RefreshCw,
+  Search, Trash2, Play, Sparkles, RefreshCw,
   Award, Database, Clock, ChevronRight, AlertTriangle, X,
   CheckCircle2, Loader2, Gauge, Zap,
 } from 'lucide-react';
@@ -15,59 +15,19 @@ export default function ModelsView() {
 
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [renameTarget, setRenameTarget] = useState(null);
-  const [renameValue, setRenameValue] = useState('');
 
   const fetchModels = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await listModels();
-      if (Array.isArray(data) && data.length > 0) {
-        setModels(data);
-      } else {
-        // Provide sample trained models for rich UX if no runs have created models yet
-        const seedModels = [
-          {
-            model_id: 'mod-rf-churn-01',
-            algorithm: 'Random Forest Classifier',
-            version: 'v1.2.0',
-            task_type: 'classification',
-            dataset_id: 'Customer Churn (Telecommunication)',
-            accuracy: 0.942,
-            f1: 0.938,
-            created: new Date(Date.now() - 3600000 * 18).toISOString(),
-            artifacts: ['best_model.joblib', 'features.joblib', 'model_meta.joblib'],
-          },
-          {
-            model_id: 'mod-ridge-house-02',
-            algorithm: 'Ridge Regression',
-            version: 'v1.0.1',
-            task_type: 'regression',
-            dataset_id: 'California Housing Valuations',
-            r2: 0.814,
-            rmse: 48210,
-            created: new Date(Date.now() - 3600000 * 36).toISOString(),
-            artifacts: ['best_model.joblib', 'features.joblib'],
-          },
-          {
-            model_id: 'mod-dt-iris-03',
-            algorithm: 'Decision Tree Classifier',
-            version: 'v1.0.0',
-            task_type: 'classification',
-            dataset_id: 'Iris Flower Morphology',
-            accuracy: 0.967,
-            f1: 0.965,
-            created: new Date(Date.now() - 3600000 * 72).toISOString(),
-            artifacts: ['best_model.joblib'],
-          },
-        ];
-        setModels(seedModels);
-      }
+      setModels(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.warn('Models fetch error:', err);
       setModels([]);
+      setError(err.message || 'Unable to load models. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -88,21 +48,6 @@ export default function ModelsView() {
     } finally {
       setDeleteTarget(null);
     }
-  };
-
-  const handleRename = (e) => {
-    e.preventDefault();
-    if (!renameTarget || !renameValue.trim()) return;
-
-    setModels((prev) =>
-      prev.map((m) =>
-        m.model_id === renameTarget.model_id
-          ? { ...m, algorithm: renameValue.trim() }
-          : m
-      )
-    );
-    showToast('Model renamed.', 'success');
-    setRenameTarget(null);
   };
 
   const handleLaunchStudio = () => {
@@ -182,7 +127,12 @@ export default function ModelsView() {
       </div>
 
       {/* Grid */}
-      {loading ? (
+      {error ? (
+        <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700 flex items-center justify-between gap-4">
+          <span>{error}</span>
+          <button onClick={fetchModels} className="font-semibold underline">Retry</button>
+        </div>
+      ) : loading ? (
         <div className="p-16 flex flex-col items-center justify-center gap-3 text-slate-400">
           <FlowMLIcon size={56} />
           <p className="text-xs font-medium">Scanning model artifact store…</p>
@@ -216,8 +166,8 @@ export default function ModelsView() {
           {filtered.map((m) => {
             const isReg = m.task_type === 'regression';
             const primaryMetric = isReg
-              ? { label: 'R² Score', val: m.r2 ? `${(m.r2 * 100).toFixed(1)}%` : '82.4%' }
-              : { label: 'Accuracy', val: m.accuracy ? `${(m.accuracy * 100).toFixed(1)}%` : '94.8%' };
+              ? { label: 'R² Score', val: m.r2 != null ? `${(m.r2 * 100).toFixed(1)}%` : '—' }
+              : { label: 'Accuracy', val: m.accuracy != null ? `${(m.accuracy * 100).toFixed(1)}%` : '—' };
 
             return (
               <motion.div
@@ -248,7 +198,7 @@ export default function ModelsView() {
                         </h3>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[10px] font-mono px-2 py-0.2 rounded-full font-bold bg-white/5 border border-white/10" style={{ color: 'var(--color-text-muted)' }}>
-                            {m.version || 'v1.0.0'}
+                            {m.version || '—'}
                           </span>
                           <span
                             className="text-[10px] font-mono font-semibold uppercase"
@@ -261,16 +211,6 @@ export default function ModelsView() {
                     </div>
 
                     <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => {
-                          setRenameTarget(m);
-                          setRenameValue(m.algorithm);
-                        }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
-                        title="Rename"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
                       <button
                         onClick={() => setDeleteTarget(m)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
@@ -302,7 +242,7 @@ export default function ModelsView() {
                         Artifacts
                       </div>
                       <div className="font-mono text-xs text-slate-300 mt-0.5">
-                        {m.artifacts?.length || 2} saved
+                        {m.artifacts?.length ?? 0} saved
                       </div>
                     </div>
                   </div>
@@ -312,14 +252,14 @@ export default function ModelsView() {
                 <div className="mt-4 pt-3.5 border-t flex items-center justify-between text-[11px]" style={{ borderColor: 'var(--color-border)' }}>
                   <div className="flex items-center gap-1.5 text-slate-400">
                     <Clock className="w-3 h-3" />
-                    <span>{m.created ? new Date(m.created).toLocaleDateString() : 'Active'}</span>
+                    <span>{m.created ? new Date(m.created).toLocaleDateString() : '—'}</span>
                   </div>
 
                   <button
                     onClick={handleLaunchStudio}
                     className="px-3 py-1.5 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 flex items-center gap-1 transition-colors"
                   >
-                    Run Inference
+                    Open Studio
                     <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -371,62 +311,6 @@ export default function ModelsView() {
         )}
       </AnimatePresence>
 
-      {/* Rename Modal */}
-      <AnimatePresence>
-        {renameTarget && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md rounded-3xl p-6 shadow-2xl relative"
-              style={{
-                background: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-              }}
-            >
-              <h3 className="font-display font-semibold text-base mb-4" style={{ color: 'var(--color-text)' }}>
-                Rename Model Identifier
-              </h3>
-              <form onSubmit={handleRename} className="space-y-4">
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-wider block mb-1.5" style={{ color: 'var(--color-text-muted)' }}>
-                    Algorithm / Label
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={renameValue}
-                    onChange={(e) => setRenameValue(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                    style={{
-                      background: 'var(--color-bg)',
-                      border: '1px solid var(--color-border)',
-                      color: 'var(--color-text)',
-                    }}
-                  />
-                </div>
-                <div className="flex items-center justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setRenameTarget(null)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 rounded-xl text-xs font-bold text-white"
-                    style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

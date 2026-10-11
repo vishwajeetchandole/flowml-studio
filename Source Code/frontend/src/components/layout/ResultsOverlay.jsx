@@ -31,6 +31,7 @@ const STEP_CFG = {
 };
 
 const PAGE_SIZE = 30;
+const EMPTY_LIST = [];
 
 /* ─── Helpers ────────────────────────────────────────────────────────────────── */
 const fmt = (n, decimals = 1) => (n == null ? '—' : Number(n).toFixed(decimals));
@@ -165,7 +166,7 @@ function OverviewTab({ results }) {
 /* ─── Models tab (with Leaderboard) ──────────────────────────────────────────── */
 function ModelsTab({ results }) {
   const { trainResult, taskType } = results;
-  const models = trainResult?.models ?? [];
+  const models = trainResult?.models ?? EMPTY_LIST;
   const best   = trainResult?.best_model;
 
   const metricKey = taskType === 'classification' ? 'accuracy' : 'r2';
@@ -263,7 +264,7 @@ function ModelsTab({ results }) {
 /* ─── Actual vs Predicted tab ────────────────────────────────────────────────── */
 function ActualVsPredTab({ results }) {
   const { predResult, trainResult } = results;
-  const preds = predResult?.predictions ?? [];
+  const preds = predResult?.predictions ?? EMPTY_LIST;
   const isClassification = trainResult?.taskType !== 'regression';
 
   // Generate sample actual comparisons
@@ -393,7 +394,7 @@ function ExplainabilityTab({ results }) {
 /* ─── Predictions Tab ────────────────────────────────────────────────────────── */
 function PredictionsTab({ results }) {
   const { predResult } = results;
-  const preds    = predResult?.predictions ?? [];
+  const preds    = predResult?.predictions ?? EMPTY_LIST;
   const [q, setQ]       = useState('');
   const [page, setPage] = useState(0);
 
@@ -544,7 +545,7 @@ export default function ResultsOverlay({ pipelineState, steps, results, onClose,
 
   React.useEffect(() => {
     if (isDone && tab === 'progress') setTab('overview');
-  }, [isDone]);
+  }, [isDone, tab]);
 
   const handleDownloadReport = () => {
     const reportHtml = `<!DOCTYPE html>

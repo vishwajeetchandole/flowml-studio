@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { checkHealth } from '../../services/api';
 import Toast from '../../components/common/Toast';
 import Logo from '../../components/common/Logo';
 import FlowMLIcon from '../../components/FlowMLIcon';
@@ -12,18 +11,11 @@ import {
 } from 'lucide-react';
 
 export default function DashboardLayout() {
-  const { user, signOut, isDevMode } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [backendOnline, setBackendOnline] = useState(null);
   const [toast, setToast] = useState(null);
-
-  useEffect(() => {
-    checkHealth()
-      .then(() => setBackendOnline(true))
-      .catch(() => setBackendOnline(false));
-  }, []);
 
   const showToast = (msg, type = 'success', title = '') => {
     setToast({ msg, type, title });
@@ -37,6 +29,7 @@ export default function DashboardLayout() {
     { to: '/app/runs', label: 'Run History', icon: PlayCircle },
     { to: '/app/code', label: 'Python Studio', icon: Code },
     { to: '/app/templates', label: 'Templates', icon: LayoutTemplate },
+    { to: '/app/admin', label: 'Admin', icon: ShieldCheck },
     { to: '/app/settings', label: 'Settings', icon: Settings },
   ];
 
@@ -65,21 +58,6 @@ export default function DashboardLayout() {
             </div>
           </Link>
 
-          {/* Backend Status indicator */}
-          <div
-            className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold"
-            style={{
-              background: backendOnline ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
-              color: backendOnline ? '#22c55e' : '#ef4444',
-              border: `1px solid ${backendOnline ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'}`,
-            }}
-            title={backendOnline ? 'Backend API connected' : 'Backend offline'}
-          >
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${backendOnline ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`}
-            />
-            {backendOnline ? 'API OK' : 'API DISCONNECTED'}
-          </div>
         </div>
 
         {/* Studio Launch Quick Action */}
@@ -163,20 +141,6 @@ export default function DashboardLayout() {
             </h2>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Dev Mode Badge */}
-            <div
-              className="px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold flex items-center gap-1.5"
-              style={{
-                background: isDevMode ? 'rgba(124,58,237,0.12)' : 'rgba(34,197,94,0.12)',
-                color: isDevMode ? '#7C3AED' : '#22c55e',
-                border: `1px solid ${isDevMode ? 'rgba(124,58,237,0.25)' : 'rgba(34,197,94,0.25)'}`,
-              }}
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              {isDevMode ? 'DEV_AUTH Mock' : 'Firebase SDK'}
-            </div>
-          </div>
         </header>
 
         {/* Routed Sub-view */}

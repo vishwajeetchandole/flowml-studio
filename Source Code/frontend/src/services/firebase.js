@@ -29,7 +29,8 @@ const isConfigured = Boolean(
   firebaseConfig.projectId !== 'placeholder'
 );
 
-let forceDevAuth = import.meta.env.VITE_DEV_AUTH === 'true' || !isConfigured;
+const devAuthSetting = import.meta.env.VITE_DEV_AUTH;
+const forceDevAuth = devAuthSetting === 'true' || (!isConfigured && devAuthSetting !== 'false');
 
 let app = null;
 let realAuth = null;
@@ -38,9 +39,8 @@ if (!forceDevAuth && isConfigured) {
   try {
     app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     realAuth = getAuth(app);
-  } catch (err) {
-    console.warn('[Firebase] Initialization failed, falling back to DEV_AUTH mock:', err);
-    forceDevAuth = true;
+  } catch {
+    console.error('[Firebase] Initialization failed. Check the Firebase environment configuration.');
   }
 }
 
@@ -83,20 +83,6 @@ function saveStoredUsers(users) {
 const devAuthListeners = new Set();
 let currentDevUser = getStoredDevUser();
 
-// If no user is logged in on first dev run, seed a default demo user
-if (!currentDevUser && forceDevAuth) {
-  currentDevUser = {
-    uid: 'dev-user-demo',
-    email: 'engineer@flowml.studio',
-    displayName: 'FlowML Engineer',
-    emailVerified: true,
-    photoURL: null,
-    isDev: true,
-    createdAt: new Date().toISOString(),
-  };
-  setStoredDevUser(currentDevUser);
-}
-
 function notifyDevListeners(user) {
   currentDevUser = user;
   setStoredDevUser(user);
@@ -106,6 +92,17 @@ function notifyDevListeners(user) {
 // ── Public Auth Methods ───────────────────────────────────────────────────────
 
 export const isDevMode = forceDevAuth;
+
+export function getCurrentUserId() {
+  return forceDevAuth ? currentDevUser?.uid ?? null : realAuth?.currentUser?.uid ?? null;
+}
+
+function requireFirebaseAuth() {
+  if (!realAuth) {
+    throw new Error('Firebase authentication is unavailable. Check your Firebase environment configuration.');
+  }
+  return realAuth;
+}
 
 export const getFirebaseConfigStatus = () => ({
   isConfigured,
@@ -118,8 +115,8 @@ export const getFirebaseConfigStatus = () => ({
  * Sign in with email & password
  */
 export async function loginWithEmail(email, password) {
-  if (!forceDevAuth && realAuth) {
-    const cred = await signInWithEmailAndPassword(realAuth, email, password);
+  if (!forceDevAuth) {
+    const cred = await signInWithEmailAndPassword(requireFirebaseAuth(), email, password);
     return cred.user;
   }
 
@@ -127,6 +124,9 @@ export async function loginWithEmail(email, password) {
   const users = getStoredUsers();
   const existing = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
 
+  if (!existing) {
+    throw new Error('No account exists for this email. Create an account first.');
+  }
   if (existing && existing.password !== password) {
     throw new Error('Invalid credentials. Password does not match.');
   }
@@ -149,8 +149,8 @@ export async function loginWithEmail(email, password) {
  * Register a new user
  */
 export async function registerWithEmail(email, password, displayName = '') {
-  if (!forceDevAuth && realAuth) {
-    const cred = await createUserWithEmailAndPassword(realAuth, email, password);
+  if (!forceDevAuth) {
+    const cred = await createUserWithEmailAndPassword(requireFirebaseAuth(), email, password);
     if (displayName) {
       await updateProfile(cred.user, { displayName });
     }
@@ -193,8 +193,8 @@ export async function registerWithEmail(email, password, displayName = '') {
  * Reset password
  */
 export async function sendPasswordReset(email) {
-  if (!forceDevAuth && realAuth) {
-    return sendPasswordResetEmail(realAuth, email);
+  if (!forceDevAuth) {
+    return sendPasswordResetEmail(requireFirebaseAuth(), email);
   }
   // Dev Mock — simulates sending email
   await new Promise((r) => setTimeout(r, 600));
@@ -205,8 +205,10 @@ export async function sendPasswordReset(email) {
  * Resend email verification
  */
 export async function sendVerification() {
-  if (!forceDevAuth && realAuth && realAuth.currentUser) {
-    return sendEmailVerification(realAuth.currentUser);
+  if (!forceDevAuth) {
+    const auth = requireFirebaseAuth();
+    if (!auth.currentUser) throw new Error('Sign in before requesting email verification.');
+    return sendEmailVerification(auth.currentUser);
   }
   // Dev Mock — marks verified or sends mock email
   if (currentDevUser) {
@@ -220,8 +222,8 @@ export async function sendVerification() {
  * Sign out
  */
 export async function logoutUser() {
-  if (!forceDevAuth && realAuth) {
-    return fbSignOut(realAuth);
+  if (!forceDevAuth) {
+    return fbSignOut(requireFirebaseAuth());
   }
   notifyDevListeners(null);
 }
@@ -230,11 +232,10 @@ export async function logoutUser() {
  * Get current Auth ID token for API calls
  */
 export async function getCurrentIdToken() {
-  if (!forceDevAuth && realAuth && realAuth.currentUser) {
-    return realAuth.currentUser.getIdToken();
+  if (!forceDevAuth) {
+    return realAuth?.currentUser ? realAuth.currentUser.getIdToken() : null;
   }
-  // In DEV_AUTH, the raw token value IS the uid accepted by FastAPI backend
-  return currentDevUser?.uid || 'dev-user-demo';
+  return currentDevUser?.uid ?? null;
 }
 
 /**
@@ -245,6 +246,11 @@ export function subscribeToAuthState(callback) {
     return onAuthStateChanged(realAuth, (user) => {
       callback(user);
     });
+  }
+
+  if (!forceDevAuth) {
+    callback(null);
+    return () => {};
   }
 
   // Dev mock subscription

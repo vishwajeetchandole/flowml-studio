@@ -6,6 +6,8 @@ import {
   Filter, Sparkles,
 } from 'lucide-react';
 
+const EMPTY_PREDICTIONS = [];
+
 /* ─── helpers ──────────────────────────────────────────────────────────────── */
 const fmtNum = (n) => (typeof n === 'number' ? n.toLocaleString() : n ?? '—');
 
@@ -43,7 +45,7 @@ export default function PredictionModal({ result, trainedConfig, onClose }) {
   const [page, setPage]         = useState(0);
   const [showCharts, setShowCharts] = useState(false);
 
-  const predictions = result?.predictions ?? [];
+  const predictions = result?.predictions ?? EMPTY_PREDICTIONS;
   const charts      = result?.charts ?? {};
   const taskType    = trainedConfig?.taskType ?? 'classification';
   const bestModel   = result?.best_model ?? trainedConfig?.bestModel ?? 'Model';

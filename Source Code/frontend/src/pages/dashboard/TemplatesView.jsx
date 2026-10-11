@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { saveProject } from '../../services/api';
+import { saveProject, workflowStorageKey, uploadDataset } from '../../services/api';
 import {
   LayoutTemplate, ArrowRight, Sparkles, Layers,
   Activity, Database, BrainCircuit, BarChart3,
-  TreePine, Network, Zap, CheckCircle2,
+  TreePine, Network, Zap, CheckCircle2, Loader2,
 } from 'lucide-react';
 
 const generateTemplateId = () => `proj-tpl-${Date.now()}`;
@@ -13,25 +13,27 @@ const generateTemplateId = () => `proj-tpl-${Date.now()}`;
 export default function TemplatesView() {
   const { showToast } = useOutletContext();
   const navigate = useNavigate();
+  const [loadingTemplate, setLoadingTemplate] = useState(null);
 
   const templates = [
     {
       id: 'template-classification',
-      title: 'Customer Churn Intelligence',
+      title: 'Titanic Survival Classifier',
       badge: 'Classification',
       badgeColor: '#7C3AED',
       badgeBg: 'rgba(124, 58, 237, 0.12)',
-      description: 'Complete binary classification pipeline predicting churn with median imputation, feature scaling, Random Forest ensemble, and SHAP explainability.',
-      dataset: 'telecom_churn.csv (7,043 rows)',
-      target: 'Churn (Yes / No)',
+      description: 'Train and evaluate classification models against the bundled Titanic sample, including missing-value handling and generated predictions.',
+      dataset: 'titanic.csv (bundled sample)',
+      sampleFile: 'titanic.csv',
+      target: 'Survived',
       algorithms: ['Random Forest', 'Logistic Regression'],
-      nodesList: ['Upload Dataset', 'Fill Missing', 'Scale Features', 'Random Forest', 'Explainable AI', 'Prediction'],
+      nodesList: ['Upload Dataset', 'Fill Missing', 'Scale Features', 'Random Forest', 'Prediction'],
       nodes: [
-        { id: 'node-1', type: 'upload', data: { label: 'Upload Dataset', file_name: 'telecom_churn.csv' }, position: { x: 50, y: 150 } },
+        { id: 'node-1', type: 'upload', data: { label: 'Upload Dataset' }, position: { x: 50, y: 150 } },
         { id: 'node-2', type: 'fillMissing', data: { label: 'Fill Missing', missing_values: 'median' }, position: { x: 300, y: 150 } },
         { id: 'node-3', type: 'scale', data: { label: 'Scale Features', scaling: 'standard' }, position: { x: 550, y: 150 } },
         { id: 'node-4', type: 'randomForest', data: { label: 'Random Forest', n_estimators: 100, max_depth: 10 }, position: { x: 800, y: 150 } },
-        { id: 'node-5', type: 'explainableAi', data: { label: 'Explainable AI', method: 'shap' }, position: { x: 1050, y: 150 } },
+        { id: 'node-5', type: 'prediction', data: { label: 'Prediction' }, position: { x: 1050, y: 150 } },
       ],
       edges: [
         { id: 'e1-2', source: 'node-1', target: 'node-2', animated: true, style: { stroke: '#7C3AED' } },
@@ -46,22 +48,21 @@ export default function TemplatesView() {
       badge: 'Regression',
       badgeColor: '#f97316',
       badgeBg: 'rgba(249, 115, 22, 0.12)',
-      description: 'Continuous value prediction pipeline with feature column selection, mean imputation, MinMax normalization, Linear Regression, and automated report export.',
-      dataset: 'california_housing.csv (20,640 rows)',
-      target: 'MedHouseVal ($USD)',
+      description: 'Train and evaluate regression models against the bundled California housing sample, then generate predictions.',
+      dataset: 'housing.csv (bundled sample)',
+      sampleFile: 'housing.csv',
+      target: 'MedHouseVal',
       algorithms: ['Linear Regression', 'Ridge', 'Decision Tree'],
-      nodesList: ['Upload Dataset', 'Select Columns', 'Fill Missing', 'Scale Features', 'Linear Regression', 'Report'],
+      nodesList: ['Upload Dataset', 'Fill Missing', 'Scale Features', 'Linear Regression', 'Prediction'],
       nodes: [
-        { id: 'node-1', type: 'upload', data: { label: 'Upload Dataset', file_name: 'california_housing.csv' }, position: { x: 50, y: 150 } },
-        { id: 'node-2', type: 'selectColumns', data: { label: 'Select Columns', columns: ['MedInc', 'HouseAge', 'AveRooms', 'MedHouseVal'] }, position: { x: 300, y: 150 } },
+        { id: 'node-1', type: 'upload', data: { label: 'Upload Dataset' }, position: { x: 50, y: 150 } },
         { id: 'node-3', type: 'fillMissing', data: { label: 'Fill Missing', missing_values: 'mean' }, position: { x: 550, y: 150 } },
         { id: 'node-4', type: 'scale', data: { label: 'Scale Features', scaling: 'minmax' }, position: { x: 800, y: 150 } },
         { id: 'node-5', type: 'linearRegression', data: { label: 'Linear Regression' }, position: { x: 1050, y: 150 } },
-        { id: 'node-6', type: 'report', data: { label: 'Report' }, position: { x: 1300, y: 150 } },
+        { id: 'node-6', type: 'prediction', data: { label: 'Prediction' }, position: { x: 1300, y: 150 } },
       ],
       edges: [
-        { id: 'e1-2', source: 'node-1', target: 'node-2', animated: true, style: { stroke: '#7C3AED' } },
-        { id: 'e2-3', source: 'node-2', target: 'node-3', animated: true, style: { stroke: '#7C3AED' } },
+        { id: 'e1-3', source: 'node-1', target: 'node-3', animated: true, style: { stroke: '#7C3AED' } },
         { id: 'e3-4', source: 'node-3', target: 'node-4', animated: true, style: { stroke: '#7C3AED' } },
         { id: 'e4-5', source: 'node-4', target: 'node-5', animated: true, style: { stroke: '#7C3AED' } },
         { id: 'e5-6', source: 'node-5', target: 'node-6', animated: true, style: { stroke: '#7C3AED' } },
@@ -74,7 +75,8 @@ export default function TemplatesView() {
       badgeColor: '#10b981',
       badgeBg: 'rgba(16, 185, 129, 0.12)',
       description: 'Unsupervised grouping workflow removing duplicated samples, scaling feature ranges, finding natural cohort clusters with KMeans, and generating distribution report.',
-      dataset: 'mall_customers.csv (200 rows)',
+      dataset: 'K-Means execution is not available from the Studio runner yet',
+      comingSoon: true,
       target: 'Unsupervised (K=4 clusters)',
       algorithms: ['K-Means Clustering'],
       nodesList: ['Upload Dataset', 'Remove Duplicates', 'Scale Features', 'K-Means', 'Report'],
@@ -94,25 +96,44 @@ export default function TemplatesView() {
     },
   ];
 
-  const handleUseTemplate = (tpl) => {
-    const newId = generateTemplateId();
-    const newProject = {
-      id: newId,
-      name: tpl.title,
-      description: tpl.description,
-      taskType: tpl.badge.toLowerCase(),
-      nodesCount: tpl.nodes.length,
-    };
-
-    saveProject(newProject);
-    // Persist template nodes & edges to project workflow key
-    localStorage.setItem(
-      `flowml_workflow_${newId}`,
-      JSON.stringify({ nodes: tpl.nodes, edges: tpl.edges })
-    );
-
-    showToast(`Template "${tpl.title}" initialized!`, 'success');
-    navigate(`/studio/${newId}`);
+  const handleUseTemplate = async (tpl) => {
+    if (tpl.comingSoon || loadingTemplate) return;
+    setLoadingTemplate(tpl.id);
+    try {
+      const response = await fetch(`/samples/${tpl.sampleFile}`);
+      if (!response.ok) throw new Error(`Unable to load bundled sample (${response.status}).`);
+      const sample = new File([await response.blob()], tpl.sampleFile, { type: 'text/csv' });
+      const uploaded = await uploadDataset(sample);
+      const nodes = tpl.nodes.map((node) => node.id === 'node-1'
+        ? {
+            ...node,
+            data: {
+              ...node.data,
+              dataset_id: uploaded.dataset_id,
+              file_name: uploaded.file_name,
+              _info: uploaded,
+            },
+          }
+        : node);
+      const newId = generateTemplateId();
+      saveProject({
+        id: newId,
+        name: tpl.title,
+        description: tpl.description,
+        taskType: tpl.badge.toLowerCase(),
+        nodesCount: nodes.length,
+      });
+      localStorage.setItem(
+        workflowStorageKey(newId),
+        JSON.stringify({ nodes, edges: tpl.edges })
+      );
+      showToast(`Sample loaded. "${tpl.title}" is ready in Studio.`, 'success');
+      navigate(`/studio/${newId}`);
+    } catch (error) {
+      showToast(error.message || 'Unable to initialize this template.', 'error');
+    } finally {
+      setLoadingTemplate(null);
+    }
   };
 
   return (
@@ -122,7 +143,7 @@ export default function TemplatesView() {
           Pre-built Workflow Templates
         </h1>
         <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
-          Kickstart your machine learning projects with production-grade architectures designed for classification, regression, and clustering.
+          Start with ready-to-run classification and regression workflows; clustering will be enabled when its execution path is available.
         </p>
       </div>
 
@@ -167,7 +188,7 @@ export default function TemplatesView() {
               <div className="p-3 rounded-2xl border space-y-1.5 mb-4 text-[11px]" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Sample Data:</span>
-                  <span className="font-mono font-semibold text-slate-200">{tpl.dataset}</span>
+                  <span className="font-mono font-semibold text-slate-600">{tpl.dataset}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Target Spec:</span>
@@ -196,14 +217,15 @@ export default function TemplatesView() {
             {/* CTA */}
             <button
               onClick={() => handleUseTemplate(tpl)}
-              className="w-full py-2.5 rounded-xl font-bold text-xs text-white flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98]"
+              disabled={tpl.comingSoon || Boolean(loadingTemplate)}
+              className="w-full py-2.5 rounded-xl font-bold text-xs text-white flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
               style={{
                 background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
                 boxShadow: '0 4px 16px rgba(124, 58, 237, 0.35)',
               }}
             >
-              Open in Studio Canvas
-              <ArrowRight className="w-3.5 h-3.5" />
+              {loadingTemplate === tpl.id ? 'Loading sample…' : tpl.comingSoon ? 'Coming soon' : 'Load Sample & Open Studio'}
+              {loadingTemplate === tpl.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
             </button>
           </motion.div>
         ))}

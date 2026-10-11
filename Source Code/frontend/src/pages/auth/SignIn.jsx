@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import {
   Mail, Lock, ArrowRight, Loader2, AlertCircle,
-  CheckCircle2, Sparkles, ShieldCheck,
+  Sparkles, ShieldCheck,
 } from 'lucide-react';
 
 import Logo from '../../components/common/Logo';
@@ -35,20 +35,6 @@ export default function SignIn() {
       navigate(from, { replace: true });
     } catch (err) {
       setError(err.message || 'Failed to sign in. Please check your credentials.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuickDemo = async () => {
-    setEmail('engineer@flowml.studio');
-    setPassword('demo1234');
-    setLoading(true);
-    try {
-      await signIn('engineer@flowml.studio', 'demo1234');
-      navigate(from, { replace: true });
-    } catch (err) {
-      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -179,23 +165,12 @@ export default function SignIn() {
           </button>
         </form>
 
-        {/* Demo Fast Access Button */}
-        <div className="mt-6 pt-5 border-t" style={{ borderColor: 'var(--color-border)' }}>
-          <button
-            type="button"
-            onClick={handleQuickDemo}
-            disabled={loading}
-            className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all hover:border-primary/50"
-            style={{
-              background: 'rgba(99, 102, 241, 0.08)',
-              border: '1px dashed rgba(99, 102, 241, 0.35)',
-              color: '#818cf8',
-            }}
-          >
-            <ShieldCheck className="w-4 h-4 text-primary" />
-            Quick Demo Sign-In ({isDevMode ? 'DEV_AUTH Mock' : 'Firebase'})
-          </button>
-        </div>
+        {isDevMode && (
+          <p role="status" className="mt-5 flex items-center justify-center gap-2 text-xs text-slate-500">
+            <ShieldCheck className="w-4 h-4 text-violet-600" />
+            Local development mode. Create an account to get started.
+          </p>
+        )}
 
         <div className="mt-6 text-center text-xs" style={{ color: 'var(--color-text-muted)' }}>
           Don't have an account yet?{' '}

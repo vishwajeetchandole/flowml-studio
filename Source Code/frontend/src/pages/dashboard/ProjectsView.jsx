@@ -9,13 +9,17 @@ import {
   ExternalLink, Calendar, Clock, Layers, Sparkles, AlertTriangle, X,
   CheckCircle2, ArrowRight,
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import FlowMLIcon from '../../components/FlowMLIcon';
 
 export default function ProjectsView({ initialCreateOpen = false }) {
   const { showToast } = useOutletContext();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [projects, setProjects] = useState(() => getProjects());
+  const [dismissedTourUser, setDismissedTourUser] = useState(null);
+  const [tourStep, setTourStep] = useState(0);
   const [search, setSearch] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(initialCreateOpen);
   const [renameTarget, setRenameTarget] = useState(null);
@@ -29,6 +33,24 @@ export default function ProjectsView({ initialCreateOpen = false }) {
   // Rename form state
   const [renameTitle, setRenameTitle] = useState('');
   const [renameDesc, setRenameDesc] = useState('');
+
+  const tourVisible = Boolean(
+    user?.uid &&
+    projects.length === 0 &&
+    dismissedTourUser !== user.uid &&
+    localStorage.getItem(`flowml_onboarding_seen_${user.uid}`) !== 'true'
+  );
+
+  const finishTour = () => {
+    if (user?.uid) localStorage.setItem(`flowml_onboarding_seen_${user.uid}`, 'true');
+    setDismissedTourUser(user?.uid ?? null);
+  };
+
+  const tourSteps = [
+    { title: 'Welcome to FlowML', detail: 'Build machine-learning workflows visually, from data upload through predictions.' },
+    { title: 'Start with a dataset', detail: 'Upload your own CSV or Excel file, or begin from a workflow template.' },
+    { title: 'Run and explore', detail: 'Connect nodes, run the workflow, and review results and predictions.' },
+  ];
 
   const refreshProjects = () => {
     setProjects(getProjects());
@@ -47,6 +69,7 @@ export default function ProjectsView({ initialCreateOpen = false }) {
     };
 
     saveProject(newProj);
+    finishTour();
     refreshProjects();
     setIsCreateOpen(false);
     setNewTitle('');
@@ -118,6 +141,44 @@ export default function ProjectsView({ initialCreateOpen = false }) {
           New Project
         </button>
       </div>
+
+      {tourVisible && (
+        <section
+          aria-label="Getting started tour"
+          className="rounded-2xl border border-violet-200 bg-violet-50 p-5 flex flex-col sm:flex-row sm:items-center gap-4"
+        >
+          <div className="flex-1">
+            <p className="text-[10px] uppercase tracking-wider font-bold text-violet-700">
+              Getting started · {tourStep + 1} of {tourSteps.length}
+            </p>
+            <h2 className="mt-1 text-sm font-bold text-slate-900">{tourSteps[tourStep].title}</h2>
+            <p className="mt-1 text-xs text-slate-600">{tourSteps[tourStep].detail}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={finishTour} className="px-3 py-2 text-xs font-semibold text-slate-600">
+              Skip tour
+            </button>
+            {tourStep < tourSteps.length - 1 ? (
+              <button
+                onClick={() => setTourStep((step) => step + 1)}
+                className="px-3 py-2 rounded-lg bg-violet-600 text-xs font-bold text-white"
+              >
+                Next
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  finishTour();
+                  navigate('/studio');
+                }}
+                className="px-3 py-2 rounded-lg bg-violet-600 text-xs font-bold text-white"
+              >
+                Create your first workflow
+              </button>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Filter / Search Bar */}
       <div className="flex items-center gap-4">

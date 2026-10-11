@@ -107,7 +107,7 @@ function Navbar({ onLaunch }) {
             onClick={() => navigate('/signin')}
             className="text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors px-3 py-2 cursor-pointer"
           >
-            Log in
+            Sign In
           </button>
           <button
             onClick={onLaunch}
@@ -161,7 +161,7 @@ function Navbar({ onLaunch }) {
                   }}
                   className="w-full py-2.5 text-center text-sm font-semibold text-slate-700 bg-slate-100 rounded-xl"
                 >
-                  Log in
+                  Sign In
                 </button>
                 <button
                   onClick={() => {
@@ -183,7 +183,6 @@ function Navbar({ onLaunch }) {
 
 /* ─── HERO PIPELINE DEMO COMPONENT ───────────────────────────────────────────── */
 function HeroPreviewDemo({ onLaunch }) {
-  const [activeTab, setActiveTab] = useState('pipeline');
   const [selectedNode, setSelectedNode] = useState('model');
 
   const nodes = [
@@ -730,19 +729,6 @@ function IntegrationsSection({ onLaunch }) {
               Explore integrations <ArrowRight className="w-3.5 h-3.5" />
             </button>
 
-            {/* Testimonial Quote */}
-            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80">
-              <p className="text-xs sm:text-sm text-slate-700 italic mb-3">
-                "FlowML cut our time from raw CSV to deployed prediction API from 2 weeks to under 20 minutes."
-              </p>
-              <div className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-violet-600 text-white text-xs font-bold flex items-center justify-center">SC</span>
-                <div>
-                  <p className="font-display font-bold text-xs text-slate-900">Dr. Sarah Chen</p>
-                  <p className="text-[11px] text-slate-500">VP of AI at VectorScale</p>
-                </div>
-              </div>
-            </div>
           </Reveal>
         </div>
       </div>
@@ -834,11 +820,6 @@ const TESTIMONIALS = [
     initials: 'MV', color: 'bg-violet-600',
     quote: 'FlowML has completely redefined how our team prototypes models. We test hypotheses 10x faster without writing boilerplate training loops.',
     name: 'Marcus Vance', role: 'Senior AI Scientist at DataVantage', stars: 5,
-  },
-  {
-    initials: 'SC', color: 'bg-indigo-600',
-    quote: 'FlowML cut our time from raw CSV to deployed prediction API from 2 weeks to under 20 minutes. It\'s become indispensable in our stack.',
-    name: 'Dr. Sarah Chen', role: 'VP of AI at VectorScale', stars: 5,
   },
   {
     initials: 'RT', color: 'bg-emerald-600',

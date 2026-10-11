@@ -19,7 +19,7 @@ export default function SettingsView() {
     { key: 'VITE_FIREBASE_AUTH_DOMAIN', status: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ? 'Configured' : 'Missing / Using Dev Mock' },
     { key: 'VITE_FIREBASE_PROJECT_ID', status: import.meta.env.VITE_FIREBASE_PROJECT_ID ? 'Configured' : 'Missing / Using Dev Mock' },
     { key: 'VITE_FIREBASE_STORAGE_BUCKET', status: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ? 'Configured' : 'Missing / Using Dev Mock' },
-    { key: 'VITE_API_URL', status: import.meta.env.VITE_API_URL || 'http://localhost:8000 (Default)' },
+    { key: 'VITE_API_BASE_URL', status: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000 (Default)' },
   ];
 
   const handleCopyUid = () => {

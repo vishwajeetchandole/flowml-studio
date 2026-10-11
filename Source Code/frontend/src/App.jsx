@@ -18,7 +18,7 @@ import {
 import {
   uploadDataset, analyzeDataset, preprocessDataset,
   trainModels, runPredictions, getVisualizations,
-  getProjects, saveProject, checkHealth,
+  getProjects, saveProject, checkHealth, workflowStorageKey,
 } from './services/api';
 
 /* ─── Node type groupings ────────────────────────────────────────────────────── */
@@ -85,38 +85,12 @@ function AppInner() {
     setPipelineSteps((p) => p.map((s) => s.id === id ? { ...s, ...patch } : s));
   }, []);
 
-  /* ─── Keyboard Shortcuts for Colab: Run, Save, Undo, Redo ────────────── */
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-        if (e.shiftKey) {
-          e.preventDefault();
-          workflowRef.current?.redo();
-        } else {
-          e.preventDefault();
-          workflowRef.current?.undo();
-        }
-      } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
-        e.preventDefault();
-        workflowRef.current?.redo();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault();
-        handleRun();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        handleManualSave();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleRun, handleManualSave]);
-
   /* ─── Autosave (Debounced 2s) ────────────────────────────────────────────── */
   useEffect(() => {
     const timer = setInterval(() => {
       const wf = workflowRef.current?.getWorkflowData();
       if (wf?.nodes?.length) {
-        localStorage.setItem(`flowml_workflow_${projectId}`, JSON.stringify(wf));
+        localStorage.setItem(workflowStorageKey(projectId), JSON.stringify(wf));
         saveProject({
           id: projectId,
           name: workflowName,
@@ -130,7 +104,7 @@ function AppInner() {
   }, [projectId, workflowName]);
 
   /* ─── Pre-run Validation ─────────────────────────────────────────────────── */
-  const validateGraph = (nodes, edges) => {
+  const validateGraph = useCallback((nodes, edges) => {
     if (!nodes.length) {
       showToast('Add at least one node to the canvas!', 'error');
       return false;
@@ -175,7 +149,7 @@ function AppInner() {
     }
 
     return true;
-  };
+  }, [showToast]);
 
   /* ─── Run Pipeline ───────────────────────────────────────────────────────── */
   const handleRun = useCallback(async () => {
@@ -218,14 +192,26 @@ function AppInner() {
           if (node.data._uploadedFile) {
             const r = await uploadDataset(node.data._uploadedFile);
             uploadResult = r;
+            workflowRef.current?.updateNode(node.id, {
+              dataset_id: r.dataset_id,
+              file_name: r.file_name,
+              _info: r,
+              _uploadedFile: null,
+            });
             updateStep(sid, { status: 'done', detail: `${r.file_name} · ${r.rows?.toLocaleString()} rows · ${r.columns} cols` });
           } else {
-            uploadResult = { file_name: node.data.file_name };
-            updateStep(sid, { status: 'done', detail: `Using ${node.data.file_name}` });
-          }
+              uploadResult = node.data._info || {
+                dataset_id: node.data.dataset_id,
+                file_name: node.data.file_name,
+              };
+              if (!uploadResult.dataset_id) {
+                throw new Error('This dataset is no longer available. Upload it again to continue.');
+              }
+              updateStep(sid, { status: 'done', detail: `Using ${node.data.file_name}` });
+            }
 
-          const asid = addStep('Analyze Dataset', 'running', 'Inferring schema & target…');
-          const analysis = await analyzeDataset(uploadResult.file_name);
+            const asid = addStep('Analyze Dataset', 'running', 'Inferring schema & target…');
+            const analysis = await analyzeDataset(uploadResult.dataset_id);
           targetColumn = analysis.suggested_target;
           taskType     = analysis.suggested_task_type ?? 'classification';
           updateStep(asid, { status: 'done', detail: `Target: "${targetColumn}" · Task: ${taskType}` });
@@ -241,7 +227,7 @@ function AppInner() {
             categorical_encoding: node.data.categorical_encoding ?? 'label',
             scaling:              node.data.scaling              ?? 'standard',
           };
-          const r = await preprocessDataset(uploadResult.file_name, cfg, targetColumn);
+          const r = await preprocessDataset(uploadResult.dataset_id, cfg, targetColumn);
           preprocessResult = r;
           updateStep(sid, { status: 'done', detail: `${r.rows?.toLocaleString()} rows · ${r.columns} features` });
           workflowRef.current?.setNodeStatus(node.id, 'completed');
@@ -251,8 +237,8 @@ function AppInner() {
         else if (MODEL_TYPES.includes(t)) {
           if (!uploadResult) { addStep('Train Models', 'skipped', 'No dataset available'); continue; }
           const sid = addStep('Train Models', 'running', 'Fitting ML estimators…');
-          const src = preprocessResult?.processed_file ?? uploadResult.file_name;
-          const r   = await trainModels(uploadResult.file_name, targetColumn, taskType, src !== uploadResult.file_name ? src : null);
+          const processedDatasetId = preprocessResult?.processed_dataset_id ?? null;
+          const r   = await trainModels(uploadResult.dataset_id, targetColumn, taskType, processedDatasetId);
           trainResult = { ...r, targetColumn, taskType };
           const best = r.models?.find((m) => m.model_name === r.best_model);
           const metricStr = taskType === 'classification'
@@ -266,8 +252,7 @@ function AppInner() {
         else if (OUTPUT_TYPES.includes(t)) {
           if (!uploadResult || !trainResult) { addStep('Predictions', 'skipped', 'Train a model first'); continue; }
           const sid = addStep('Run Predictions', 'running', 'Generating inference predictions…');
-          const src = preprocessResult?.processed_file ?? uploadResult.file_name;
-          const r   = await runPredictions(src, targetColumn);
+          const r   = await runPredictions(uploadResult.dataset_id, targetColumn, trainResult.model_id);
           predResult = r;
           updateStep(sid, { status: 'done', detail: `${r.predictions?.length?.toLocaleString()} predictions ready` });
           workflowRef.current?.setNodeStatus(node.id, 'completed');
@@ -275,18 +260,21 @@ function AppInner() {
 
         /* 5 ─ Explainable AI */
         else if (VIZ_TYPES.includes(t)) {
-          if (!uploadResult) { addStep('Visualizations', 'skipped', 'No dataset'); continue; }
+          if (!uploadResult || !trainResult?.model_id) {
+            addStep('Visualizations', 'skipped', 'Train a model first');
+            continue;
+          }
           const sid = addStep('Explainability', 'running', 'Calculating SHAP feature attributions…');
-          const r   = await getVisualizations(uploadResult.file_name);
+          const r   = await getVisualizations(uploadResult.dataset_id, trainResult.model_id);
           vizResult = r;
           updateStep(sid, { status: 'done', detail: `${Object.keys(r).length} diagnostic plots generated` });
           workflowRef.current?.setNodeStatus(node.id, 'completed');
         }
       }
 
-      if (!vizResult && uploadResult) {
+      if (!vizResult && uploadResult && trainResult?.model_id) {
         try {
-          vizResult = await getVisualizations(uploadResult.file_name);
+          vizResult = await getVisualizations(uploadResult.dataset_id, trainResult.model_id);
         } catch (e) {
           console.warn('Fallback visualization failed:', e);
         }
@@ -302,7 +290,7 @@ function AppInner() {
       addStep('Pipeline Failed', 'error', err.message);
       showToast(err.message, 'error');
     }
-  }, [pipelineState, addStep, updateStep, showToast]);
+  }, [pipelineState, addStep, updateStep, showToast, validateGraph]);
 
   /* ─── Stop Pipeline ──────────────────────────────────────────────────────── */
   const handleStop = () => {
@@ -319,7 +307,7 @@ function AppInner() {
   const handleManualSave = useCallback(() => {
     const wf = workflowRef.current?.getWorkflowData();
     if (wf) {
-      localStorage.setItem(`flowml_workflow_${projectId}`, JSON.stringify(wf));
+      localStorage.setItem(workflowStorageKey(projectId), JSON.stringify(wf));
       saveProject({
         id: projectId,
         name: workflowName,
@@ -330,6 +318,32 @@ function AppInner() {
       showToast(`Saved "${workflowName}" successfully.`, 'success');
     }
   }, [projectId, workflowName, showToast]);
+
+  /* ─── Keyboard Shortcuts for Colab: Run, Save, Undo, Redo ────────────── */
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          workflowRef.current?.redo();
+        } else {
+          e.preventDefault();
+          workflowRef.current?.undo();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault();
+        workflowRef.current?.redo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        handleRun();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleManualSave();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleRun, handleManualSave]);
 
   const handleExport = useCallback(() => {
     const wf = workflowRef.current?.getWorkflowData();
@@ -375,7 +389,7 @@ function AppInner() {
 
         {/* Canvas */}
         <div className="flex-1 relative overflow-hidden">
-          <Workflow onNodeClick={handleNodeClick} actionsRef={workflowRef} />
+          <Workflow onNodeClick={handleNodeClick} actionsRef={workflowRef} projectId={projectId} />
 
           {/* Canvas Bottom Hint */}
           <AnimatePresence>

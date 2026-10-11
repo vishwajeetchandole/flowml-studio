@@ -2,12 +2,14 @@
 Routes for Isolated Python Code Execution.
 """
 
+import os
 from typing import Optional, Dict, Any, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from auth import get_current_user
 from services.code_executor import execute_python_code, stop_code_run, get_code_history
+from services.store import StoreBackend, get_store
 
 router = APIRouter(prefix="/code", tags=["Code Execution"])
 
@@ -22,11 +24,18 @@ class CodeRunRequest(BaseModel):
 async def run_code(
     payload: CodeRunRequest,
     uid: str = Depends(get_current_user),
+    store: StoreBackend = Depends(get_store),
 ):
     """
     Executes Python script in an isolated worker sandbox.
     Guarantees user code never runs inside the FastAPI process.
     """
+    if os.getenv("ENABLE_PYTHON_SANDBOX", "false").lower() != "true":
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Python execution is disabled. Not available in this setup.",
+        )
+
     if not payload.code or not payload.code.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -38,6 +47,7 @@ async def run_code(
         code=payload.code,
         input_dataset_id=payload.input_dataset_id,
         timeout_seconds=payload.timeout or 15,
+        store=store,
     )
     # Exclude un-serializable pandas DataFrame object from JSON HTTP response
     res_dict = dict(result)
@@ -58,6 +68,7 @@ async def stop_code(
 @router.get("/history", response_model=List[Dict[str, Any]])
 async def list_code_history(
     uid: str = Depends(get_current_user),
+    store: StoreBackend = Depends(get_store),
 ):
     """Returns past execution runs for the current user."""
-    return get_code_history(uid)
+    return get_code_history(uid, store)

@@ -5,7 +5,7 @@ import {
   listDatasets, uploadDataset, getDatasetPreview, deleteDataset,
 } from '../../services/api';
 import {
-  Upload, Search, Trash2, Eye, Edit2, AlertCircle,
+  Upload, Search, Trash2, Eye, AlertCircle,
   FileSpreadsheet, CheckCircle2, Loader2, X, AlertTriangle,
   RefreshCw, Table, Sparkles, Filter, Hash, HelpCircle,
 } from 'lucide-react';
@@ -16,6 +16,7 @@ export default function DatasetsView() {
 
   const [datasets, setDatasets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
 
   // Upload modal state
@@ -28,41 +29,20 @@ export default function DatasetsView() {
   const [previewDatasetId, setPreviewDatasetId] = useState(null);
   const [previewData, setPreviewData] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState(null);
 
   // Delete modal state
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  // Rename modal state
-  const [renameTarget, setRenameTarget] = useState(null);
-  const [renameValue, setRenameValue] = useState('');
-
   const fetchDatasets = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await listDatasets();
       setDatasets(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.warn('Failed to fetch datasets from API, checking local storage:', err);
-      // Fallback local datasets if any
-      const cached = localStorage.getItem('flowml_local_datasets');
-      setDatasets(cached ? JSON.parse(cached) : [
-        {
-          dataset_id: 'ds-iris-demo',
-          original_name: 'iris_flowers.csv',
-          file: 'iris_flowers.csv',
-          rows: 150,
-          columns: 5,
-          column_names: ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species'],
-        },
-        {
-          dataset_id: 'ds-housing-demo',
-          original_name: 'california_housing.csv',
-          file: 'california_housing.csv',
-          rows: 20640,
-          columns: 9,
-          column_names: ['MedInc', 'HouseAge', 'AveRooms', 'AveBedrms', 'Population', 'AveOccup', 'Latitude', 'Longitude', 'MedHouseVal'],
-        },
-      ]);
+      setDatasets([]);
+      setError(err.message || 'Unable to load datasets. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -100,33 +80,12 @@ export default function DatasetsView() {
     setPreviewDatasetId(ds.dataset_id);
     setPreviewLoading(true);
     setPreviewData(null);
+    setPreviewError(null);
     try {
       const data = await getDatasetPreview(ds.dataset_id);
       setPreviewData(data);
     } catch (e) {
-      console.warn('Dataset preview fallback:', e);
-      // Generate synthetic preview for demo fallback
-      setPreviewData({
-        dataset_id: ds.dataset_id,
-        name: ds.original_name || ds.file,
-        rows: ds.rows || 150,
-        columns: ds.columns || (ds.column_names?.length || 4),
-        total_missing: 0,
-        duplicate_count: 0,
-        columns_info: (ds.column_names || ['feat_1', 'feat_2', 'feat_3', 'target']).map((c) => ({
-          name: c,
-          type: c === 'target' || c === 'species' ? 'object' : 'float64',
-          missing: 0,
-          unique: 15,
-        })),
-        preview_rows: [
-          { feat_1: 5.1, feat_2: 3.5, feat_3: 1.4, target: 'setosa' },
-          { feat_1: 4.9, feat_2: 3.0, feat_3: 1.4, target: 'setosa' },
-          { feat_1: 4.7, feat_2: 3.2, feat_3: 1.3, target: 'setosa' },
-          { feat_1: 4.6, feat_2: 3.1, feat_3: 1.5, target: 'setosa' },
-          { feat_1: 5.0, feat_2: 3.6, feat_3: 1.4, target: 'setosa' },
-        ],
-      });
+      setPreviewError(e.message || 'Unable to preview this dataset.');
     } finally {
       setPreviewLoading(false);
     }
@@ -143,21 +102,6 @@ export default function DatasetsView() {
     } finally {
       setDeleteTarget(null);
     }
-  };
-
-  const handleRename = (e) => {
-    e.preventDefault();
-    if (!renameTarget || !renameValue.trim()) return;
-
-    setDatasets((prev) =>
-      prev.map((d) =>
-        d.dataset_id === renameTarget.dataset_id
-          ? { ...d, original_name: renameValue.trim(), file: renameValue.trim() }
-          : d
-      )
-    );
-    showToast('Dataset renamed successfully.', 'success');
-    setRenameTarget(null);
   };
 
   const filtered = datasets.filter((d) => {
@@ -229,7 +173,12 @@ export default function DatasetsView() {
       </div>
 
       {/* Dataset List / Table */}
-      {loading ? (
+      {error ? (
+        <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700 flex items-center justify-between gap-4">
+          <span>{error}</span>
+          <button onClick={fetchDatasets} className="font-semibold underline">Retry</button>
+        </div>
+      ) : loading ? (
         <div className="p-16 flex flex-col items-center justify-center gap-3 text-slate-400">
           <FlowMLIcon size={56} />
           <p className="text-xs font-medium">Scanning user storage for datasets…</p>
@@ -344,17 +293,6 @@ export default function DatasetsView() {
                           >
                             <Eye className="w-3.5 h-3.5" />
                             Preview
-                          </button>
-
-                          <button
-                            onClick={() => {
-                              setRenameTarget(ds);
-                              setRenameValue(name);
-                            }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
-                            title="Rename"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
                           </button>
 
                           <button
@@ -527,6 +465,19 @@ export default function DatasetsView() {
                     <FlowMLIcon size={56} />
                     <p className="text-xs text-slate-400">Loading dataset statistics and preview…</p>
                   </div>
+                ) : previewError ? (
+                  <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 flex items-center justify-between gap-4">
+                    <span>{previewError}</span>
+                    <button
+                      onClick={() => {
+                        const dataset = datasets.find((item) => item.dataset_id === previewDatasetId);
+                        if (dataset) handleOpenPreview(dataset);
+                      }}
+                      className="font-semibold underline"
+                    >
+                      Retry
+                    </button>
+                  </div>
                 ) : previewData ? (
                   <>
                     {/* Stat Cards */}
@@ -677,62 +628,6 @@ export default function DatasetsView() {
         )}
       </AnimatePresence>
 
-      {/* Rename Modal */}
-      <AnimatePresence>
-        {renameTarget && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md rounded-3xl p-6 shadow-2xl relative"
-              style={{
-                background: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-              }}
-            >
-              <h3 className="font-display font-semibold text-base mb-4" style={{ color: 'var(--color-text)' }}>
-                Rename Dataset Display
-              </h3>
-              <form onSubmit={handleRename} className="space-y-4">
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-wider block mb-1.5" style={{ color: 'var(--color-text-muted)' }}>
-                    Display Filename
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={renameValue}
-                    onChange={(e) => setRenameValue(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                    style={{
-                      background: 'var(--color-bg)',
-                      border: '1px solid var(--color-border)',
-                      color: 'var(--color-text)',
-                    }}
-                  />
-                </div>
-                <div className="flex items-center justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setRenameTarget(null)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 rounded-xl text-xs font-bold text-white"
-                    style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
