@@ -83,8 +83,8 @@ def test_memory_bomb_is_killed():
 
 
 def test_code_execution_api_endpoint(monkeypatch, client):
-    """Test POST /api/code/run works for legitimate data manipulation."""
-    monkeypatch.setenv("ENABLE_PYTHON_SANDBOX", "true")
+    """Test POST /api/code/run is enabled by default for legitimate data manipulation."""
+    monkeypatch.delenv("ENABLE_PYTHON_SANDBOX", raising=False)
     script = (
         "import numpy as np\n"
         "import pandas as pd\n"

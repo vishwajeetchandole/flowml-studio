@@ -185,6 +185,7 @@ Backend will be running at: `http://localhost:8000` (Interactive Swagger docs: `
 | `MAX_EXECUTION_MEMORY_MB` | `256` | Maximum allowed resident memory for Python worker sandboxes |
 | `MAX_UPLOAD_SIZE_MB` | `25` | Maximum upload size for datasets (returns HTTP 413 if exceeded) |
 | `DOCKER_WORKER_IMAGE` | `flowml-worker:latest` | Docker image tag for containerized Python execution |
+| `ENABLE_PYTHON_SANDBOX` | `true` | Enable Python Studio execution (`false` disables it) |
 
 ---
 
@@ -218,6 +219,8 @@ npm run dev
 ```
 
 Frontend will be running at: `http://localhost:5173`
+
+Python Studio is enabled by default. Set `VITE_ENABLE_PYTHON_SANDBOX=false` in the frontend environment to hide the editor and set `ENABLE_PYTHON_SANDBOX=false` in the backend environment to reject execution requests.
 
 ---
 

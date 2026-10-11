@@ -3,7 +3,7 @@ import { Shield, Cpu } from 'lucide-react';
 import PythonEditor from '../../components/code/PythonEditor';
 
 export default function CodeEditorView() {
-  const sandboxEnabled = import.meta.env.VITE_ENABLE_PYTHON_SANDBOX === 'true';
+  const sandboxEnabled = import.meta.env.VITE_ENABLE_PYTHON_SANDBOX !== 'false';
 
   return (
     <div className="space-y-6">

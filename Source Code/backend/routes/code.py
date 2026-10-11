@@ -30,7 +30,7 @@ async def run_code(
     Executes Python script in an isolated worker sandbox.
     Guarantees user code never runs inside the FastAPI process.
     """
-    if os.getenv("ENABLE_PYTHON_SANDBOX", "false").lower() != "true":
+    if os.getenv("ENABLE_PYTHON_SANDBOX", "true").lower() != "true":
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Python execution is disabled. Not available in this setup.",

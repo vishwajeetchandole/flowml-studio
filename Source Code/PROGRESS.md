@@ -192,7 +192,7 @@ This section supersedes earlier completion claims for any flow not reverified in
 - [x] Python execution and history now use the request-scoped storage dependency, avoiding a global-store mismatch in isolated/concurrent runs.
 - [x] DEV_AUTH no longer creates an automatic demo session; local project/workflow data is user-scoped.
 - [x] Dataset/model/run dashboards no longer populate fake demo entries after empty or failed API responses; retryable errors and true empty states are shown.
-- [x] Python code execution is opt-in and off by default; disabled state is explained in Python Studio.
+- [x] Python Studio is enabled by default and can be disabled with `ENABLE_PYTHON_SANDBOX=false` and `VITE_ENABLE_PYTHON_SANDBOX=false`.
 - [x] CORS is environment-configurable, logs require authenticated per-user streams, upload size is checked while streaming, and auth error details are sanitized.
 - [x] `/app/admin` is part of the protected dashboard route tree and its navigation item is available.
 - [x] Windows setup documentation and backend/frontend `.env.example` files added; real `.env` or Firebase credentials were not created or edited.
