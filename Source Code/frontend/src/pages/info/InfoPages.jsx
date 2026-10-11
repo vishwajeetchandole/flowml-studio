@@ -1,11 +1,13 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
+import SignOutButton from '../../components/auth/SignOutButton';
 import {
   ArrowLeft, Shield, FileText, Mail, BookOpen, Video,
   Cpu, CheckCircle2, Send, ExternalLink, HelpCircle, Layers,
   Sparkles, Lock, ArrowRight, Code2, Terminal, Database,
-  Copy, Check, Zap, Play, Sliders, Search, FileCode,
+  Copy, Check, Zap, Play, Sliders, Search, FileCode, LogOut,
 } from 'lucide-react';
 import Logo from '../../components/common/Logo';
 import FlowMLIcon from '../../components/FlowMLIcon';
@@ -58,6 +60,7 @@ function PageHeader({ title, subtitle, badge, icon: Icon }) {
 
 function PageLayout({ children, title, subtitle, badge, icon }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <div
@@ -80,19 +83,40 @@ function PageLayout({ children, title, subtitle, badge, icon }) {
           </Link>
 
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/signin')}
-              className="text-xs font-semibold transition-colors hover:text-violet-600"
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => navigate('/app')}
-              className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white shadow-sm transition-all"
-            >
-              Open App
-            </button>
+            {user ? (
+              <>
+                <button
+                  onClick={() => navigate('/app')}
+                  className="text-xs font-semibold transition-colors hover:text-violet-600"
+                  style={{ color: 'var(--color-text-muted)' }}
+                >
+                  Dashboard
+                </button>
+                <SignOutButton
+                  redirectTo="/"
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white shadow-sm transition-all flex items-center gap-1.5"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  Sign Out
+                </SignOutButton>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => navigate('/signin')}
+                  className="text-xs font-semibold transition-colors hover:text-violet-600"
+                  style={{ color: 'var(--color-text-muted)' }}
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => navigate('/app')}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white shadow-sm transition-all"
+                >
+                  Open App
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -1514,4 +1538,3 @@ export function FeaturesPage() {
     </PageLayout>
   );
 }
-

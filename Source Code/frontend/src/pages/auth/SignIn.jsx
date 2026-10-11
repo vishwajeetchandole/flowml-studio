@@ -7,7 +7,6 @@ import {
   Sparkles, ShieldCheck,
 } from 'lucide-react';
 
-import Logo from '../../components/common/Logo';
 import FlowMLIcon from '../../components/FlowMLIcon';
 
 export default function SignIn() {
@@ -41,34 +40,11 @@ export default function SignIn() {
   };
 
   return (
-    <div
-      className="min-h-screen w-full flex items-center justify-center p-6 relative overflow-hidden font-sans"
-      style={{ background: 'var(--color-bg)' }}
-    >
-      {/* Background glow effects */}
-      <div
-        className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20 pointer-events-none"
-        style={{ background: '#7C3AED' }}
-      />
-      <div
-        className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl opacity-20 pointer-events-none"
-        style={{ background: '#4F46E5' }}
-      />
-
-      {/* Top navbar controls */}
-      <div className="absolute top-6 inset-x-6 max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5">
-          <FlowMLIcon size={44} />
-          <Logo size="text-2xl" />
-        </Link>
-      </div>
-
-      {/* Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md rounded-3xl p-8 relative shadow-xl z-10"
+        className="max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-3xl p-6 shadow-xl sm:p-8"
         style={{
           background: 'var(--color-surface)',
           border: '1px solid var(--color-border)',
@@ -179,6 +155,5 @@ export default function SignIn() {
           </Link>
         </div>
       </motion.div>
-    </div>
   );
 }

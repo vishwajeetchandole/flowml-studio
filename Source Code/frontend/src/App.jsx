@@ -9,7 +9,7 @@ import FlowMLIcon from './components/FlowMLIcon';
 import Logo from './components/common/Logo';
 import {
   Cpu, Play, RotateCcw, Save, Download,
-  CheckCircle2, AlertCircle, Loader2, Zap, BarChart3, X,
+  CheckCircle2, AlertCircle, Loader2, Zap, BarChart3, X, LogOut,
   LayoutTemplate, Undo2, Redo2, Square, ArrowLeft, ShieldAlert,
   Plus, Database, Layers, Code, Settings, BookOpen, FileCode,
   HardDrive, RefreshCw, Sparkles, ChevronDown, HelpCircle,
@@ -20,6 +20,7 @@ import {
   trainModels, runPredictions, getVisualizations,
   getProjects, saveProject, checkHealth, workflowStorageKey,
 } from './services/api';
+import SignOutButton from './components/auth/SignOutButton';
 
 /* ─── Node type groupings ────────────────────────────────────────────────────── */
 const UPLOAD_TYPES     = ['upload', 'loadCsv', 'preview'];
@@ -696,6 +697,13 @@ function TopBar({
             <ArrowLeft className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Dashboard</span>
           </button>
+          <SignOutButton
+            className="flex items-center gap-1 px-2.5 py-1 rounded text-xs text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors border border-slate-200 cursor-pointer"
+            title="Sign Out"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Sign Out</span>
+          </SignOutButton>
         </div>
       </div>
 

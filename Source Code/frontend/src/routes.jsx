@@ -9,9 +9,6 @@ import LandingPage from './pages/LandingPage.jsx';
 import App from './App.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 
-// Auth Pages
-import SignIn from './pages/auth/SignIn.jsx';
-import SignUp from './pages/auth/SignUp.jsx';
 import ForgotPassword from './pages/auth/ForgotPassword.jsx';
 import VerifyEmail from './pages/auth/VerifyEmail.jsx';
 
@@ -51,8 +48,8 @@ export default function AppRoutes() {
       <Route path="/terms" element={<TermsPage />} />
 
       {/* ─── Authentication ────────────────────────────────────────────────── */}
-      <Route path="/signin" element={<SignIn />} />
-      <Route path="/signup" element={<SignUp />} />
+      <Route path="/signin" element={<LandingPage authMode="signin" />} />
+      <Route path="/signup" element={<LandingPage authMode="signup" />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
 

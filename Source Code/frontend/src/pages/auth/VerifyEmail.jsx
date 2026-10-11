@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import SignOutButton from '../../components/auth/SignOutButton';
 import {
   MailCheck, ArrowRight, Loader2, CheckCircle2,
   RefreshCw, LogOut, Sparkles,
 } from 'lucide-react';
 
 export default function VerifyEmail() {
-  const { user, resendVerification, signOut } = useAuth();
+  const { user, resendVerification } = useAuth();
   const navigate = useNavigate();
 
   const [sending, setSending] = useState(false);
@@ -102,13 +103,13 @@ export default function VerifyEmail() {
         </div>
 
         <div className="mt-6 pt-5 border-t flex items-center justify-center" style={{ borderColor: 'var(--color-border)' }}>
-          <button
-            onClick={signOut}
+          <SignOutButton
+            redirectTo="/"
             className="text-xs font-medium text-slate-400 hover:text-red-400 flex items-center gap-1.5 transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" />
             Sign out and switch account
-          </button>
+          </SignOutButton>
         </div>
       </motion.div>
     </div>

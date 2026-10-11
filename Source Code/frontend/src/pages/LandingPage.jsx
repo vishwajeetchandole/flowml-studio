@@ -1,11 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
+import SignOutButton from '../components/auth/SignOutButton';
+import AuthDialog from '../components/auth/AuthDialog';
+import SignIn from './auth/SignIn';
+import SignUp from './auth/SignUp';
 import {
   ArrowRight, Sparkles, Check, Star, Play, Database,
   Sliders, Brain, Award, Shield, Zap, Cloud, Code2,
   Share2, ArrowUpRight, CheckCircle2, ChevronRight,
-  TrendingUp, Activity, Terminal, Lock, FileSpreadsheet,
+  TrendingUp, Activity, Terminal, Lock, FileSpreadsheet, LogOut,
   Globe, BarChart3, Layers, Users, RefreshCw
 } from 'lucide-react';
 import Logo from '../components/common/Logo';
@@ -45,6 +50,7 @@ function Reveal({ children, delay = 0, y = 20, className = '' }) {
 /* ─── TOP NAVIGATION ─────────────────────────────────────────────────────────── */
 function Navbar({ onLaunch }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -103,18 +109,38 @@ function Navbar({ onLaunch }) {
 
         {/* Action Buttons */}
         <div className="hidden md:flex items-center gap-4">
-          <button
-            onClick={() => navigate('/signin')}
-            className="text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors px-3 py-2 cursor-pointer"
-          >
-            Sign In
-          </button>
-          <button
-            onClick={onLaunch}
-            className="px-5 py-2.5 rounded-full text-xs font-semibold bg-slate-950 hover:bg-slate-800 text-white transition-all shadow-sm hover:shadow cursor-pointer"
-          >
-            Get Started
-          </button>
+          {user ? (
+            <>
+              <button
+                onClick={() => navigate('/app/projects')}
+                className="text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors px-3 py-2 cursor-pointer"
+              >
+                Dashboard
+              </button>
+              <SignOutButton
+                redirectTo="/"
+                className="px-5 py-2.5 rounded-full text-xs font-semibold bg-slate-950 hover:bg-slate-800 text-white transition-all shadow-sm hover:shadow cursor-pointer flex items-center gap-2"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                Sign Out
+              </SignOutButton>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => navigate('/signin')}
+                className="text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors px-3 py-2 cursor-pointer"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={onLaunch}
+                className="px-5 py-2.5 rounded-full text-xs font-semibold bg-slate-950 hover:bg-slate-800 text-white transition-all shadow-sm hover:shadow cursor-pointer"
+              >
+                Get Started
+              </button>
+            </>
+          )}
         </div>
 
         {/* Mobile Hamburger Toggle */}
@@ -154,24 +180,48 @@ function Navbar({ onLaunch }) {
                 </button>
               ))}
               <div className="pt-4 border-t border-slate-100 flex flex-col gap-2.5">
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    navigate('/signin');
-                  }}
-                  className="w-full py-2.5 text-center text-sm font-semibold text-slate-700 bg-slate-100 rounded-xl"
-                >
-                  Sign In
-                </button>
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    onLaunch();
-                  }}
-                  className="w-full py-2.5 text-center text-sm font-semibold text-white bg-slate-900 rounded-xl"
-                >
-                  Get Started
-                </button>
+                {user ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigate('/app/projects');
+                      }}
+                      className="w-full py-2.5 text-center text-sm font-semibold text-slate-700 bg-slate-100 rounded-xl"
+                    >
+                      Dashboard
+                    </button>
+                    <SignOutButton
+                      redirectTo="/"
+                      onSignedOut={() => setMobileMenuOpen(false)}
+                      className="w-full py-2.5 text-center text-sm font-semibold text-white bg-slate-900 rounded-xl flex items-center justify-center gap-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </SignOutButton>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigate('/signin');
+                      }}
+                      className="w-full py-2.5 text-center text-sm font-semibold text-slate-700 bg-slate-100 rounded-xl"
+                    >
+                      Sign In
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        onLaunch();
+                      }}
+                      className="w-full py-2.5 text-center text-sm font-semibold text-white bg-slate-900 rounded-xl"
+                    >
+                      Get Started
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>
@@ -1041,6 +1091,7 @@ function BottomCtaSection({ onLaunch }) {
 /* ─── DARK MODERN SAAS FOOTER ────────────────────────────────────────────────── */
 function Footer() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <footer className="bg-[#0A0D14] text-slate-400 py-16 px-6 text-left border-t border-slate-900">
@@ -1083,7 +1134,14 @@ function Footer() {
               <li><button onClick={() => navigate('/features')} className="hover:text-white transition-colors cursor-pointer">Features</button></li>
               <li><button onClick={() => navigate('/app/projects')} className="hover:text-white transition-colors cursor-pointer">Projects</button></li>
               <li><button onClick={() => navigate('/app/templates')} className="hover:text-white transition-colors cursor-pointer">Blueprints</button></li>
-              <li><button onClick={() => navigate('/signin')} className="hover:text-white transition-colors cursor-pointer">Sign In</button></li>
+              {user ? (
+                <>
+                  <li><button onClick={() => navigate('/app/projects')} className="hover:text-white transition-colors cursor-pointer">Dashboard</button></li>
+                  <li><SignOutButton redirectTo="/" className="hover:text-white transition-colors cursor-pointer">Sign Out</SignOutButton></li>
+                </>
+              ) : (
+                <li><button onClick={() => navigate('/signin')} className="hover:text-white transition-colors cursor-pointer">Sign In</button></li>
+              )}
             </ul>
           </div>
 
@@ -1115,9 +1173,15 @@ function Footer() {
 }
 
 /* ─── MAIN LANDING PAGE COMPONENT ────────────────────────────────────────────── */
-export default function LandingPage() {
+export default function LandingPage({ authMode }) {
   const navigate = useNavigate();
   const launch = () => navigate('/studio');
+  const closeAuthDialog = useCallback(() => navigate('/', { replace: true }), [navigate]);
+  const authPage = authMode === 'signin'
+    ? { label: 'Sign in to FlowML', content: <SignIn /> }
+    : authMode === 'signup'
+      ? { label: 'Create a FlowML account', content: <SignUp /> }
+      : null;
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-violet-500 selection:text-white">
@@ -1191,6 +1255,14 @@ export default function LandingPage() {
 
       {/* Dark Modern Footer */}
       <Footer />
+
+      <AuthDialog
+        open={Boolean(authPage)}
+        label={authPage?.label}
+        onClose={closeAuthDialog}
+      >
+        {authPage?.content}
+      </AuthDialog>
     </div>
   );
 }

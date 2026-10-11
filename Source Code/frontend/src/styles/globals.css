@@ -85,6 +85,8 @@
 ::-webkit-scrollbar-track       { background: transparent; }
 ::-webkit-scrollbar-thumb       { background: var(--color-border); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+.auth-signup-card               { scrollbar-width: none; -ms-overflow-style: none; }
+.auth-signup-card::-webkit-scrollbar { display: none; }
 
 /* ─── Shared FlowML Type Scale Components ───────────────────────────────────── */
 @layer components {

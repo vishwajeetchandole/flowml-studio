@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import Toast from '../../components/common/Toast';
 import Logo from '../../components/common/Logo';
 import FlowMLIcon from '../../components/FlowMLIcon';
+import SignOutButton from '../../components/auth/SignOutButton';
 import {
   FolderKanban, Database, Layers, PlayCircle, LayoutTemplate,
   Settings, LogOut, Plus, Sparkles, ExternalLink,
@@ -11,7 +12,7 @@ import {
 } from 'lucide-react';
 
 export default function DashboardLayout() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -111,16 +112,14 @@ export default function DashboardLayout() {
                 {user?.email || 'dev@flowml.studio'}
               </div>
             </div>
-            <button
-              onClick={() => {
-                signOut();
-                navigate('/signin');
-              }}
+            <SignOutButton
               title="Sign Out"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+              aria-label="Sign Out"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors flex items-center gap-1.5"
             >
               <LogOut className="w-3.5 h-3.5" />
-            </button>
+              <span className="text-[10px] font-semibold">Sign Out</span>
+            </SignOutButton>
           </div>
         </div>
       </aside>

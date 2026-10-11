@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useOutletContext, useNavigate } from 'react-router-dom';
+import SignOutButton from '../../components/auth/SignOutButton';
+import { useOutletContext } from 'react-router-dom';
 import {
   Settings, User, Shield, Key, LogOut,
   CheckCircle2, AlertCircle, Sparkles, Terminal, Copy, Check,
 } from 'lucide-react';
 
 export default function SettingsView() {
-  const { user, signOut, isDevMode } = useAuth();
+  const { user, isDevMode } = useAuth();
   const { showToast } = useOutletContext();
-  const navigate = useNavigate();
 
   const [copiedKey, setCopiedKey] = useState(false);
   const [autoSave, setAutoSave] = useState('2');
@@ -89,16 +89,12 @@ export default function SettingsView() {
             </div>
           </div>
 
-          <button
-            onClick={() => {
-              signOut();
-              navigate('/signin');
-            }}
+          <SignOutButton
             className="px-4 py-2 rounded-xl text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 flex items-center gap-1.5 transition-colors self-start sm:self-center"
           >
             <LogOut className="w-3.5 h-3.5" />
             Sign Out
-          </button>
+          </SignOutButton>
         </div>
       </div>
 
