@@ -8,7 +8,7 @@ export default {
     extend: {
       fontFamily: {
         display: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'],
-        logo: ['Audiowide', 'cursive'],
+        logo: ['"Audiowide"', 'cursive'],
         sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
       },
