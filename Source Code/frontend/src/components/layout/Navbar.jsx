@@ -1,40 +1,27 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
-  Play, Save, Download, Terminal, Cpu,
+  Play, Save, Download, Terminal,
   Loader2, CheckCircle2, AlertCircle, Zap,
   GitBranch, LayoutGrid, Settings, Bell,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import Logo from '../common/Logo';
+import FlowMLIcon from '../FlowMLIcon';
 
 /* ─── Brand logo mark ────────────────────────────────────────────────────────── */
-const BrandMark = () => {
-  const navigate = useNavigate();
-  return (
-    <div
-      onClick={() => navigate('/')}
-      className="flex items-center gap-3 select-none cursor-pointer group"
-      title="Go to Home"
-    >
-      <div className="relative">
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg bg-violet-600 group-hover:scale-105 transition-transform">
-          <Cpu className="w-5 h-5 text-white" />
-        </div>
-        {/* animated glow ring */}
-        <div className="absolute inset-0 rounded-xl animate-pulse"
-          style={{ boxShadow: '0 0 16px rgba(124,58,237,0.5)', opacity: 0.6 }} />
-      </div>
-      <div>
-        <Logo size="text-xl" />
-        <div className="text-[9px] font-sans font-semibold uppercase tracking-widest text-[#6B6585]">
-          Studio
-        </div>
+const BrandMark = () => (
+  <Link to="/" className="flex items-center gap-3 select-none" title="Go to Home">
+    <FlowMLIcon size={44} />
+    <div>
+      <Logo size="text-2xl" />
+      <div className="text-[9px] font-sans font-semibold uppercase tracking-widest text-[#6B6585]">
+        Studio
       </div>
     </div>
-  );
-};
+  </Link>
+);
 
 /* ─── Run Pipeline button ─────────────────────────────────────────────────────── */
 const RunBtn = ({ isRunning, pipelineStatus, onRunPipeline }) => {

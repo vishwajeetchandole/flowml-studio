@@ -5,10 +5,11 @@ import {
   getProjects, saveProject, deleteProject, duplicateProject,
 } from '../../services/api';
 import {
-  FolderKanban, Plus, Search, MoreVertical, Edit2, Copy, Trash2,
+  Plus, Search, MoreVertical, Edit2, Copy, Trash2,
   ExternalLink, Calendar, Clock, Layers, Sparkles, AlertTriangle, X,
   CheckCircle2, ArrowRight,
 } from 'lucide-react';
+import FlowMLIcon from '../../components/FlowMLIcon';
 
 export default function ProjectsView({ initialCreateOpen = false }) {
   const { showToast } = useOutletContext();
@@ -149,12 +150,7 @@ export default function ProjectsView({ initialCreateOpen = false }) {
             background: 'var(--color-surface)',
           }}
         >
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: 'rgba(124, 58, 237, 0.1)', color: '#7C3AED' }}
-          >
-            <FolderKanban className="w-7 h-7" />
-          </div>
+          <FlowMLIcon size={56} className="mb-4" />
           <h3 className="font-display font-bold text-base mb-1" style={{ color: 'var(--color-text)' }}>
             No projects found
           </h3>

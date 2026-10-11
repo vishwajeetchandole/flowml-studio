@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import {
-  Cpu, MailCheck, ArrowRight, Loader2, CheckCircle2,
+  MailCheck, ArrowRight, Loader2, CheckCircle2,
   RefreshCw, LogOut, Sparkles,
 } from 'lucide-react';
 

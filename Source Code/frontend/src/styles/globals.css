@@ -5,6 +5,7 @@
   --font-display: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
   --font-sans: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-logo: Audiowide, cursive;
 
   /* FlowML Typography Theme Colors */
   --color-flow-dark:   #1F1B2E;
@@ -31,6 +32,10 @@
   --color-border:     #e2e8f0;
   --color-text:       #1F1B2E;
   --color-text-muted: #6B6585;
+}
+
+.font-logo {
+  font-weight: 400;
 }
 
 /* ─── Light Mode Defaults ────────────────────────────────────────────────────── */

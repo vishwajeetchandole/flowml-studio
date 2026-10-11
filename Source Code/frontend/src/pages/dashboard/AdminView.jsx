@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Users, Activity, Cpu, HardDrive,
@@ -15,6 +15,8 @@ import {
   adminUpdateLimits,
   adminGetAuditLogs,
 } from '../../services/api';
+import Logo from '../../components/common/Logo';
+import FlowMLIcon from '../../components/FlowMLIcon';
 
 /* ─── Shared card wrapper ───────────────────────────────────────────────── */
 function Card({ className = '', children }) {
@@ -160,16 +162,10 @@ export default function AdminView() {
           </div>
         </div>
 
-        <div
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 cursor-pointer group"
-          title="FlowML Home"
-        >
-          <div className="w-6 h-6 rounded-md bg-violet-600 flex items-center justify-center text-white group-hover:scale-105 transition-transform">
-            <Cpu className="w-3.5 h-3.5 text-white" />
-          </div>
-          <span className="font-display font-bold text-xs text-slate-800 group-hover:text-violet-600 transition-colors">FlowML</span>
-        </div>
+        <Link to="/" className="flex items-center gap-2" title="FlowML Home">
+          <FlowMLIcon size={40} />
+          <Logo size="text-sm" />
+        </Link>
       </header>
 
       {/* Page Content */}

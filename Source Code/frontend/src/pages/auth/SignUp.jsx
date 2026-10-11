@@ -3,10 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import {
-  Cpu, Mail, Lock, User, ArrowRight, Loader2, AlertCircle,
+  Mail, Lock, User, ArrowRight, Loader2, AlertCircle,
   Sparkles, Check,
 } from 'lucide-react';
 import Logo from '../../components/common/Logo';
+import FlowMLIcon from '../../components/FlowMLIcon';
 
 export default function SignUp() {
   const { signUp } = useAuth();
@@ -68,13 +69,8 @@ export default function SignUp() {
       {/* Top navbar controls */}
       <div className="absolute top-6 inset-x-6 max-w-7xl mx-auto flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md"
-            style={{ background: 'linear-gradient(135deg, #7C3AED, #4F46E5)' }}
-          >
-            <Cpu className="w-4 h-4 text-white" />
-          </div>
-          <Logo size="text-xl" />
+          <FlowMLIcon size={44} />
+          <Logo size="text-2xl" />
         </Link>
       </div>
 
@@ -89,6 +85,9 @@ export default function SignUp() {
         }}
       >
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <FlowMLIcon size={56} />
+          </div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase mb-3 bg-purple-50 text-purple-700 border border-purple-200">
             <Sparkles className="w-3.5 h-3.5" />
             Get Started

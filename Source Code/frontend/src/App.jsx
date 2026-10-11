@@ -1,10 +1,12 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import Workflow from './pages/Workflow';
 import Sidebar from './components/layout/Sidebar';
 import PipelinePanel from './components/layout/PipelinePanel';
 import ResultsOverlay from './components/layout/ResultsOverlay';
+import FlowMLIcon from './components/FlowMLIcon';
+import Logo from './components/common/Logo';
 import {
   Cpu, Play, RotateCcw, Save, Download,
   CheckCircle2, AlertCircle, Loader2, Zap, BarChart3, X,
@@ -562,18 +564,12 @@ function TopBar({
         {/* Left: Brand, Document Title & Menubar */}
         <div className="flex items-center gap-3">
           {/* FlowML Logo (clicking renders to home page) */}
-          <div
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 cursor-pointer group"
-            title="FlowML Home"
-          >
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br from-violet-600 to-indigo-600 shadow-xs group-hover:scale-105 transition-transform">
-              <Cpu className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-display font-extrabold text-sm tracking-tight text-slate-900 hidden sm:inline">
-              Flow<span className="text-violet-600">ML</span>
+          <Link to="/" className="flex items-center gap-2" title="FlowML Home">
+            <FlowMLIcon size={40} />
+            <span className="hidden sm:inline">
+              <Logo size="text-base" />
             </span>
-          </div>
+          </Link>
 
           <div className="h-4 w-[1px] bg-slate-200" />
 

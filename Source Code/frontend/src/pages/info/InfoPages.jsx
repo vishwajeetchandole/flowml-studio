@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, Shield, FileText, Mail, BookOpen, Video,
@@ -7,6 +7,8 @@ import {
   Sparkles, Lock, ArrowRight, Code2, Terminal, Database,
   Copy, Check, Zap, Play, Sliders, Search, FileCode,
 } from 'lucide-react';
+import Logo from '../../components/common/Logo';
+import FlowMLIcon from '../../components/FlowMLIcon';
 
 function PageHeader({ title, subtitle, badge, icon: Icon }) {
   const navigate = useNavigate();
@@ -72,15 +74,10 @@ function PageLayout({ children, title, subtitle, badge, icon }) {
         }}
       >
         <div className="max-w-5xl mx-auto px-6 w-full flex items-center justify-between">
-          <div
-            onClick={() => navigate('/')}
-            className="flex items-center gap-3 cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-md" style={{ background: '#7c3aed' }}>
-              <Cpu className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-base tracking-tight" style={{ color: 'var(--color-text)' }}>FlowML Studio</span>
-          </div>
+          <Link to="/" className="flex items-center gap-3">
+            <FlowMLIcon size={44} />
+            <Logo size="text-lg" />
+          </Link>
 
           <div className="flex items-center gap-4">
             <button

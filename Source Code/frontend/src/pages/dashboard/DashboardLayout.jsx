@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { checkHealth } from '../../services/api';
 import Toast from '../../components/common/Toast';
 import Logo from '../../components/common/Logo';
+import FlowMLIcon from '../../components/FlowMLIcon';
 import {
   FolderKanban, Database, Layers, PlayCircle, LayoutTemplate,
-  Settings, LogOut, Cpu, Plus, Sparkles, ExternalLink,
+  Settings, LogOut, Plus, Sparkles, ExternalLink,
   ChevronRight, Activity, Bell, Search, Terminal, Code, ShieldCheck,
 } from 'lucide-react';
 
@@ -54,24 +55,15 @@ export default function DashboardLayout() {
       >
         {/* Brand */}
         <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: 'var(--color-border)' }}>
-          <div
-            className="flex items-center gap-2.5 cursor-pointer"
-            onClick={() => navigate('/')}
-            title="Go to Home"
-          >
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md"
-              style={{ background: 'linear-gradient(135deg, #7C3AED, #4F46E5)' }}
-            >
-              <Cpu className="w-5 h-5 text-white" />
-            </div>
+          <Link to="/" className="flex items-center gap-2.5" title="Go to Home">
+            <FlowMLIcon size={44} />
             <div>
-              <Logo size="text-lg" />
+              <Logo size="text-xl" />
               <div className="text-[10px] font-mono tracking-wider text-slate-400">
                 Studio Workspace
               </div>
             </div>
-          </div>
+          </Link>
 
           {/* Backend Status indicator */}
           <div

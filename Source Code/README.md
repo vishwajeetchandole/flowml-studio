@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="frontend/public/flowml-icon.svg" width="80" height="80" alt="FlowML" />
+</p>
+
 # 🚀 FlowML
 
 # AI-Powered Visual Machine Learning Pipeline Builder

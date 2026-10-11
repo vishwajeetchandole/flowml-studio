@@ -170,3 +170,12 @@
 - [x] **Project-Wide Theme Unification**:
   - Unified color system to FlowML Violet (`#7C3AED` / `violet-600`) and pure light surfaces across `DashboardLayout`, all dashboard views (`ProjectsView`, `DatasetsView`, `ModelsView`, `RunsView`, `TemplatesView`, `CodeEditorView`, `AdminView`, `SettingsView`), Info & Docs pages, Studio canvas, and Auth views.
   - Production build passes with 0 errors.
+
+---
+
+## Brand Icon ✓
+- [x] Added `frontend/src/components/FlowMLIcon.jsx` (animated inner chain only; no hover/click/float effects).
+- [x] Added `frontend/public/flowml-icon.svg` and wired `index.html` favicon to `/flowml-icon.svg`.
+- [x] Navbar, app shell, auth pages, landing hero/footer, loaders, and empty states use the new icon; old Cpu-in-box logo marks removed.
+- [x] FlowML wordmark uses Audiowide only (`--font-logo` / `font-logo` in `Logo.jsx`); headings stay Plus Jakarta Sans.
+- [x] Brand wordmark uses Audiowide at regular weight (400); navbar/auth icon sizes bumped; landing hero no longer shows the centered icon above the heading.

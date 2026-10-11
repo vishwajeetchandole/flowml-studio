@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import {
   ArrowRight, Sparkles, Check, Star, Play, Database,
   Sliders, Brain, Award, Shield, Zap, Cloud, Code2,
   Share2, ArrowUpRight, CheckCircle2, ChevronRight,
   TrendingUp, Activity, Terminal, Lock, FileSpreadsheet,
-  Globe, BarChart3, Layers, Users, RefreshCw, Cpu
+  Globe, BarChart3, Layers, Users, RefreshCw
 } from 'lucide-react';
 import Logo from '../components/common/Logo';
+import FlowMLIcon from '../components/FlowMLIcon';
 
 /* ─── Hero Mount Animation Wrapper ───────────────────────────────────────────── */
 function HeroReveal({ children, delay = 0, y = 16, className = '' }) {
@@ -82,18 +83,10 @@ function Navbar({ onLaunch }) {
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         {/* Brand Logo */}
-        <div
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2.5 cursor-pointer group"
-          title="FlowML Home"
-        >
-          <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center text-white shadow-md shadow-violet-600/20 group-hover:scale-105 transition-transform">
-            <Cpu className="w-5 h-5 text-white" />
-          </div>
-          <span className="font-display font-extrabold text-xl text-slate-900 tracking-tight">
-            Flow<span className="text-violet-600">ML</span>
-          </span>
-        </div>
+        <Link to="/" className="flex items-center gap-2.5" title="FlowML Home">
+          <FlowMLIcon size={44} />
+          <Logo size="text-2xl" />
+        </Link>
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-8">
@@ -717,9 +710,7 @@ function IntegrationsSection({ onLaunch }) {
               </div>
 
               {/* Central flow connector */}
-              <div className="w-12 h-12 rounded-2xl bg-violet-600 text-white flex items-center justify-center shadow-lg shadow-violet-500/30">
-                <Cpu className="w-6 h-6 text-white" />
-              </div>
+              <FlowMLIcon size={48} />
               <span className="text-xs font-bold text-slate-700 mt-2">FlowML Engine Core</span>
             </div>
           </Reveal>
@@ -1051,8 +1042,8 @@ function BottomCtaSection({ onLaunch }) {
               <span className="text-[11px] font-mono text-slate-400 ml-2">flowml-studio://canvas</span>
             </div>
             <div className="h-64 sm:h-80 bg-gradient-to-tr from-slate-50 via-violet-50/30 to-slate-100 rounded-t-2xl p-6 flex flex-col items-center justify-center text-center">
-              <div className="w-16 h-16 rounded-2xl bg-violet-600 text-white flex items-center justify-center shadow-lg shadow-violet-500/30 mb-4">
-                <Cpu className="w-8 h-8 text-white" />
+              <div className="mb-4">
+                <FlowMLIcon size={64} />
               </div>
               <h3 className="font-display font-bold text-xl text-slate-900 mb-2">FlowML Studio Canvas</h3>
               <p className="text-xs text-slate-500 max-w-md">
@@ -1076,16 +1067,10 @@ function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 pb-12 border-b border-white/10">
           {/* Brand info */}
           <div className="col-span-2">
-            <div
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2.5 mb-4 cursor-pointer group"
-              title="FlowML Home"
-            >
-              <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center text-white group-hover:scale-105 transition-transform">
-                <Cpu className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-display font-extrabold text-lg text-white tracking-tight group-hover:text-violet-300 transition-colors">FlowML</span>
-            </div>
+            <Link to="/" className="flex items-center gap-2.5 mb-4" title="FlowML Home">
+              <FlowMLIcon size={44} />
+              <span className="font-logo text-xl text-white tracking-[-0.03em]">FlowML</span>
+            </Link>
             <p className="text-xs text-slate-400 max-w-xs leading-relaxed mb-6">
               The next-generation visual pipeline canvas for machine learning development, automated benchmarking, and transparent explainable AI.
             </p>

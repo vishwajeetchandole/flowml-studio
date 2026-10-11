@@ -5,10 +5,11 @@ import {
   listDatasets, uploadDataset, getDatasetPreview, deleteDataset,
 } from '../../services/api';
 import {
-  Database, Upload, Search, Trash2, Eye, Edit2, AlertCircle,
+  Upload, Search, Trash2, Eye, Edit2, AlertCircle,
   FileSpreadsheet, CheckCircle2, Loader2, X, AlertTriangle,
   RefreshCw, Table, Sparkles, Filter, Hash, HelpCircle,
 } from 'lucide-react';
+import FlowMLIcon from '../../components/FlowMLIcon';
 
 export default function DatasetsView() {
   const { showToast } = useOutletContext();
@@ -230,7 +231,7 @@ export default function DatasetsView() {
       {/* Dataset List / Table */}
       {loading ? (
         <div className="p-16 flex flex-col items-center justify-center gap-3 text-slate-400">
-          <Loader2 className="w-7 h-7 animate-spin text-primary" />
+          <FlowMLIcon size={56} />
           <p className="text-xs font-medium">Scanning user storage for datasets…</p>
         </div>
       ) : filtered.length === 0 ? (
@@ -241,12 +242,7 @@ export default function DatasetsView() {
             background: 'var(--color-surface)',
           }}
         >
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}
-          >
-            <Database className="w-7 h-7" />
-          </div>
+          <FlowMLIcon size={56} className="mb-4" />
           <h3 className="font-display font-semibold text-base mb-1" style={{ color: 'var(--color-text)' }}>
             No datasets uploaded
           </h3>
@@ -528,7 +524,7 @@ export default function DatasetsView() {
               <div className="flex-1 overflow-y-auto py-5 space-y-5">
                 {previewLoading ? (
                   <div className="p-16 flex flex-col items-center justify-center gap-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <FlowMLIcon size={56} />
                     <p className="text-xs text-slate-400">Loading dataset statistics and preview…</p>
                   </div>
                 ) : previewData ? (

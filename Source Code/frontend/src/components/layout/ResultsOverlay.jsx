@@ -19,6 +19,7 @@ import {
   Database, Zap, Download, Search, ChevronLeft, ChevronRight,
   Table, Image, Activity, GitCompare, FlaskConical, FileText,
 } from 'lucide-react';
+import FlowMLIcon from '../FlowMLIcon';
 
 /* ─── Step status config ─────────────────────────────────────────────────────── */
 const STEP_CFG = {
@@ -59,7 +60,9 @@ function ProgressView({ steps, pipelineState }) {
     <div className="max-w-2xl mx-auto w-full space-y-4">
       {steps.length === 0 && (
         <div className="text-center py-16" style={{ color: 'var(--color-text-muted)' }}>
-          <Loader2 className="w-10 h-10 mx-auto mb-3 animate-spin text-primary" />
+          <div className="flex justify-center mb-3">
+            <FlowMLIcon size={56} />
+          </div>
           <p className="text-lg font-semibold">Starting pipeline…</p>
         </div>
       )}

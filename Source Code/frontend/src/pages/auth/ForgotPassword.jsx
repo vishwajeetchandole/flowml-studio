@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import {
-  Cpu, Mail, ArrowRight, Loader2, AlertCircle,
-  CheckCircle2, ArrowLeft, KeyRound,
+  Mail, ArrowRight, Loader2, AlertCircle,
+  CheckCircle2, ArrowLeft,
 } from 'lucide-react';
 import Logo from '../../components/common/Logo';
+import FlowMLIcon from '../../components/FlowMLIcon';
 
 export default function ForgotPassword() {
   const { resetPassword } = useAuth();
@@ -46,13 +47,8 @@ export default function ForgotPassword() {
 
       <div className="absolute top-6 inset-x-6 max-w-7xl mx-auto flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md"
-            style={{ background: 'linear-gradient(135deg, #7C3AED, #4F46E5)' }}
-          >
-            <Cpu className="w-4 h-4 text-white" />
-          </div>
-          <Logo size="text-xl" />
+          <FlowMLIcon size={44} />
+          <Logo size="text-2xl" />
         </Link>
       </div>
 
@@ -67,10 +63,8 @@ export default function ForgotPassword() {
         }}
       >
         <div className="text-center mb-8">
-          <div
-            className="w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center bg-purple-50 text-purple-700 border border-purple-200"
-          >
-            <KeyRound className="w-6 h-6" />
+          <div className="flex justify-center mb-4">
+            <FlowMLIcon size={56} />
           </div>
           <h1 className="font-display text-2xl font-bold tracking-tight mb-2 text-[#1F1B2E]">
             Reset your password

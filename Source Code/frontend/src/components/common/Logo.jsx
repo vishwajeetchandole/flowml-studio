@@ -1,34 +1,18 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 
 /**
- * Reusable FlowML Live-Text Wordmark
- * Clicking navigates to '/' (home page) across the entire application by default.
+ * Reusable FlowML live-text wordmark.
+ * Pair with FlowMLIcon and wrap both in a Link to "/".
  */
 export default function Logo({
   className = '',
   size = 'text-2xl',
   showBadge = false,
   badgeText = 'v2.4',
-  onClick,
 }) {
-  const navigate = useNavigate();
-
-  const handleClick = (e) => {
-    if (onClick) {
-      onClick(e);
-    } else {
-      navigate('/');
-    }
-  };
-
   return (
-    <div
-      onClick={handleClick}
-      className={`inline-flex items-center gap-2 select-none cursor-pointer group ${className}`}
-      title="Go to Home"
-    >
-      <span className={`font-display font-extrabold tracking-[-0.03em] ${size} leading-none text-[#1F1B2E] group-hover:opacity-90 transition-opacity`}>
+    <span className={`inline-flex items-center gap-2 select-none ${className}`}>
+      <span className={`font-logo font-normal tracking-[-0.03em] ${size} leading-none text-[#1F1B2E]`}>
         Flow<span className="text-[#7C3AED]">ML</span>
       </span>
       {showBadge && (
@@ -36,6 +20,6 @@ export default function Logo({
           {badgeText}
         </span>
       )}
-    </div>
+    </span>
   );
 }

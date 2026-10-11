@@ -5,8 +5,9 @@ import { listRuns, getRun, stopRun } from '../../services/api';
 import {
   PlayCircle, RefreshCw, Clock, CheckCircle2, AlertCircle,
   Loader2, X, Terminal, BarChart2, RotateCcw, StopCircle,
-  ArrowRight, Sparkles, Layers,
+  ArrowRight, Sparkles,
 } from 'lucide-react';
+import FlowMLIcon from '../../components/FlowMLIcon';
 
 const STATUS_CONFIG = {
   Completed: { label: 'Completed', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.12)', border: 'rgba(34, 197, 94, 0.25)', icon: CheckCircle2 },
@@ -161,7 +162,7 @@ export default function RunsView() {
       {/* Runs Table */}
       {loading ? (
         <div className="p-16 flex flex-col items-center justify-center gap-3 text-slate-400">
-          <Loader2 className="w-7 h-7 animate-spin text-primary" />
+          <FlowMLIcon size={56} />
           <p className="text-xs font-medium">Fetching job history…</p>
         </div>
       ) : runs.length === 0 ? (
@@ -172,12 +173,7 @@ export default function RunsView() {
             background: 'var(--color-surface)',
           }}
         >
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: 'rgba(124, 58, 237, 0.1)', color: '#7C3AED' }}
-          >
-            <PlayCircle className="w-7 h-7" />
-          </div>
+          <FlowMLIcon size={56} className="mb-4" />
           <h3 className="font-display font-semibold text-base mb-1" style={{ color: 'var(--color-text)' }}>
             No execution runs yet
           </h3>
@@ -349,7 +345,7 @@ export default function RunsView() {
               <div className="flex-1 overflow-y-auto py-5 space-y-5">
                 {detailLoading ? (
                   <div className="p-16 flex flex-col items-center justify-center gap-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <FlowMLIcon size={56} />
                     <p className="text-xs text-slate-400">Loading run logs and execution outputs…</p>
                   </div>
                 ) : runDetail ? (

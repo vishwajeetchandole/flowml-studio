@@ -3,10 +3,11 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { listModels, deleteModel } from '../../services/api';
 import {
-  Layers, Search, Trash2, Edit2, Play, Sparkles, RefreshCw,
+  Search, Trash2, Edit2, Play, Sparkles, RefreshCw,
   Award, Database, Clock, ChevronRight, AlertTriangle, X,
   CheckCircle2, Loader2, Gauge, Zap,
 } from 'lucide-react';
+import FlowMLIcon from '../../components/FlowMLIcon';
 
 export default function ModelsView() {
   const { showToast } = useOutletContext();
@@ -183,7 +184,7 @@ export default function ModelsView() {
       {/* Grid */}
       {loading ? (
         <div className="p-16 flex flex-col items-center justify-center gap-3 text-slate-400">
-          <Loader2 className="w-7 h-7 animate-spin text-primary" />
+          <FlowMLIcon size={56} />
           <p className="text-xs font-medium">Scanning model artifact store…</p>
         </div>
       ) : filtered.length === 0 ? (
@@ -194,12 +195,7 @@ export default function ModelsView() {
             background: 'var(--color-surface)',
           }}
         >
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}
-          >
-            <Layers className="w-7 h-7" />
-          </div>
+          <FlowMLIcon size={56} className="mb-4" />
           <h3 className="font-display font-semibold text-base mb-1" style={{ color: 'var(--color-text)' }}>
             No models found
           </h3>
