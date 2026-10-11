@@ -7,16 +7,66 @@ import sys
 import json
 import shutil
 import time
+import hmac
 from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from auth import get_current_admin, get_deactivated_users, set_user_active_status
+from auth import (
+    create_admin_session_token,
+    get_configured_admin_credentials,
+    get_current_admin,
+    get_deactivated_users,
+    set_user_active_status,
+)
 from services.store import get_store
 from services.job_queue import get_job_queue
 from services.audit import get_audit_logs, log_security_event
 
 router = APIRouter(prefix="/admin", tags=["Admin Governance"])
+
+
+class AdminLoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+@router.post("/auth/login")
+async def admin_login(payload: AdminLoginRequest):
+    """Authenticates configured admin accounts and issues an expiring session token."""
+    usernames, password = get_configured_admin_credentials()
+    if not usernames or not password:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Admin sign-in is not configured on the server.",
+        )
+
+    username_bytes = payload.username.encode("utf-8")
+    password_bytes = payload.password.encode("utf-8")
+    username_is_valid = any(
+        hmac.compare_digest(username_bytes, username.encode("utf-8"))
+        for username in usernames
+    )
+    password_is_valid = hmac.compare_digest(password_bytes, password.encode("utf-8"))
+    if not username_is_valid or not password_is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid admin username or password.",
+        )
+    if payload.username in get_deactivated_users():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is deactivated.",
+        )
+
+    try:
+        token = create_admin_session_token(payload.username)
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Admin sign-in is not configured on the server.",
+        ) from exc
+    return {"access_token": token, "token_type": "bearer", "expires_in": 28800}
 
 
 class UserStatusRequest(BaseModel):

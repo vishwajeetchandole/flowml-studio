@@ -8,7 +8,7 @@ import SignOutButton from '../../components/auth/SignOutButton';
 import {
   FolderKanban, Database, Layers, PlayCircle, LayoutTemplate,
   Settings, LogOut, Plus, Sparkles, ExternalLink,
-  ChevronRight, Activity, Bell, Search, Terminal, Code, ShieldCheck,
+  ChevronRight, Activity, Bell, Search, Terminal, Code,
 } from 'lucide-react';
 
 export default function DashboardLayout() {
@@ -30,7 +30,6 @@ export default function DashboardLayout() {
     { to: '/app/runs', label: 'Run History', icon: PlayCircle },
     { to: '/app/code', label: 'Python Studio', icon: Code },
     { to: '/app/templates', label: 'Templates', icon: LayoutTemplate },
-    { to: '/app/admin', label: 'Admin', icon: ShieldCheck },
     { to: '/app/settings', label: 'Settings', icon: Settings },
   ];
 

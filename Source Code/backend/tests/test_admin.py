@@ -9,6 +9,41 @@ from app import app
 from auth import set_user_active_status
 
 
+def _admin_headers(client, username="vish@flowml", password="flowml@2026"):
+    response = client.post(
+        "/api/admin/auth/login",
+        json={"username": username, "password": password},
+    )
+    assert response.status_code == 200
+    return {"Authorization": f"Bearer {response.json()['access_token']}"}
+
+
+@pytest.mark.parametrize("username", ["vish@flowml", "kush@flowml", "ajinkya@flowml"])
+def test_configured_admins_can_sign_in(client, username):
+    response = client.post(
+        "/api/admin/auth/login",
+        json={"username": username, "password": "flowml@2026"},
+    )
+    assert response.status_code == 200
+    assert response.json()["expires_in"] == 28800
+
+
+def test_admin_login_rejects_invalid_credentials(client):
+    response = client.post(
+        "/api/admin/auth/login",
+        json={"username": "unknown@flowml", "password": "flowml@2026"},
+    )
+    assert response.status_code == 401
+
+
+def test_dev_admin_identifier_cannot_bypass_admin_login(client):
+    response = client.get(
+        "/api/admin/users",
+        headers={"Authorization": "Bearer admin-demo"},
+    )
+    assert response.status_code == 403
+
+
 def test_non_admin_forbidden():
     """Non-admin user must receive 403 Forbidden on admin endpoints."""
     client = TestClient(app)
@@ -25,7 +60,7 @@ def test_admin_list_users():
     client = TestClient(app)
     resp = client.get(
         "/api/admin/users",
-        headers={"Authorization": "Bearer admin"},
+        headers=_admin_headers(client),
     )
     assert resp.status_code == 200
     assert isinstance(resp.json(), list)
@@ -36,7 +71,7 @@ def test_admin_system_metrics():
     client = TestClient(app)
     resp = client.get(
         "/api/admin/system",
-        headers={"Authorization": "Bearer admin"},
+        headers=_admin_headers(client),
     )
     assert resp.status_code == 200
     data = resp.json()
@@ -51,7 +86,7 @@ def test_admin_limits_get_and_update():
     # Get limits
     resp = client.get(
         "/api/admin/limits",
-        headers={"Authorization": "Bearer admin"},
+        headers=_admin_headers(client),
     )
     assert resp.status_code == 200
     assert "execution_timeout_sec" in resp.json()
@@ -66,7 +101,7 @@ def test_admin_limits_get_and_update():
     update_resp = client.post(
         "/api/admin/limits",
         json=new_limits,
-        headers={"Authorization": "Bearer admin"},
+        headers=_admin_headers(client),
     )
     assert update_resp.status_code == 200
     assert update_resp.json()["execution_timeout_sec"] == 20
@@ -81,7 +116,7 @@ def test_admin_deactivate_and_reactivate_user():
     resp = client.post(
         f"/api/admin/users/{target_uid}/status",
         json={"active": False},
-        headers={"Authorization": "Bearer admin"},
+        headers=_admin_headers(client),
     )
     assert resp.status_code == 200
     assert resp.json()["is_active"] is False
@@ -98,7 +133,7 @@ def test_admin_deactivate_and_reactivate_user():
     unblock_resp = client.post(
         f"/api/admin/users/{target_uid}/status",
         json={"active": True},
-        headers={"Authorization": "Bearer admin"},
+        headers=_admin_headers(client),
     )
     assert unblock_resp.status_code == 200
     assert unblock_resp.json()["is_active"] is True

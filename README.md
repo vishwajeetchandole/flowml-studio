@@ -156,6 +156,8 @@ uvicorn app:app --reload --host 127.0.0.1 --port 8000
 
 The backend loads `Source Code\backend\.env` at startup. Keep `DEV_AUTH=1` for local development; never use DEV_AUTH in production. Python code execution is off by default. Do not enable `ENABLE_PYTHON_SANDBOX` unless the isolated worker setup has been reviewed and configured.
 
+The admin console is available only at `http://localhost:5173/admin` and uses its own sign-in, separate from the user dashboard. The example backend environment configures the usernames `vish@flowml`, `kush@flowml`, and `ajinkya@flowml` with the shared password `flowml@2026`. Before starting the backend, set `ADMIN_AUTH_SECRET` in `Source Code\backend\.env` to a random value of at least 32 characters (generate one with `python -c "import secrets; print(secrets.token_urlsafe(48))"`). Admin sessions expire after 8 hours. For production, replace the shared password and protect the environment file.
+
 ### Frontend
 
 ```powershell

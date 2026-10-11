@@ -15,6 +15,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 # Force dev auth mode
 os.environ["DEV_AUTH"] = "1"
 os.environ["STORAGE_ROOT"] = ""  # will be overridden per test
+os.environ["ADMIN_USERNAMES"] = "vish@flowml,kush@flowml,ajinkya@flowml"
+os.environ["ADMIN_PASSWORD"] = "flowml@2026"
+os.environ["ADMIN_AUTH_SECRET"] = "test-only-admin-session-secret-at-least-32-chars"
 
 from fastapi.testclient import TestClient
 from app import app

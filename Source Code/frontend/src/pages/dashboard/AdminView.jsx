@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Users, Activity, Cpu, HardDrive,
-  Sliders, ShieldCheck, AlertTriangle,
+  Sliders, ShieldCheck, AlertTriangle, LogOut,
   CheckCircle2, Save, RefreshCw, ArrowLeft,
 } from 'lucide-react';
 import {
@@ -68,7 +68,7 @@ function Field({ label, ...props }) {
 }
 
 /* ─── Main Component ────────────────────────────────────────────────────── */
-export default function AdminView() {
+export default function AdminView({ onSignOut }) {
   const [users, setUsers] = useState([]);
   const [jobs, setJobs] = useState({ summary: {}, running_jobs: [], failed_jobs: [] });
   const [system, setSystem] = useState(null);
@@ -162,10 +162,20 @@ export default function AdminView() {
           </div>
         </div>
 
-        <Link to="/" className="flex items-center gap-2" title="FlowML Home">
-          <FlowMLIcon size={40} />
-          <Logo size="text-sm" />
-        </Link>
+        <div className="flex items-center gap-5">
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-rose-600 transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Sign out
+          </button>
+          <Link to="/" className="flex items-center gap-2" title="FlowML Home">
+            <FlowMLIcon size={40} />
+            <Logo size="text-sm" />
+          </Link>
+        </div>
       </header>
 
       {/* Page Content */}

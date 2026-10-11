@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 
 // Auth Guard
 import ProtectedRoute from './components/auth/ProtectedRoute.jsx';
+import AdminRoute from './components/auth/AdminRoute.jsx';
 
 // Pages
 import LandingPage from './pages/LandingPage.jsx';
@@ -20,7 +21,6 @@ import ModelsView from './pages/dashboard/ModelsView.jsx';
 import RunsView from './pages/dashboard/RunsView.jsx';
 import TemplatesView from './pages/dashboard/TemplatesView.jsx';
 import CodeEditorView from './pages/dashboard/CodeEditorView.jsx';
-import AdminView from './pages/dashboard/AdminView.jsx';
 import SettingsView from './pages/dashboard/SettingsView.jsx';
 
 // Info & Legal Pages
@@ -75,7 +75,6 @@ export default function AppRoutes() {
         <Route path="runs" element={<RunsView />} />
         <Route path="templates" element={<TemplatesView />} />
         <Route path="code" element={<CodeEditorView />} />
-        <Route path="admin" element={<AdminView />} />
         <Route path="settings" element={<SettingsView />} />
       </Route>
 
@@ -97,8 +96,8 @@ export default function AppRoutes() {
         }
       />
 
-      {/* ─── Backwards-compatible admin route ──────────────────────────────── */}
-      <Route path="/admin" element={<Navigate to="/app/admin" replace />} />
+      {/* ─── Standalone admin console ──────────────────────────────────────── */}
+      <Route path="/admin" element={<AdminRoute />} />
 
       {/* ─── Error 404 ─────────────────────────────────────────────────────── */}
       <Route path="*" element={<NotFoundPage />} />

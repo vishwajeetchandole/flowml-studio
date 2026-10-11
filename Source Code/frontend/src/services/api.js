@@ -12,6 +12,18 @@ const api = axios.create({
 // ── Attach Auth Token Interceptor ─────────────────────────────────────────────
 api.interceptors.request.use(
   async (config) => {
+    if (config.url?.startsWith('/api/admin/auth/login')) {
+      return config;
+    }
+
+    if (config.url?.startsWith('/api/admin/')) {
+      const adminToken = localStorage.getItem('flowml_admin_token');
+      if (adminToken) {
+        config.headers.Authorization = `Bearer ${adminToken}`;
+      }
+      return config;
+    }
+
     try {
       const token = await getCurrentIdToken();
       if (token) {
@@ -29,11 +41,22 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (res) => res,
   (err) => {
+    if (
+      err.config?.url?.startsWith('/api/admin/') &&
+      !err.config.url.startsWith('/api/admin/auth/login') &&
+      [401, 403].includes(err.response?.status)
+    ) {
+      localStorage.removeItem('flowml_admin_token');
+      window.dispatchEvent(new Event('flowml-admin-session-expired'));
+    }
+
     let msg = 'An unexpected error occurred';
     if (err.response) {
       const { status, data } = err.response;
       const detail = data?.detail;
-      if (status === 401) {
+      if (status === 401 && err.config?.url?.startsWith('/api/admin/auth/login')) {
+        msg = typeof detail === 'string' ? detail : 'Invalid admin username or password.';
+      } else if (status === 401) {
         msg = 'Your session has expired or authentication failed. Please sign in again.';
       } else if (status === 403) {
         msg = typeof detail === 'string' ? detail : 'Access forbidden. Administrator permissions may be required.';
@@ -253,6 +276,10 @@ export const getCodeHistory = () =>
   api.get('/api/code/history').then((r) => r.data);
 
 /* ─── PHASE 3: Admin & Security Endpoints ───────────────────────────────────── */
+
+/** POST /api/admin/auth/login */
+export const adminLogin = (username, password) =>
+  api.post('/api/admin/auth/login', { username, password }).then((r) => r.data);
 
 /** GET /api/admin/users */
 export const adminListUsers = () =>
