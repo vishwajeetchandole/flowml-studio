@@ -159,6 +159,17 @@ export default function AdminView() {
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 border border-rose-200 uppercase tracking-wider">Restricted Access</span>
           </div>
         </div>
+
+        <div
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 cursor-pointer group"
+          title="FlowML Home"
+        >
+          <div className="w-6 h-6 rounded-md bg-violet-600 flex items-center justify-center text-white group-hover:scale-105 transition-transform">
+            <Cpu className="w-3.5 h-3.5 text-white" />
+          </div>
+          <span className="font-display font-bold text-xs text-slate-800 group-hover:text-violet-600 transition-colors">FlowML</span>
+        </div>
       </header>
 
       {/* Page Content */}

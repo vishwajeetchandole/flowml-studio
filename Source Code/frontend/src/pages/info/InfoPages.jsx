@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import {
   ArrowLeft, Shield, FileText, Mail, BookOpen, Video,
   Cpu, CheckCircle2, Send, ExternalLink, HelpCircle, Layers,
-  Sparkles, Lock, ArrowRight, Code2, Terminal, Database
+  Sparkles, Lock, ArrowRight, Code2, Terminal, Database,
+  Copy, Check, Zap, Play, Sliders, Search, FileCode,
 } from 'lucide-react';
 
 function PageHeader({ title, subtitle, badge, icon: Icon }) {
@@ -127,36 +128,50 @@ function PageLayout({ children, title, subtitle, badge, icon }) {
 
 /* ─── 1. Documentation Page ─────────────────────────────────────────────────── */
 export function DocsPage() {
-  const [activeTab, setActiveTab] = React.useState('nodes');
+  const [activeTab, setActiveTab] = React.useState('quickstart');
+  const [nodeCategory, setNodeCategory] = React.useState('all');
   const [search, setSearch] = React.useState('');
+  const [copiedCode, setCopiedCode] = React.useState(false);
+  const navigate = useNavigate();
+
+  const copySnippet = (code) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
 
   const NODE_CATALOG = [
     {
+      id: 'ingestion',
       category: 'Data Ingestion',
+      badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
       nodes: [
         {
           name: 'Upload Dataset',
           type: 'upload',
           inputs: 'None (Root Node)',
-          outputs: 'DataFrame (csv/xlsx/xls)',
-          params: 'file: Binary File Upload, file_name: Target identifier',
-          when: 'Ingest raw local datasets from disk into user-isolated project storage.'
+          outputs: 'DataFrame (csv / xlsx / xls)',
+          params: 'file: Binary File Upload (Max 25MB)',
+          when: 'Use as the entry point of your pipeline to upload CSV or Excel files from your computer.',
+          tip: 'Automatically infers column data types, missing value percentages, and row counts.'
         },
         {
           name: 'Load CSV',
           type: 'loadCsv',
           inputs: 'None (Root Node)',
           outputs: 'DataFrame (csv)',
-          params: 'file_path: Internal relative path, delimiter: Separator symbol',
-          when: 'Attach previously stored datasets or system sample datasets.'
+          params: 'file_path: Internal relative storage path',
+          when: 'Attach previously uploaded workspace datasets or built-in sample datasets (Titanic, Housing).',
+          tip: 'Fastest way to prototype models without re-uploading large data files.'
         },
         {
           name: 'Preview Dataset',
           type: 'preview',
           inputs: 'DataFrame',
           outputs: 'DataFrame (Pass-through) + Schema Profile',
-          params: 'sample_rows: Top N rows to preview (default 10)',
-          when: 'Inspect column data types, missing value percentages, and distributions.'
+          params: 'sample_rows: Top N rows to inspect (default 10)',
+          when: 'Inspect column schemas, data distributions, and value spreads before preprocessing.',
+          tip: 'Displays a live interactive table directly inside the canvas drawer.'
         },
         {
           name: 'Remove Duplicates',
@@ -164,36 +179,42 @@ export function DocsPage() {
           inputs: 'DataFrame',
           outputs: 'De-duplicated DataFrame',
           params: 'keep: First or Last occurrence, subset: Column identifiers',
-          when: 'Clean repeating observations to prevent bias or data leakage.'
+          when: 'Eliminate duplicate rows to prevent over-weighting repeated observations.',
+          tip: 'Connect right after Upload Node for clean baseline data hygiene.'
         },
         {
           name: 'Select Columns',
           type: 'selectColumns',
           inputs: 'DataFrame',
-          outputs: 'Filtered Column DataFrame',
-          params: 'selected_columns: Array of feature names to preserve',
-          when: 'Filter out uninformative IDs, timestamps, or target leakage features.'
+          outputs: 'Filtered DataFrame',
+          params: 'selected_columns: Array of feature names to keep',
+          when: 'Drop uninformative IDs, tracking timestamps, or data leakage columns.',
+          tip: 'Drastically reduces memory usage and speeds up model training.'
         }
       ]
     },
     {
-      category: 'Preprocessing & Feature Engineering',
+      id: 'preprocess',
+      category: 'Preprocessing & Transforms',
+      badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
       nodes: [
         {
           name: 'Fill Missing',
           type: 'fillMissing',
           inputs: 'DataFrame',
           outputs: 'Imputed DataFrame',
-          params: 'missing_values: mean | median | most_frequent | constant | drop',
-          when: 'Handle null entries before passing into scikit-learn estimators.'
+          params: 'strategy: mean | median | most_frequent | constant | drop',
+          when: 'Handle null or NaN values. Scikit-learn estimators fail if missing values are present.',
+          tip: 'Use median for skewed numeric distributions; use most_frequent for categories.'
         },
         {
           name: 'Encode Labels',
           type: 'encode',
           inputs: 'DataFrame',
           outputs: 'Numerically Encoded DataFrame',
-          params: 'categorical_encoding: label (Ordinal) | onehot (Dummy columns)',
-          when: 'Convert textual categorical features into machine-readable numeric matrices.'
+          params: 'categorical_encoding: label (Ordinal) | onehot (Dummy Columns)',
+          when: 'Convert textual categorical values into machine-readable numbers.',
+          tip: 'Use One-Hot for nominal categories (<10 unique values); Label Encoding for ordinal ranks.'
         },
         {
           name: 'Scale Features',
@@ -201,146 +222,178 @@ export function DocsPage() {
           inputs: 'DataFrame',
           outputs: 'Normalized Feature DataFrame',
           params: 'scaling: standard (Z-Score) | minmax (0-1 Range) | robust (IQR)',
-          when: 'Normalize feature magnitudes for distance-based and gradient estimators.'
+          when: 'Normalize feature magnitudes so features with large values do not dominate the model.',
+          tip: 'Mandatory for KNN, SVM, Logistic Regression, and Neural Networks.'
         },
         {
           name: 'Split Train/Test',
           type: 'splitData',
           inputs: 'DataFrame',
           outputs: 'Train DataFrame & Test DataFrame',
-          params: 'test_size: 0.15 - 0.30, random_state: Reproducibility integer seed',
-          when: 'Isolate holdout test set to empirically validate model generalization.'
+          params: 'test_size: 0.15 - 0.30, random_state: 42 (seed)',
+          when: 'Divide data into training and evaluation sets to prevent overfitting.',
+          tip: 'Always evaluate models on holdout test data to measure true generalization.'
         },
         {
           name: 'Custom Python',
           type: 'customPython',
-          inputs: 'DataFrame (bound as "df")',
+          inputs: 'DataFrame (accessible as "df")',
           outputs: 'Transformed DataFrame',
-          params: 'code: Python script, timeout: 5-60s execution limit',
-          when: 'Perform arbitrary domain-specific transformations, math formulas, or outlier filters.'
+          params: 'code: Python script string (Sandboxed execution)',
+          when: 'Perform custom domain logic, mathematical formulas, regex parsing, or feature synthesis.',
+          tip: 'Executes inside an isolated worker with NumPy and Pandas pre-loaded.'
         }
       ]
     },
     {
-      category: 'Algorithms & Model Training',
+      id: 'models',
+      category: 'Machine Learning Models',
+      badgeColor: 'bg-violet-50 text-violet-700 border-violet-200',
       nodes: [
         {
           name: 'Random Forest',
           type: 'randomForest',
-          inputs: 'Preprocessed Train DataFrame',
+          inputs: 'Train DataFrame',
           outputs: 'Trained Model Artifact + Validation Metrics',
-          params: 'n_estimators (50-200), max_depth (5-20), target_col: Target label',
-          when: 'Robust non-linear baseline resilient to outliers and feature interactions.'
+          params: 'n_estimators (50-200), max_depth (5-20), target_col: Target name',
+          when: 'Gold-standard ensemble algorithm. Handles non-linear relationships and resistant to overfitting.',
+          tip: 'Excellent default baseline for tabular classification and regression.'
         },
         {
           name: 'Linear / Logistic Regression',
           type: 'linearRegression / logisticRegression',
-          inputs: 'Preprocessed Train DataFrame',
-          outputs: 'Linear Model Artifact + Coefficients',
-          params: 'C: Inverse regularization strength, solver: lbfgs | liblinear',
-          when: 'Interpretable linear benchmark for continuous prices or binary odds.'
+          inputs: 'Scaled Train DataFrame',
+          outputs: 'Model Artifact + Feature Weights',
+          params: 'C: Inverse regularization strength, solver: lbfgs',
+          when: 'Fast, highly interpretable baseline for continuous values or binary classifications.',
+          tip: 'Ensure features are scaled using the Scale Features node before training.'
         },
         {
           name: 'Decision Tree',
           type: 'decisionTree',
-          inputs: 'Preprocessed Train DataFrame',
+          inputs: 'Train DataFrame',
           outputs: 'Decision Tree Graph + Rules',
-          params: 'max_depth: Maximum tree split levels, criterion: gini | entropy',
-          when: 'Highly explainable decision boundaries with rule-based extraction.'
+          params: 'max_depth: Maximum tree depth, criterion: gini | entropy',
+          when: 'Requires transparent white-box decision logic that can be audited by humans.',
+          tip: 'Keep max_depth between 3 and 6 to prevent deep tree overfitting.'
         },
         {
           name: 'Support Vector Machine (SVM)',
           type: 'svm',
           inputs: 'Scaled Train DataFrame',
-          outputs: 'Maximum-Margin Classifier / Regressor',
-          params: 'kernel: rbf | linear, C: Margin penalty, gamma: Scale',
-          when: 'Effective in high-dimensional feature spaces with clear separation margins.'
+          outputs: 'Max-Margin Model Artifact',
+          params: 'kernel: rbf | linear, C: Margin penalty, gamma: scale',
+          when: 'Excels with high-dimensional data where features outnumber observations.',
+          tip: 'Requires scaled inputs; training complexity scales quadratically with dataset size.'
         },
         {
           name: 'K-Means Clustering',
           type: 'kmeans',
           inputs: 'Scaled Feature DataFrame',
-          outputs: 'Cluster Labels + Centroid Coordinates',
-          params: 'n_clusters: Number of cohorts (2-10), init: k-means++',
-          when: 'Unsupervised pattern recognition, customer segmentation, or cohort grouping.'
+          outputs: 'Cluster Labels + Centroids',
+          params: 'n_clusters: Number of clusters (2-10), init: k-means++',
+          when: 'Unsupervised grouping, customer segmentation, or anomaly detection.',
+          tip: 'Inspect the Silhouette Score to find the optimal number of clusters.'
         }
       ]
     },
     {
-      category: 'AI Decision, Explainability & Output',
+      id: 'ai_output',
+      category: 'AI Tournament & Explainability',
+      badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
       nodes: [
         {
-          name: 'AI Decision',
+          name: 'AI Decision (AutoML Tournament)',
           type: 'aiDecision',
           inputs: 'Preprocessed Dataset',
-          outputs: 'Champion Model Recommendation + Tournament Leaderboard',
+          outputs: 'Champion Model Recommendation + Leaderboard',
           params: 'metric_focus: accuracy | f1 | r2 | speed',
-          when: 'Automatically train and benchmark multiple candidate models simultaneously.'
+          when: 'Automatically train, evaluate, and rank candidate models in a competitive tournament.',
+          tip: 'Selects the champion model based on validation metrics and training latency.'
         },
         {
-          name: 'Explainable AI',
+          name: 'Explainable AI (SHAP)',
           type: 'explainableAi',
           inputs: 'Trained Model + Dataset',
           outputs: 'SHAP Feature Importance & Force Plots',
           params: 'explainer_type: TreeExplainer | KernelExplainer',
-          when: 'Audit model decisions, regulatory compliance, and individual feature contributions.'
+          when: 'Audit model decisions, understand why individual predictions were made, and comply with AI regulations.',
+          tip: 'Identifies which features drove predictions higher or lower for each observation.'
         },
         {
           name: 'Prediction Output',
           type: 'prediction',
-          inputs: 'Trained Model + Input Records',
-          outputs: 'Inference Prediction Array + Confidence Probabilities',
+          inputs: 'Trained Model + Records to Predict',
+          outputs: 'Prediction Array + Class Probabilities',
           params: 'batch_inference: true | false',
-          when: 'Run batch inference or single-sample real-time predictions.'
+          when: 'Generate predictions for new unlabelled observations.',
+          tip: 'Export predictions as CSV or inspect directly in the results modal.'
         },
         {
-          name: 'Report',
+          name: 'Report Generator',
           type: 'report',
           inputs: 'Pipeline Execution Context',
           outputs: 'Audit Report (HTML / PDF / JSON)',
-          params: 'reportTitle: Document heading, format: html | pdf | json',
-          when: 'Export reproducible compliance documentation and performance summaries.'
+          params: 'reportTitle: Document heading',
+          when: 'Create an exportable compliance report documenting pipeline architecture, hyperparameters, and metrics.',
+          tip: 'Ready to share with stakeholders and regulatory compliance teams.'
         }
       ]
     }
   ];
 
   const METRICS = [
-    { name: 'Accuracy', formula: '(TP + TN) / Total', desc: 'Overall percentage of correct predictions across all classes. Best for balanced datasets.' },
-    { name: 'Precision', formula: 'TP / (TP + FP)', desc: 'Proportion of positive identifications that were actually correct. Crucial when false positives are expensive.' },
-    { name: 'Recall (Sensitivity)', formula: 'TP / (TP + FN)', desc: 'Proportion of actual positives identified correctly. Crucial for medical diagnosis and fraud detection.' },
-    { name: 'F1 Score', formula: '2 * (Precision * Recall) / (Precision + Recall)', desc: 'Harmonic mean of precision and recall. Ideal single metric for imbalanced classification tasks.' },
-    { name: 'ROC-AUC', formula: 'Area under TPR vs FPR curve', desc: 'Discriminative capacity across all classification decision thresholds. Invariant to class distribution.' },
-    { name: 'R² (Determination)', formula: '1 - (SS_res / SS_tot)', desc: 'Proportion of variance in target variable predictable from independent features. 1.0 is a perfect score.' },
-    { name: 'MSE / RMSE', formula: 'Mean((y - y_hat)²)', desc: 'Mean Squared Error heavily penalizes large outlier mistakes. RMSE is in the original target units.' },
-    { name: 'MAE', formula: 'Mean(|y - y_hat|)', desc: 'Mean Absolute Error represents median-style average magnitude of prediction deviations.' },
-    { name: 'Silhouette Score', formula: '(b - a) / max(a, b)', desc: 'Measures how similar an observation is to its own cluster compared to neighboring clusters (-1 to +1).' }
+    {
+      category: 'Classification Metrics',
+      items: [
+        { name: 'Accuracy', formula: '(TP + TN) / Total', best: '1.0 (100%)', desc: 'Overall percentage of correct predictions across all classes. Best for balanced datasets.' },
+        { name: 'Precision', formula: 'TP / (TP + FP)', best: '1.0', desc: 'Out of all positive predictions, how many were true positives. High precision avoids costly false alarms.' },
+        { name: 'Recall (Sensitivity)', formula: 'TP / (TP + FN)', best: '1.0', desc: 'Out of all actual positive cases, how many were correctly detected. Critical for medical screening and fraud.' },
+        { name: 'F1 Score', formula: '2 · (Precision · Recall) / (Precision + Recall)', best: '1.0', desc: 'Harmonic mean of precision and recall. The best single metric for imbalanced classification tasks.' },
+        { name: 'ROC-AUC', formula: 'Area under Receiver Operating Characteristic', best: '1.0 (0.5 is random)', desc: 'Measures class separation ability across all decision thresholds. Invariant to class imbalance.' },
+      ]
+    },
+    {
+      category: 'Regression & Clustering Metrics',
+      items: [
+        { name: 'R² (Determination)', formula: '1 - (SS_res / SS_tot)', best: '1.0 (Higher is better)', desc: 'Proportion of target variance explained by the model. 1.0 represents a perfect fit; 0.0 is equal to mean baseline.' },
+        { name: 'RMSE', formula: '√[ Mean((y - ŷ)²) ]', best: '0.0 (Lower is better)', desc: 'Root Mean Squared Error. Heavily penalizes large outlier mistakes and is expressed in target units.' },
+        { name: 'MAE', formula: 'Mean(|y - ŷ|)', best: '0.0 (Lower is better)', desc: 'Mean Absolute Error. Average magnitude of prediction errors, resilient to outlier anomalies.' },
+        { name: 'Silhouette Score', formula: '(b - a) / max(a, b)', best: '+1.0 (-1 to +1)', desc: 'Measures cluster cohesion and separation. Higher scores indicate well-separated distinct clusters.' },
+      ]
+    }
   ];
 
   const FAQS = [
     {
-      q: 'How does isolated code execution protect system security?',
-      a: 'User scripts NEVER run inside the main FastAPI server process. Each code invocation runs inside an isolated container sandbox (or dedicated child subprocess) with a stripped environment, read-only root filesystem, memory capped at 256MB, CPU capped at 1.0 core, execution timeout enforced at 15s, and all network calls statically and dynamically blocked.'
+      q: 'How do I build my first pipeline in FlowML?',
+      a: 'Go to Canvas Studio (click Launch Canvas). Drag an "Upload Dataset" or "Load CSV" node onto the canvas. Next, add a "Fill Missing" and "Encode Labels" preprocessing node and connect them with a cable. Add a model node (e.g. Random Forest) and connect the preprocessed output to the model input. Finally, click "Run Pipeline" to execute!'
     },
     {
-      q: 'Can I export trained models to production?',
-      a: 'Yes! Trained model artifacts can be downloaded directly from the Models tab as standalone Python joblib binaries. These can be deployed directly into AWS Lambda, Docker, or any Python runtime with standard scikit-learn.'
+      q: 'What is the correct order of nodes in a pipeline?',
+      a: 'Standard FlowML workflow: [1. Data Ingestion] ➔ [2. Data Cleaning: Fill Missing / Remove Duplicates] ➔ [3. Feature Encoding & Scaling] ➔ [4. Split Train/Test] ➔ [5. Model Training or AI Decision] ➔ [6. Explainable AI or Prediction Output].'
     },
     {
-      q: 'What file formats are supported for dataset ingestion?',
-      a: 'FlowML natively parses CSV (.csv), Excel spreadsheets (.xlsx, .xls), and structured tabular JSON files up to 25MB (configurable by system administrators in Admin Ops).'
+      q: 'Can I export trained models to production Python applications?',
+      a: 'Yes! Trained model artifacts can be downloaded directly from the Models tab as standalone Python joblib or pickle files. You can load and use them in FastAPI, Flask, AWS Lambda, or Docker with standard scikit-learn.'
     },
     {
-      q: 'How is user data kept private across multi-tenant teams?',
-      a: 'All files, dataset uploads, models, and execution logs are partitioned under user-scoped paths (storage/{uid}/). Access is guarded by Firebase ID token verification and path traversal defenses.'
+      q: 'How does the AI Decision AutoML tournament work?',
+      a: 'When you include the AI Decision node, FlowML automatically trains Random Forest, Logistic Regression, Decision Tree, and SVM candidates across your dataset in parallel. It benchmarks each candidate on validation accuracy, F1 score, and inference latency, and automatically crowns the champion model.'
     },
     {
-      q: 'What happens if a custom Python script enters an infinite loop or memory leak?',
-      a: 'The execution supervisor enforces strict watchdog timeouts (default 15s) and active memory limits (256MB). Any process exceeding memory or time limits is immediately terminated with SIGKILL, returning a clear error without crashing the server.'
+      q: 'How is user-authored Python code executed securely?',
+      a: 'Custom Python scripts execute inside a restricted worker sandbox with a 256MB memory cap, 1.0 CPU quota, 15-second timeout watchdog, read-only root filesystem, and zero outbound network access. It will never crash the server or affect other users.'
+    },
+    {
+      q: 'What dataset formats and file sizes are supported?',
+      a: 'FlowML natively parses CSV (.csv), Excel spreadsheets (.xlsx, .xls), and structured JSON tables up to 25MB per file. Datasets are securely stored in your user-isolated storage namespace.'
     }
   ];
 
-  const filteredNodes = NODE_CATALOG.map(cat => ({
+  const filteredNodes = NODE_CATALOG.filter(cat =>
+    nodeCategory === 'all' || cat.id === nodeCategory
+  ).map(cat => ({
     ...cat,
     nodes: cat.nodes.filter(n =>
       n.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -351,27 +404,28 @@ export function DocsPage() {
 
   return (
     <PageLayout
-      title="System Documentation & API Reference"
-      subtitle="Complete guides, node definitions, mathematical metrics glossary, and isolated execution limits for FlowML Studio."
-      badge="Comprehensive Manual"
+      title="System Documentation & Knowledge Base"
+      subtitle="Comprehensive guides, step-by-step pipeline architectures, 14 node specifications, and mathematical metrics glossary for FlowML Studio."
+      badge="User Manual"
       icon={BookOpen}
     >
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-4 mb-8 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-3 mb-8 overflow-x-auto">
         {[
-          { id: 'nodes', label: '14 Studio Nodes' },
-          { id: 'metrics', label: 'Metrics Glossary' },
-          { id: 'sandbox', label: 'Execution Limits & Sandbox' },
-          { id: 'libraries', label: 'Supported Libraries' },
-          { id: 'faq', label: 'Security & FAQs' },
-        ].map(tab => (
+          { id: 'quickstart', label: '🚀 Quickstart & Pipeline Basics' },
+          { id: 'nodes', label: '🧩 14 Visual Nodes Catalog' },
+          { id: 'metrics', label: '📐 Metrics & Loss Glossary' },
+          { id: 'sandbox', label: '🛡️ Sandbox & Security Limits' },
+          { id: 'python', label: '🐍 Custom Python Scripting' },
+          { id: 'faq', label: '❓ FAQs & Troubleshooting' },
+        ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
               activeTab === tab.id
                 ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
-                : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'
+                : 'text-slate-600 hover:text-violet-600 hover:bg-violet-50'
             }`}
           >
             {tab.label}
@@ -379,53 +433,290 @@ export function DocsPage() {
         ))}
       </div>
 
-      {/* 1. Nodes Tab */}
-      {activeTab === 'nodes' && (
-        <div className="space-y-8">
-          <div className="flex items-center justify-between gap-4">
-            <p className="text-xs text-slate-400">
-              FlowML provides 14 visual building blocks covering data ingestion, feature transformation, machine learning models, and explainability.
+      {/* ─── 1. Quickstart & Pipeline Basics Tab ────────────────────────────── */}
+      {activeTab === 'quickstart' && (
+        <div className="space-y-10">
+          {/* Hero Banner */}
+          <div className="p-6 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/20 text-white backdrop-blur-sm">
+              <Sparkles className="w-3.5 h-3.5" /> Getting Started
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold">How FlowML Visual Pipelines Work</h2>
+            <p className="text-sm text-violet-100 max-w-2xl leading-relaxed">
+              FlowML replaces complex machine learning code with an intuitive node-and-cable canvas. Each node represents a validated data transformation or machine learning algorithm. When you click <strong>Run Pipeline</strong>, FlowML compiles your graph into an optimized Directed Acyclic Graph (DAG) executed in real time.
             </p>
-            <input
-              type="text"
-              placeholder="Search nodes..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white text-xs focus:outline-none focus:border-violet-500 w-56"
-            />
+            <div className="pt-2 flex items-center gap-3">
+              <button
+                onClick={() => navigate('/studio')}
+                className="px-4 py-2 rounded-xl bg-white text-violet-700 font-bold text-xs hover:bg-violet-50 transition-colors shadow-sm"
+              >
+                Open Canvas Studio
+              </button>
+              <button
+                onClick={() => navigate('/tutorials')}
+                className="px-4 py-2 rounded-xl bg-white/10 text-white border border-white/20 font-bold text-xs hover:bg-white/20 transition-colors"
+              >
+                Try Sample Tutorials
+              </button>
+            </div>
           </div>
 
-          {filteredNodes.map((cat, idx) => (
-            <div key={idx} className="space-y-3">
-              <h3 className="text-sm font-extrabold text-violet-600 uppercase tracking-wider flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-violet-500" /> {cat.category}
+          {/* 5-Step Pipeline Lifecycle Cards */}
+          <div className="space-y-4">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-violet-600" />
+              The 5-Step Pipeline Lifecycle
+            </h3>
+
+            <div className="grid md:grid-cols-5 gap-4">
+              {[
+                {
+                  step: '01',
+                  title: 'Upload Data',
+                  desc: 'Drop in your CSV or Excel file. FlowML profiles schema, column types, and null counts.',
+                  color: 'border-blue-200 bg-blue-50/50 text-blue-700',
+                  badge: 'Ingestion'
+                },
+                {
+                  step: '02',
+                  title: 'Clean & Encode',
+                  desc: 'Connect Fill Missing to impute NaNs, and Encode Labels to turn text into numbers.',
+                  color: 'border-amber-200 bg-amber-50/50 text-amber-700',
+                  badge: 'Preprocessing'
+                },
+                {
+                  step: '03',
+                  title: 'Train Model',
+                  desc: 'Attach Random Forest, SVM, or AI Decision to train models concurrently.',
+                  color: 'border-violet-200 bg-violet-50/50 text-violet-700',
+                  badge: 'Training'
+                },
+                {
+                  step: '04',
+                  title: 'Validate & SHAP',
+                  desc: 'Evaluate Accuracy, ROC-AUC, F1 score, and audit feature impacts with SHAP values.',
+                  color: 'border-emerald-200 bg-emerald-50/50 text-emerald-700',
+                  badge: 'Explainability'
+                },
+                {
+                  step: '05',
+                  title: 'Export Model',
+                  desc: 'Download model weights as Python pickle/joblib binaries or export batch predictions.',
+                  color: 'border-rose-200 bg-rose-50/50 text-rose-700',
+                  badge: 'Deployment'
+                },
+              ].map((s, idx) => (
+                <div
+                  key={idx}
+                  className={`p-4 rounded-xl border ${s.color} flex flex-col justify-between space-y-3 bg-white`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono font-black text-lg text-slate-400">{s.step}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-white">
+                      {s.badge}
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-slate-900 mb-1">{s.title}</h4>
+                    <p className="text-xs text-slate-600 leading-relaxed">{s.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Valid Connection Pin Rules */}
+          <div className="p-6 rounded-2xl border border-slate-200 bg-white space-y-4">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              Pin Connection Rules (How Cables Work)
+            </h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Every node has output pins (right side) and input pins (left side). FlowML enforces type-safe DAG rules so invalid configurations are prevented automatically:
+            </p>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-500 font-semibold bg-slate-50">
+                    <th className="py-2.5 px-3">Upstream Output</th>
+                    <th className="py-2.5 px-3">Connects To (Downstream)</th>
+                    <th className="py-2.5 px-3">Example Nodes</th>
+                    <th className="py-2.5 px-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  <tr>
+                    <td className="py-2.5 px-3 font-mono font-semibold text-blue-700">DataFrame (Raw)</td>
+                    <td className="py-2.5 px-3 text-slate-700">Preprocessing Nodes, Preview Node</td>
+                    <td className="py-2.5 px-3 font-mono text-slate-500">Upload ➔ Fill Missing</td>
+                    <td className="py-2.5 px-3 text-emerald-600 font-bold">✓ Valid</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2.5 px-3 font-mono font-semibold text-amber-700">DataFrame (Cleaned)</td>
+                    <td className="py-2.5 px-3 text-slate-700">Train/Test Split, Scaling, Model Nodes</td>
+                    <td className="py-2.5 px-3 font-mono text-slate-500">Fill Missing ➔ Random Forest</td>
+                    <td className="py-2.5 px-3 text-emerald-600 font-bold">✓ Valid</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2.5 px-3 font-mono font-semibold text-violet-700">Trained Model Artifact</td>
+                    <td className="py-2.5 px-3 text-slate-700">Explainable AI (SHAP), Prediction Output</td>
+                    <td className="py-2.5 px-3 font-mono text-slate-500">Random Forest ➔ SHAP</td>
+                    <td className="py-2.5 px-3 text-emerald-600 font-bold">✓ Valid</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2.5 px-3 font-mono font-semibold text-rose-700">Model Artifact</td>
+                    <td className="py-2.5 px-3 text-slate-700">Preprocessing Node (Direct)</td>
+                    <td className="py-2.5 px-3 font-mono text-slate-500">Random Forest ➔ Scale Features</td>
+                    <td className="py-2.5 px-3 text-rose-600 font-bold">✗ Invalid (Cycle)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── 2. 14 Visual Nodes Catalog Tab ─────────────────────────────────── */}
+      {activeTab === 'nodes' && (
+        <div className="space-y-6">
+          {/* Filters & Search */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            {/* Category Filter Pills */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {[
+                { id: 'all', label: 'All 14 Nodes' },
+                { id: 'ingestion', label: 'Data Ingestion' },
+                { id: 'preprocess', label: 'Preprocessing' },
+                { id: 'models', label: 'ML Algorithms' },
+                { id: 'ai_output', label: 'AI & Output' },
+              ].map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => setNodeCategory(cat.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                    nodeCategory === cat.id
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Live Search */}
+            <div className="relative w-full sm:w-64">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search nodes, inputs, params..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+              />
+            </div>
+          </div>
+
+          {/* Node Cards */}
+          <div className="space-y-8">
+            {filteredNodes.map((cat, idx) => (
+              <div key={idx} className="space-y-4">
+                <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+                  <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+                    {cat.category}
+                  </h3>
+                  <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                    {cat.nodes.length} nodes
+                  </span>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  {cat.nodes.map((node, i) => (
+                    <div
+                      key={i}
+                      className="p-5 rounded-2xl border border-slate-200 bg-white hover:border-violet-300 hover:shadow-md transition-all space-y-3"
+                    >
+                      {/* Node Header */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <h4 className="text-sm font-bold text-slate-900">{node.name}</h4>
+                          <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md border ${cat.badgeColor}`}>
+                            type: {node.type}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <p className="text-xs text-slate-700 leading-relaxed">
+                        {node.when}
+                      </p>
+
+                      {/* Pro Tip */}
+                      {node.tip && (
+                        <div className="p-2.5 rounded-xl bg-violet-50 border border-violet-100 text-[11px] text-violet-800 flex items-start gap-2">
+                          <Sparkles className="w-3.5 h-3.5 shrink-0 text-violet-600 mt-0.5" />
+                          <span><strong>Best Practice:</strong> {node.tip}</span>
+                        </div>
+                      )}
+
+                      {/* Specs Grid */}
+                      <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2 text-[11px]">
+                        <div className="p-2 rounded-lg bg-slate-50">
+                          <span className="text-slate-500 font-semibold block text-[10px] uppercase">Inputs</span>
+                          <span className="text-slate-800 font-mono text-[11px]">{node.inputs}</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-slate-50">
+                          <span className="text-slate-500 font-semibold block text-[10px] uppercase">Outputs</span>
+                          <span className="text-slate-800 font-mono text-[11px]">{node.outputs}</span>
+                        </div>
+                        <div className="col-span-2 p-2 rounded-lg bg-slate-50">
+                          <span className="text-slate-500 font-semibold block text-[10px] uppercase">Parameters</span>
+                          <span className="text-violet-700 font-mono text-[11px] break-all">{node.params}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ─── 3. Metrics & Loss Glossary Tab ─────────────────────────────────── */}
+      {activeTab === 'metrics' && (
+        <div className="space-y-8">
+          <p className="text-xs text-slate-600 leading-relaxed max-w-2xl">
+            Mathematical loss functions and evaluation benchmarks calculated during pipeline runs, model tournament leaderboards, and SHAP explainability analyses.
+          </p>
+
+          {METRICS.map((group, gIdx) => (
+            <div key={gIdx} className="space-y-4">
+              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-violet-600" />
+                {group.category}
               </h3>
-              <div className="grid gap-3">
-                {cat.nodes.map((node, i) => (
-                  <div key={i} className="p-4 rounded-xl border border-slate-100 hover:border-violet-200 bg-white transition-all space-y-2">
+
+              <div className="grid md:grid-cols-2 gap-4">
+                {group.items.map((m, idx) => (
+                  <div key={idx} className="p-5 rounded-2xl border border-slate-200 bg-white space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>{node.name}</span>
-                        <code className="text-[10px] font-mono px-2 py-0.5 rounded border text-slate-500">
-                          {node.type}
-                        </code>
-                      </div>
+                      <h4 className="text-sm font-bold text-slate-900">{m.name}</h4>
+                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Target: {m.best}
+                      </span>
                     </div>
-                    <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text)' }}>{node.when}</p>
-                    <div className="grid sm:grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-[11px]">
-                      <div>
-                        <span className="text-slate-500 block" style={{}}>Inputs</span>
-                        <span className="text-slate-600 font-mono text-[10px]">{node.inputs}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500 block" style={{}}>Outputs</span>
-                        <span className="text-slate-600 font-mono text-[10px]">{node.outputs}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500 block" style={{}}>Key Parameters</span>
-                        <span className="text-violet-300 font-mono text-[10px] truncate block">{node.params}</span>
-                      </div>
+
+                    <div className="p-2 rounded-lg bg-slate-50 border border-slate-200">
+                      <code className="text-xs font-mono font-bold text-violet-700 block">
+                        {m.formula}
+                      </code>
                     </div>
+
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      {m.desc}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -434,92 +725,127 @@ export function DocsPage() {
         </div>
       )}
 
-      {/* 2. Metrics Tab */}
-      {activeTab === 'metrics' && (
-        <div className="space-y-6">
-          <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-            Standard loss metrics and evaluation benchmarks calculated during pipeline runs and model tournament leaderboards.
-          </p>
-          <div className="grid md:grid-cols-2 gap-4">
-            {METRICS.map((m, idx) => (
-              <div key={idx} className="p-5 rounded-2xl border border-slate-100 bg-white space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>{m.name}</h4>
-                  <code className="text-[10px] font-mono px-2 py-0.5 rounded bg-violet-500/10 text-violet-300 border border-violet-500/20">
-                    {m.formula}
-                  </code>
-                </div>
-                <p className="text-xs text-slate-400 leading-relaxed">{m.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 3. Sandbox & Limits Tab */}
+      {/* ─── 4. Sandbox & Security Limits Tab ───────────────────────────────── */}
       {activeTab === 'sandbox' && (
         <div className="space-y-6">
-          <div className="p-6 rounded-2xl border border-slate-100 bg-white border-violet-200 space-y-4">
+          <div className="p-6 rounded-2xl border border-slate-200 bg-white space-y-3">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Lock className="w-4 h-4 text-violet-400" />
+              <Lock className="w-4 h-4 text-violet-600" />
               Isolated Execution Sandbox Architecture
             </h3>
-            <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text)' }}>
-              To guarantee zero impact on the primary API server, all user-authored Python code and DAG custom transform blocks execute inside a hardened sandbox container worker. If Docker is unavailable in local environments, the backend seamlessly falls back to a restricted OS child process with active runtime watchdog enforcement.
+            <p className="text-xs text-slate-600 leading-relaxed">
+              To guarantee zero disruption to the primary API server, all user-authored custom Python transformations execute inside a hardened sandbox container worker. If Docker is unavailable in local environments, the backend seamlessly falls back to a restricted OS child process with active runtime watchdog enforcement.
             </p>
           </div>
 
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
             {[
-              { title: 'CPU Quota', val: '1.0 Core', desc: 'Isolated worker CPU quota to prevent compute exhaustion.' },
-              { title: 'RAM Ceiling', val: '256 MB', desc: 'Active memory watch. Exceeding triggers automatic SIGKILL termination.' },
-              { title: 'Execution Timeout', val: '15 - 60s', desc: 'Strict supervisor watchdog aborts any infinite while loops.' },
-              { title: 'PIDs Ceiling', val: '64 Processes', desc: 'Fork bombs and multi-process spawns are proactively blocked.' },
-              { title: 'Network Policy', val: 'Blocked (None)', desc: 'Zero outbound or inbound network connections permitted.' },
-              { title: 'Root Filesystem', val: 'Read-Only', desc: 'Temp storage limited to a 64MB memory tmpfs mounted at /tmp.' },
+              { title: 'CPU Quota', val: '1.0 Core', desc: 'Isolated worker CPU quota to prevent compute exhaustion from multi-threaded loops.' },
+              { title: 'RAM Memory Ceiling', val: '256 MB', desc: 'Active memory watch. Exceeding triggers automatic process termination without leaking memory.' },
+              { title: 'Execution Timeout', val: '15 - 60s', desc: 'Strict supervisor watchdog aborts any infinite while loops or frozen executions.' },
+              { title: 'Process PID Ceiling', val: '64 Processes', desc: 'Fork bombs and unauthorized subprocess spawns are blocked proactively.' },
+              { title: 'Network Policy', val: 'Blocked (None)', desc: 'Zero outbound or inbound network connections permitted to eliminate data exfiltration.' },
+              { title: 'Root Filesystem', val: 'Read-Only', desc: 'Temp storage is strictly limited to a memory tmpfs mounted at /tmp.' },
             ].map((lim, idx) => (
-              <div key={idx} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block" style={{}}>{lim.title}</span>
-                <span className="text-base font-black text-violet-400 font-mono block">{lim.val}</span>
-                <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{lim.desc}</p>
+              <div key={idx} className="p-4 rounded-xl border border-slate-200 bg-white space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">{lim.title}</span>
+                <span className="text-lg font-black text-violet-700 font-mono block">{lim.val}</span>
+                <p className="text-xs text-slate-600 leading-relaxed">{lim.desc}</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* 4. Supported Libraries Tab */}
-      {activeTab === 'libraries' && (
+      {/* ─── 5. Custom Python Scripting Tab ─────────────────────────────────── */}
+      {activeTab === 'python' && (
         <div className="space-y-6">
-          <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-            The Python sandbox includes production data science and analytics packages:
-          </p>
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="p-6 rounded-2xl border border-slate-200 bg-white space-y-3">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Code2 className="w-4 h-4 text-violet-600" />
+              Writing Custom Python Transformation Nodes
+            </h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              The <strong>Custom Python Node</strong> allows you to execute arbitrary pandas data transformations directly within your visual pipeline. The upstream dataset is automatically injected into your code as a pandas DataFrame named <code>df</code>.
+            </p>
+          </div>
+
+          {/* Code Example Card */}
+          <div className="p-5 rounded-2xl border border-slate-200 bg-slate-900 text-slate-100 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                <span className="text-xs font-mono text-slate-400 ml-2">custom_transform.py</span>
+              </div>
+              <button
+                onClick={() => copySnippet(`# FlowML Custom Python Transformation
+import numpy as np
+
+# 1. Fill missing age with column median
+if 'Age' in df.columns:
+    df['Age'] = df['Age'].fillna(df['Age'].median())
+
+# 2. Extract family size feature
+if 'SibSp' in df.columns and 'Parch' in df.columns:
+    df['FamilySize'] = df['SibSp'] + df['Parch'] + 1
+
+# 3. Log-transform skewed fare distribution
+if 'Fare' in df.columns:
+    df['Fare_Log'] = np.log1p(df['Fare'])
+
+# Return the modified DataFrame:
+# The variable 'df' is automatically captured as the node output`)}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 transition-colors"
+              >
+                {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedCode ? 'Copied!' : 'Copy Code'}</span>
+              </button>
+            </div>
+
+            <pre className="text-xs font-mono text-violet-300 overflow-x-auto p-2 leading-relaxed">
+{`# FlowML Custom Python Transformation
+# Note: 'df' is automatically provided by the upstream node
+
+import numpy as np
+
+# 1. Fill missing age with column median
+if 'Age' in df.columns:
+    df['Age'] = df['Age'].fillna(df['Age'].median())
+
+# 2. Extract family size feature
+if 'SibSp' in df.columns and 'Parch' in df.columns:
+    df['FamilySize'] = df['SibSp'] + df['Parch'] + 1
+
+# 3. Log-transform skewed fare distribution
+if 'Fare' in df.columns:
+    df['Fare_Log'] = np.log1p(df['Fare'])
+
+# The modified 'df' is automatically returned to downstream nodes!`}
+            </pre>
+          </div>
+
+          {/* Supported Packages */}
+          <div className="grid sm:grid-cols-3 gap-4">
             {[
-              { name: 'NumPy', ver: '>= 1.24', desc: 'Vectorized tensor operations, linear algebra, log/exp mathematical transforms.' },
-              { name: 'Pandas', ver: '>= 2.0', desc: 'DataFrame ingestion, filtering, grouping, date arithmetic, and series encoding.' },
-              { name: 'Scikit-Learn', ver: '>= 1.4', desc: 'Preprocessing scalers, encoders, classifiers, regressors, and loss functions.' },
-              { name: 'Matplotlib', ver: '>= 3.8', desc: 'Charts rendered via headless Agg backend automatically returned as base64 PNGs.' },
-              { name: 'Python Standard', ver: '3.10+', desc: 'Standard math, datetime, re (regex), json, collections, and itertools.' }
-            ].map((lib, idx) => (
-              <div key={idx} className="p-4 rounded-xl border border-slate-100 bg-white flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-violet-500/10 text-violet-400 flex items-center justify-center font-mono font-bold text-xs shrink-0">
-                  Py
+              { name: 'NumPy', ver: '>= 1.24', desc: 'Vectorized tensor math, log/exp transforms, arrays.' },
+              { name: 'Pandas', ver: '>= 2.0', desc: 'DataFrame filtering, grouping, date arithmetic, one-hot encoding.' },
+              { name: 'Scikit-Learn', ver: '>= 1.4', desc: 'Preprocessing scalers, estimators, and loss metrics.' },
+            ].map((pkg, idx) => (
+              <div key={idx} className="p-4 rounded-xl border border-slate-200 bg-white space-y-1">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-xs text-slate-900">{pkg.name}</h4>
+                  <span className="text-[10px] font-mono text-slate-400">{pkg.ver}</span>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-xs font-bold text-slate-900">{lib.name}</h4>
-                    <span className="text-[10px] font-mono text-slate-500">{lib.ver}</span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">{lib.desc}</p>
-                </div>
+                <p className="text-xs text-slate-600">{pkg.desc}</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* 5. FAQ Tab */}
+      {/* ─── 6. FAQs & Troubleshooting Tab ─────────────────────────────────── */}
       {activeTab === 'faq' && (
         <div className="space-y-4">
           {FAQS.map((faq, idx) => (

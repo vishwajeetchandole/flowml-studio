@@ -1076,11 +1076,15 @@ function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 pb-12 border-b border-white/10">
           {/* Brand info */}
           <div className="col-span-2">
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center text-white">
+            <div
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2.5 mb-4 cursor-pointer group"
+              title="FlowML Home"
+            >
+              <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center text-white group-hover:scale-105 transition-transform">
                 <Cpu className="w-4 h-4 text-white" />
               </div>
-              <span className="font-display font-extrabold text-lg text-white tracking-tight">FlowML</span>
+              <span className="font-display font-extrabold text-lg text-white tracking-tight group-hover:text-violet-300 transition-colors">FlowML</span>
             </div>
             <p className="text-xs text-slate-400 max-w-xs leading-relaxed mb-6">
               The next-generation visual pipeline canvas for machine learning development, automated benchmarking, and transparent explainable AI.
