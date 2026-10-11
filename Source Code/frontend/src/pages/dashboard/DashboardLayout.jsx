@@ -7,7 +7,7 @@ import FlowMLIcon from '../../components/FlowMLIcon';
 import SignOutButton from '../../components/auth/SignOutButton';
 import {
   FolderKanban, Database, Layers, PlayCircle, LayoutTemplate,
-  Settings, LogOut, Plus, Sparkles, ExternalLink,
+  Settings, LogOut, Sparkles, ExternalLink,
   ChevronRight, Activity, Bell, Search, Terminal, Code,
 } from 'lucide-react';
 
@@ -30,17 +30,16 @@ export default function DashboardLayout() {
     { to: '/app/runs', label: 'Run History', icon: PlayCircle },
     { to: '/app/code', label: 'Python Studio', icon: Code },
     { to: '/app/templates', label: 'Templates', icon: LayoutTemplate },
-    { to: '/app/settings', label: 'Settings', icon: Settings },
   ];
 
   return (
-    <div className="min-h-screen flex text-slate-800 font-sans bg-slate-50">
+    <div className="h-screen flex overflow-hidden text-slate-800 font-sans bg-slate-50">
       {/* Toast notification */}
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       {/* Sidebar */}
       <aside
-        className="w-64 border-r flex flex-col shrink-0 select-none z-20"
+        className="w-64 h-screen border-r flex flex-col shrink-0 select-none z-20 overflow-hidden"
         style={{
           background: 'var(--color-surface)',
           borderColor: 'var(--color-border)',
@@ -73,7 +72,7 @@ export default function DashboardLayout() {
         </div>
 
         {/* Navigation links */}
-        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
+        <nav className="flex-1 min-h-0 px-3 py-2 space-y-1 overflow-hidden">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = location.pathname.startsWith(item.to);
@@ -120,11 +119,27 @@ export default function DashboardLayout() {
               <span className="text-[10px] font-semibold">Sign Out</span>
             </SignOutButton>
           </div>
+          <NavLink
+            to="/app/settings"
+            className={`mt-2 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
+              location.pathname.startsWith('/app/settings')
+                ? 'bg-violet-50 text-violet-700'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Settings className={`w-3.5 h-3.5 ${
+              location.pathname.startsWith('/app/settings') ? 'text-violet-600' : 'text-slate-400'
+            }`} />
+            Account Settings
+            {location.pathname.startsWith('/app/settings') && (
+              <ChevronRight className="w-3.5 h-3.5 ml-auto text-violet-600" />
+            )}
+          </NavLink>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 h-screen min-h-0 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header */}
         <header
           className="h-16 border-b px-8 flex items-center justify-between shrink-0 z-10"
@@ -135,14 +150,16 @@ export default function DashboardLayout() {
         >
           <div className="flex items-center gap-4">
             <h2 className="font-display text-base font-bold tracking-tight" style={{ color: 'var(--color-text)' }}>
-              {navItems.find((n) => location.pathname.startsWith(n.to))?.label || 'Dashboard'}
+              {location.pathname.startsWith('/app/settings')
+                ? 'Account Settings'
+                : navItems.find((n) => location.pathname.startsWith(n.to))?.label || 'Dashboard'}
             </h2>
           </div>
 
         </header>
 
         {/* Routed Sub-view */}
-        <main className="flex-1 overflow-y-auto p-8" style={{ background: 'var(--color-bg)' }}>
+        <main className="flex-1 min-h-0 overflow-y-auto p-8" style={{ background: 'var(--color-bg)' }}>
           <Outlet context={{ showToast }} />
         </main>
       </div>

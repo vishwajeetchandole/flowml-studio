@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Users, Activity, Cpu, HardDrive,
-  Sliders, ShieldCheck, AlertTriangle, LogOut,
+  Sliders, ShieldCheck, AlertTriangle, LogOut, Key,
   CheckCircle2, Save, RefreshCw, ArrowLeft,
 } from 'lucide-react';
 import {
@@ -17,6 +17,7 @@ import {
 } from '../../services/api';
 import Logo from '../../components/common/Logo';
 import FlowMLIcon from '../../components/FlowMLIcon';
+import { getFirebaseConfigStatus, isDevMode } from '../../services/firebase';
 
 /* ─── Shared card wrapper ───────────────────────────────────────────────── */
 function Card({ className = '', children }) {
@@ -83,6 +84,14 @@ export default function AdminView({ onSignOut }) {
   const [savingLimits, setSavingLimits] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState('users');
+  const firebaseStatus = getFirebaseConfigStatus();
+  const authEnvironment = [
+    ['VITE_FIREBASE_API_KEY', import.meta.env.VITE_FIREBASE_API_KEY],
+    ['VITE_FIREBASE_AUTH_DOMAIN', import.meta.env.VITE_FIREBASE_AUTH_DOMAIN],
+    ['VITE_FIREBASE_PROJECT_ID', import.meta.env.VITE_FIREBASE_PROJECT_ID],
+    ['VITE_FIREBASE_STORAGE_BUCKET', import.meta.env.VITE_FIREBASE_STORAGE_BUCKET],
+    ['VITE_API_BASE_URL', import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000 (Default)'],
+  ];
 
   const loadData = async () => {
     setLoading(true);
@@ -136,6 +145,7 @@ export default function AdminView({ onSignOut }) {
     { id: 'users',  label: 'Users',         icon: Users },
     { id: 'jobs',   label: 'Job Queue',      icon: Activity },
     { id: 'limits', label: 'Exec Limits',    icon: Sliders },
+    { id: 'auth',   label: 'Auth Status',    icon: Key },
     { id: 'audit',  label: 'Audit Logs',     icon: ShieldCheck },
   ];
 
@@ -461,6 +471,55 @@ export default function AdminView({ onSignOut }) {
               {savingLimits ? 'Saving…' : 'Save Platform Limits'}
             </button>
           </form>
+        </Card>
+      )}
+
+      {/* Tab: Authentication Infrastructure */}
+      {activeTab === 'auth' && (
+        <Card className="p-6 max-w-2xl space-y-5">
+          <div className="flex items-center justify-between gap-4 border-b pb-4" style={{ borderColor: 'var(--color-border)' }}>
+            <div>
+              <h3 className="font-display font-semibold text-sm" style={{ color: 'var(--color-text)' }}>
+                Authentication Infrastructure Status
+              </h3>
+              <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                Authentication provider and runtime configuration for the platform.
+              </p>
+            </div>
+            <span className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold border ${
+              isDevMode
+                ? 'text-violet-700 bg-violet-50 border-violet-200'
+                : firebaseStatus.isConfigured
+                  ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                  : 'text-rose-700 bg-rose-50 border-rose-200'
+            }`}>
+              {isDevMode ? 'DEV_AUTH Mock Active' : firebaseStatus.isConfigured ? 'Live Firebase Auth' : 'Firebase Not Configured'}
+            </span>
+          </div>
+
+          <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
+            {isDevMode
+              ? 'Development authentication is active. User sessions are simulated locally.'
+              : firebaseStatus.isConfigured
+                ? 'Firebase Authentication is configured for live user sign-in.'
+                : 'Firebase Authentication is not configured. Check the environment variables below.'}
+          </p>
+
+          <div className="rounded-2xl border overflow-hidden text-xs" style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg)' }}>
+            <div className="p-3 border-b text-[10px] uppercase font-bold tracking-wider" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}>
+              Environment Configuration
+            </div>
+            <div className="divide-y text-[11px] font-mono" style={{ borderColor: 'var(--color-border)' }}>
+              {authEnvironment.map(([key, value]) => (
+                <div key={key} className="p-3 flex items-center justify-between gap-4">
+                  <span className="font-semibold" style={{ color: 'var(--color-text)' }}>{key}</span>
+                  <span className={value ? 'text-emerald-600' : 'text-slate-400'}>
+                    {value ? (key === 'VITE_API_BASE_URL' && !import.meta.env.VITE_API_BASE_URL ? value : 'Configured') : 'Missing / Using Dev Mock'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </Card>
       )}
 
