@@ -9,11 +9,14 @@ import {
   Cpu, Play, RotateCcw, Save, Download,
   CheckCircle2, AlertCircle, Loader2, Zap, BarChart3, X,
   LayoutTemplate, Undo2, Redo2, Square, ArrowLeft, ShieldAlert,
+  Plus, Database, Layers, Code, Settings, BookOpen, FileCode,
+  HardDrive, RefreshCw, Sparkles, ChevronDown, HelpCircle,
+  Sliders, User,
 } from 'lucide-react';
 import {
   uploadDataset, analyzeDataset, preprocessDataset,
   trainModels, runPredictions, getVisualizations,
-  getProjects, saveProject,
+  getProjects, saveProject, checkHealth,
 } from './services/api';
 
 /* ─── Node type groupings ────────────────────────────────────────────────────── */
@@ -80,7 +83,7 @@ function AppInner() {
     setPipelineSteps((p) => p.map((s) => s.id === id ? { ...s, ...patch } : s));
   }, []);
 
-  /* ─── Keyboard Shortcuts for Undo / Redo ─────────────────────────────────── */
+  /* ─── Keyboard Shortcuts for Colab: Run, Save, Undo, Redo ────────────── */
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
@@ -94,11 +97,17 @@ function AppInner() {
       } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
         e.preventDefault();
         workflowRef.current?.redo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        handleRun();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleManualSave();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [handleRun, handleManualSave]);
 
   /* ─── Autosave (Debounced 2s) ────────────────────────────────────────────── */
   useEffect(() => {
@@ -354,6 +363,7 @@ function AppInner() {
         hasResults={!!results}
         showResults={showResults}
         onToggleResults={() => setShowResults((v) => !v)}
+        showToast={showToast}
       />
 
       {/* ── Workspace ───────────────────────────────────────────────────────── */}
@@ -435,137 +445,370 @@ function AppInner() {
   );
 }
 
-/* ─── Top Bar ────────────────────────────────────────────────────────────────── */
+/* ─── Google Colab Style Canvas Top Bar ──────────────────────────────────────── */
 function TopBar({
   isRunning, pipelineState,
   workflowName, setWorkflowName, saveStatus,
   onRun, onStop, onSave, onExport, onUndo, onRedo,
-  hasResults, showResults, onToggleResults,
+  hasResults, showResults, onToggleResults, showToast,
 }) {
   const navigate = useNavigate();
+  const [activeMenu, setActiveMenu] = useState(null);
+  const [backendOnline, setBackendOnline] = useState(true);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    checkHealth()
+      .then(() => setBackendOnline(true))
+      .catch(() => setBackendOnline(false));
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setActiveMenu(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const menus = [
+    {
+      id: 'file',
+      label: 'File',
+      items: [
+        { label: 'Save Pipeline (Ctrl+S)', icon: Save, action: onSave },
+        { label: 'Export Pipeline JSON', icon: Download, action: onExport },
+        { divider: true },
+        { label: 'Back to Dashboard', icon: ArrowLeft, action: () => navigate('/app/projects') },
+        { label: 'Return to Home', icon: Cpu, action: () => navigate('/') },
+      ],
+    },
+    {
+      id: 'edit',
+      label: 'Edit',
+      items: [
+        { label: 'Undo (Ctrl+Z)', icon: Undo2, action: onUndo },
+        { label: 'Redo (Ctrl+Y)', icon: Redo2, action: onRedo },
+      ],
+    },
+    {
+      id: 'view',
+      label: 'View',
+      items: [
+        { label: showResults ? 'Hide Results Overlay' : 'View Results Overlay', icon: BarChart3, action: onToggleResults },
+        { label: 'Model Tournaments', icon: Layers, action: () => navigate('/app/models') },
+        { label: 'Dataset Store', icon: Database, action: () => navigate('/app/datasets') },
+      ],
+    },
+    {
+      id: 'insert',
+      label: 'Insert',
+      items: [
+        { label: 'Custom Python Code Node', icon: Code, action: () => showToast?.('Drag "Custom Python" from left palette', 'info') },
+        { label: 'Upload Dataset Node', icon: Database, action: () => showToast?.('Drag "Upload Dataset" from left palette', 'info') },
+        { label: 'Preprocessing Node', icon: Sliders, action: () => showToast?.('Drag preprocessing transforms from left palette', 'info') },
+        { label: 'Random Forest Model', icon: Layers, action: () => showToast?.('Drag "Random Forest" from left palette', 'info') },
+        { label: 'AI Decision Tournament', icon: Sparkles, action: () => showToast?.('Drag "AI Decision" from left palette', 'info') },
+      ],
+    },
+    {
+      id: 'runtime',
+      label: 'Runtime',
+      items: [
+        { label: isRunning ? 'Interrupt Execution' : 'Run Pipeline (Ctrl+Enter)', icon: isRunning ? Square : Play, action: isRunning ? onStop : onRun },
+        {
+          label: 'Reconnect Kernel (Python 3.11)',
+          icon: RefreshCw,
+          action: () => {
+            checkHealth()
+              .then(() => {
+                setBackendOnline(true);
+                showToast?.('Kernel connected: Python 3.11 Kernel');
+              })
+              .catch(() => {
+                setBackendOnline(false);
+                showToast?.('Kernel offline - check backend server', 'error');
+              });
+          },
+        },
+        { label: 'Execution Limits & Sandbox', icon: ShieldAlert, action: () => navigate('/docs') },
+      ],
+    },
+    {
+      id: 'tools',
+      label: 'Tools',
+      items: [
+        { label: 'Workspace Settings', icon: Settings, action: () => navigate('/app/settings') },
+        { label: 'Dataset Store', icon: Database, action: () => navigate('/app/datasets') },
+      ],
+    },
+    {
+      id: 'help',
+      label: 'Help',
+      items: [
+        { label: 'Documentation & Guide', icon: BookOpen, action: () => navigate('/docs') },
+        { label: 'Sample Tutorials', icon: FileCode, action: () => navigate('/tutorials') },
+        { label: 'About Team & Mission', icon: User, action: () => navigate('/about') },
+      ],
+    },
+  ];
 
   return (
-    <header
-      className="h-16 shrink-0 flex items-center justify-between px-6 z-50 border-b select-none"
-      style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
-    >
-      {/* Brand & Back Button & Name Input */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => navigate('/app/projects')}
-          title="Back to Dashboard"
-          className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-        </button>
-
-        <div className="flex items-center gap-2.5">
+    <div className="flex flex-col shrink-0 select-none bg-white border-b border-[#DADCE0] z-50">
+      {/* ── Tier 1: Google Colab Header Bar ───────────────────────────────── */}
+      <div className="h-12 px-3 flex items-center justify-between border-b border-[#E8EAED] text-xs">
+        {/* Left: Brand, Document Title & Menubar */}
+        <div className="flex items-center gap-3">
+          {/* FlowML Logo (clicking renders to home page) */}
           <div
             onClick={() => navigate('/')}
-            className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md bg-violet-600 hover:scale-105 transition-transform cursor-pointer"
-            title="Go to Home"
+            className="flex items-center gap-2 cursor-pointer group"
+            title="FlowML Home"
           >
-            <Cpu className="w-4 h-4 text-white" />
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br from-violet-600 to-indigo-600 shadow-xs group-hover:scale-105 transition-transform">
+              <Cpu className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-display font-extrabold text-sm tracking-tight text-slate-900 hidden sm:inline">
+              Flow<span className="text-violet-600">ML</span>
+            </span>
           </div>
 
-          <div>
-            <input
-              type="text"
-              value={workflowName}
-              onChange={(e) => setWorkflowName(e.target.value)}
-              className="font-display font-bold text-sm bg-transparent hover:bg-slate-100 px-2 py-0.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-violet-500 transition-colors max-w-[200px] truncate"
-              style={{ color: 'var(--color-text)' }}
-            />
-            <div className="text-[10px] text-slate-500 flex items-center gap-1.5 px-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span>{saveStatus === 'saving' ? 'Saving…' : 'Autosaved'}</span>
+          <div className="h-4 w-[1px] bg-slate-200" />
+
+          {/* Notebook Document Title & Colab Menus */}
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5">
+              <input
+                type="text"
+                value={workflowName}
+                onChange={(e) => setWorkflowName(e.target.value)}
+                className="font-medium text-xs text-slate-800 bg-transparent hover:bg-slate-100 px-1 py-0.5 rounded focus:outline-none focus:ring-1 focus:ring-violet-500 max-w-[160px] truncate"
+              />
+              <span className="font-mono text-slate-500 text-[11px]">.ipynb</span>
+              <span className="text-[10px] text-slate-400 font-mono hidden md:inline">
+                [{saveStatus === 'saving' ? 'Saving…' : 'In Drive · Autosaved'}]
+              </span>
+            </div>
+
+            {/* Menubar */}
+            <div ref={menuRef} className="flex items-center gap-0.5 -ml-1 relative">
+              {menus.map((menu) => (
+                <div key={menu.id} className="relative">
+                  <button
+                    onClick={() => setActiveMenu(activeMenu === menu.id ? null : menu.id)}
+                    className={`px-1.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                      activeMenu === menu.id
+                        ? 'bg-slate-200 text-slate-900'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`}
+                  >
+                    {menu.label}
+                  </button>
+
+                  {activeMenu === menu.id && (
+                    <div className="absolute top-full left-0 mt-1 w-52 bg-white rounded-lg shadow-xl border border-slate-200 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                      {menu.items.map((item, idx) =>
+                        item.divider ? (
+                          <div key={idx} className="my-1 border-t border-slate-100" />
+                        ) : (
+                          <button
+                            key={idx}
+                            onClick={() => {
+                              setActiveMenu(null);
+                              item.action?.();
+                            }}
+                            className="w-full text-left px-3 py-1.5 flex items-center gap-2.5 text-xs text-slate-700 hover:bg-violet-50 hover:text-violet-700 transition-colors cursor-pointer"
+                          >
+                            {item.icon && <item.icon className="w-3.5 h-3.5 text-slate-400" />}
+                            <span>{item.label}</span>
+                          </button>
+                        )
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Center Actions: Undo / Redo */}
-      <div className="hidden sm:flex items-center gap-1 p-1 rounded-xl border" style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg)' }}>
-        <button
-          onClick={onUndo}
-          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-          title="Undo (Ctrl+Z)"
-        >
-          <Undo2 className="w-3.5 h-3.5" />
-        </button>
-        <button
-          onClick={onRedo}
-          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-          title="Redo (Ctrl+Y)"
-        >
-          <Redo2 className="w-3.5 h-3.5" />
-        </button>
-      </div>
+        {/* Right: Colab RAM / Disk Resource Bars & Kernel Status */}
+        <div className="flex items-center gap-3">
+          {/* RAM & Disk Resource Meters (Signature Colab Feature) */}
+          <div className="hidden lg:flex items-center gap-3 px-2.5 py-0.5 bg-slate-50 border border-slate-200 rounded text-[10px] font-mono">
+            <div className="flex items-center gap-1.5" title="Sandbox RAM Allocation: 2.4GB / 12.0GB Used">
+              <span className="text-slate-500 font-semibold">RAM</span>
+              <div className="w-12 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                <div className="bg-emerald-500 h-full w-[26%] rounded-full" />
+              </div>
+            </div>
+            <span className="text-slate-300">|</span>
+            <div className="flex items-center gap-1.5" title="Sandbox Disk: 18.5GB / 100.0GB Used">
+              <span className="text-slate-500 font-semibold">Disk</span>
+              <div className="w-12 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                <div className="bg-indigo-500 h-full w-[18%] rounded-full" />
+              </div>
+            </div>
+          </div>
 
-      {/* Right Actions */}
-      <div className="flex items-center gap-2">
-        {hasResults && (
-          <button
-            onClick={onToggleResults}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border"
-            style={{
-              background: showResults ? 'rgba(124, 58, 237, 0.1)' : 'var(--color-bg)',
-              borderColor: showResults ? '#7C3AED' : 'var(--color-border)',
-              color: showResults ? '#7C3AED' : 'var(--color-text-muted)',
+          {/* Colab Kernel Connection Pill */}
+          <div
+            onClick={() => {
+              checkHealth()
+                .then(() => {
+                  setBackendOnline(true);
+                  showToast?.('Kernel connected: Python 3.11');
+                })
+                .catch(() => {
+                  setBackendOnline(false);
+                  showToast?.('Kernel offline', 'error');
+                });
             }}
+            className={`flex items-center gap-1.5 px-2 py-0.5 rounded border text-[11px] font-mono cursor-pointer transition-colors ${
+              backendOnline
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                : 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'
+            }`}
+            title="Python 3.11 Kernel (Click to refresh)"
           >
-            <BarChart3 className="w-3.5 h-3.5" />
-            {showResults ? 'Hide Results' : 'View Results'}
-          </button>
-        )}
+            <span className={`w-1.5 h-1.5 rounded-full ${backendOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+            <span className="font-semibold hidden sm:inline">{backendOnline ? 'Connected (Python 3.11)' : 'Offline'}</span>
+          </div>
 
-        <button
-          onClick={onSave}
-          className="p-2 rounded-xl border text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-          style={{ borderColor: 'var(--color-border)' }}
-          title="Save Project"
-        >
-          <Save className="w-3.5 h-3.5" />
-        </button>
-
-        <button
-          onClick={onExport}
-          className="p-2 rounded-xl border text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-          style={{ borderColor: 'var(--color-border)' }}
-          title="Export Workflow JSON"
-        >
-          <Download className="w-3.5 h-3.5" />
-        </button>
-
-        {/* STOP / RUN BUTTON */}
-        {isRunning ? (
+          {/* Back to Dashboard Button */}
           <button
-            onClick={onStop}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-red-500 hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+            onClick={() => navigate('/app/projects')}
+            className="flex items-center gap-1 px-2.5 py-1 rounded text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors border border-slate-200 cursor-pointer"
+            title="Exit Canvas to Dashboard"
           >
-            <Square className="w-3.5 h-3.5 fill-current" />
-            Stop
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Dashboard</span>
           </button>
-        ) : (
-          <button
-            onClick={onRun}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md shadow-violet-500/25 active:scale-95 transition-all bg-violet-600 hover:bg-violet-700 cursor-pointer"
-          >
-            {pipelineState === 'done' ? (
-              <>
-                <RotateCcw className="w-3.5 h-3.5" />
-                Run Again
-              </>
-            ) : (
-              <>
-                <Play className="w-3.5 h-3.5 fill-current" />
-                Run Pipeline
-              </>
-            )}
-          </button>
-        )}
+        </div>
       </div>
-    </header>
+
+      {/* ── Tier 2: Colab Action Ribbon ─────────────────────────────────────── */}
+      <div className="h-10 px-3 bg-[#F8F9FA] flex items-center justify-between text-xs">
+        {/* Left Colab Quick Action Buttons */}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => {
+              showToast?.('Drag "Custom Python" from left palette to add code block', 'info');
+            }}
+            className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold text-slate-700 hover:bg-white border border-slate-200/80 shadow-2xs transition-colors cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5 text-violet-600" />
+            <span>+ Code</span>
+          </button>
+
+          <button
+            onClick={() => {
+              showToast?.('Drag "Upload Dataset" from left palette onto the canvas', 'info');
+            }}
+            className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold text-slate-700 hover:bg-white border border-slate-200/80 shadow-2xs transition-colors cursor-pointer"
+          >
+            <Database className="w-3.5 h-3.5 text-indigo-600" />
+            <span>+ Dataset</span>
+          </button>
+
+          <button
+            onClick={() => {
+              showToast?.('Drag a Model or AI Decision node from the left palette', 'info');
+            }}
+            className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold text-slate-700 hover:bg-white border border-slate-200/80 shadow-2xs transition-colors cursor-pointer"
+          >
+            <Layers className="w-3.5 h-3.5 text-emerald-600" />
+            <span>+ Model</span>
+          </button>
+
+          <span className="text-slate-300 mx-1">|</span>
+
+          {/* Undo / Redo */}
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={onUndo}
+              className="p-1 rounded text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-colors cursor-pointer"
+              title="Undo (Ctrl+Z)"
+            >
+              <Undo2 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={onRedo}
+              className="p-1 rounded text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-colors cursor-pointer"
+              title="Redo (Ctrl+Y)"
+            >
+              <Redo2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <span className="text-slate-300 mx-1">|</span>
+
+          {/* Save / Export */}
+          <button
+            onClick={onSave}
+            className="p-1 rounded text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-colors cursor-pointer"
+            title="Save Project (Ctrl+S)"
+          >
+            <Save className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={onExport}
+            className="p-1 rounded text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-colors cursor-pointer"
+            title="Export JSON"
+          >
+            <Download className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Right Colab Run / Results Controls */}
+        <div className="flex items-center gap-2">
+          {hasResults && (
+            <button
+              onClick={onToggleResults}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold transition-all border cursor-pointer ${
+                showResults
+                  ? 'bg-violet-100 text-violet-700 border-violet-300'
+                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              <BarChart3 className="w-3.5 h-3.5 text-violet-600" />
+              <span>{showResults ? 'Hide Results' : 'View Results'}</span>
+            </button>
+          )}
+
+          {/* Google Colab Execution Run Button */}
+          {isRunning ? (
+            <button
+              onClick={onStop}
+              className="flex items-center gap-1.5 px-3 py-1 rounded font-bold text-xs text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-xs cursor-pointer"
+            >
+              <Square className="w-3.5 h-3.5 fill-current" />
+              <span>Interrupt</span>
+            </button>
+          ) : (
+            <button
+              onClick={onRun}
+              className="flex items-center gap-1.5 px-3 py-1 rounded font-bold text-xs text-white bg-violet-600 hover:bg-violet-700 transition-colors shadow-xs active:scale-[0.98] cursor-pointer"
+              title="Run Pipeline (Ctrl+Enter)"
+            >
+              {pipelineState === 'done' ? (
+                <>
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Run Again</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Run Pipeline</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
