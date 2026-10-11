@@ -1200,7 +1200,7 @@ export default function LandingPage({ authMode }) {
             {/* Announcement Pill */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white shadow-xs mb-8 hover:bg-slate-800 transition-colors cursor-pointer">
               <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-              <span>v2.0 is live: Experience Next-Gen AutoML Studio</span>
+              <span>Experience Next-Gen AutoML Studio</span>
               <ArrowRight className="w-3.5 h-3.5 ml-0.5 text-slate-400" />
             </div>
 
