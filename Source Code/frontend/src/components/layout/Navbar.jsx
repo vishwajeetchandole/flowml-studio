@@ -6,24 +6,23 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import Logo from '../common/Logo';
+
 /* ─── Brand logo mark ────────────────────────────────────────────────────────── */
 const BrandMark = () => (
   <div className="flex items-center gap-3 select-none">
     <div className="relative">
       <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg"
-        style={{ background: 'linear-gradient(135deg,#6366f1,#3b82f6)' }}>
+        style={{ background: 'linear-gradient(135deg,#7C3AED,#7C3AED)' }}>
         <Cpu className="w-5 h-5 text-white" />
       </div>
       {/* animated glow ring */}
       <div className="absolute inset-0 rounded-xl animate-pulse"
-        style={{ boxShadow: '0 0 16px rgba(99,102,241,0.5)', opacity: 0.6 }} />
+        style={{ boxShadow: '0 0 16px rgba(124,58,237,0.5)', opacity: 0.6 }} />
     </div>
     <div>
-      <div className="font-sora font-bold text-base leading-none tracking-tight"
-        style={{ background: 'linear-gradient(90deg,#6366f1,#3b82f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-        FlowML
-      </div>
-      <div className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+      <Logo size="text-xl" />
+      <div className="text-[9px] font-sans font-semibold uppercase tracking-widest text-[#6B6585]">
         Studio
       </div>
     </div>
@@ -33,8 +32,8 @@ const BrandMark = () => (
 /* ─── Run Pipeline button ─────────────────────────────────────────────────────── */
 const RunBtn = ({ isRunning, pipelineStatus, onRunPipeline }) => {
   const cfg = {
-    idle:    { label: 'Run Pipeline',    Icon: Play,          grad: 'linear-gradient(135deg,#6366f1,#3b82f6)', glow: 'rgba(99,102,241,0.4)' },
-    running: { label: 'Running…',        Icon: Loader2,       grad: 'linear-gradient(135deg,#6366f1,#3b82f6)', glow: 'rgba(99,102,241,0.2)' },
+    idle:    { label: 'Run Pipeline',    Icon: Play,          grad: 'linear-gradient(135deg,#7C3AED,#6D28D9)', glow: 'rgba(124,58,237,0.35)' },
+    running: { label: 'Running…',        Icon: Loader2,       grad: 'linear-gradient(135deg,#7C3AED,#6D28D9)', glow: 'rgba(124,58,237,0.2)' },
     success: { label: 'Run Again',       Icon: CheckCircle2,  grad: 'linear-gradient(135deg,#22c55e,#16a34a)', glow: 'rgba(34,197,94,0.4)'  },
     error:   { label: 'Retry Pipeline',  Icon: AlertCircle,   grad: 'linear-gradient(135deg,#ef4444,#dc2626)', glow: 'rgba(239,68,68,0.4)'  },
   };
@@ -49,7 +48,7 @@ const RunBtn = ({ isRunning, pipelineStatus, onRunPipeline }) => {
       onClick={isRunning ? undefined : onRunPipeline}
       disabled={isRunning}
       id="run-pipeline-btn"
-      className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-bold transition-all"
+      className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-bold transition-all shadow-md cursor-pointer"
       style={{
         background:  grad,
         boxShadow:   `0 4px 18px ${glow}`,
@@ -71,16 +70,16 @@ const IconBtn = ({ icon: Icon, label, onClick, active, badge, id }) => (
     whileTap={{ scale: 0.92 }}
     onClick={onClick}
     title={label}
-    className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+    className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer"
     style={{
-      background: active ? 'rgba(99,102,241,0.15)' : 'transparent',
-      border:     active ? '1px solid rgba(99,102,241,0.3)' : '1px solid transparent',
-      color:      active ? '#6366f1' : 'var(--color-text-muted)',
+      background: active ? 'rgba(124,58,237,0.12)' : 'transparent',
+      border:     active ? '1px solid rgba(124,58,237,0.3)' : '1px solid transparent',
+      color:      active ? '#7C3AED' : 'var(--color-text-muted)',
     }}
     onMouseEnter={(e) => {
       if (!active) {
-        e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-        e.currentTarget.style.color = 'var(--color-text)';
+        e.currentTarget.style.background = '#f1f5f9';
+        e.currentTarget.style.color = '#0f172a';
       }
     }}
     onMouseLeave={(e) => {
@@ -113,7 +112,7 @@ const Navbar = ({
 
   const NOTIFS = [
     { icon: CheckCircle2, text: 'Backend connected', color: '#22c55e', time: 'now' },
-    { icon: Zap,          text: 'FlowML Studio ready', color: '#6366f1', time: '1m ago' },
+    { icon: Zap,          text: 'FlowML Studio ready', color: '#7C3AED', time: '1m ago' },
   ];
 
   return (

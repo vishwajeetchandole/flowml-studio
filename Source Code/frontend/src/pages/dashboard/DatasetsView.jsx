@@ -169,7 +169,7 @@ export default function DatasetsView() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-sora text-2xl font-bold tracking-tight" style={{ color: 'var(--color-text)' }}>
+          <h1 className="font-display text-2xl font-extrabold tracking-[-0.02em] leading-tight" style={{ color: 'var(--color-text)' }}>
             Dataset Repository
           </h1>
           <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
@@ -195,8 +195,8 @@ export default function DatasetsView() {
             onClick={() => setIsUploadOpen(true)}
             className="px-4 py-2.5 rounded-xl font-bold text-xs text-white flex items-center gap-2 shadow-lg transition-all active:scale-95"
             style={{
-              background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
-              boxShadow: '0 4px 16px rgba(99, 102, 241, 0.35)',
+              background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+              boxShadow: '0 4px 16px rgba(124, 58, 237, 0.35)',
             }}
           >
             <Upload className="w-4 h-4" />
@@ -247,7 +247,7 @@ export default function DatasetsView() {
           >
             <Database className="w-7 h-7" />
           </div>
-          <h3 className="font-sora font-bold text-base mb-1" style={{ color: 'var(--color-text)' }}>
+          <h3 className="font-display font-semibold text-base mb-1" style={{ color: 'var(--color-text)' }}>
             No datasets uploaded
           </h3>
           <p className="text-xs max-w-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>
@@ -256,7 +256,7 @@ export default function DatasetsView() {
           <button
             onClick={() => setIsUploadOpen(true)}
             className="px-4 py-2 rounded-xl text-xs font-bold text-white flex items-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+            style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
           >
             <Upload className="w-3.5 h-3.5" />
             Upload First Dataset
@@ -394,7 +394,7 @@ export default function DatasetsView() {
               }}
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-sora font-bold text-base" style={{ color: 'var(--color-text)' }}>
+                <h3 className="font-display font-semibold text-base" style={{ color: 'var(--color-text)' }}>
                   Upload Dataset
                 </h3>
                 <button
@@ -424,7 +424,7 @@ export default function DatasetsView() {
 
                   <div
                     className="w-12 h-12 rounded-2xl mx-auto mb-3 flex items-center justify-center"
-                    style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#818cf8' }}
+                    style={{ background: 'rgba(124, 58, 237, 0.1)', color: '#7C3AED' }}
                   >
                     <Upload className="w-6 h-6" />
                   </div>
@@ -476,7 +476,7 @@ export default function DatasetsView() {
                     type="submit"
                     disabled={!uploadFile || uploading}
                     className="px-5 py-2 rounded-xl text-xs font-bold text-white shadow-lg disabled:opacity-50 flex items-center gap-2"
-                    style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+                    style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
                   >
                     {uploading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     Upload File
@@ -507,7 +507,7 @@ export default function DatasetsView() {
                 <div>
                   <div className="flex items-center gap-2">
                     <Table className="w-5 h-5 text-primary" />
-                    <h3 className="font-sora font-bold text-lg" style={{ color: 'var(--color-text)' }}>
+                    <h3 className="font-display font-semibold text-lg" style={{ color: 'var(--color-text)' }}>
                       {previewData?.name || 'Dataset Inspection'}
                     </h3>
                   </div>
@@ -537,28 +537,28 @@ export default function DatasetsView() {
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       <div className="p-3.5 rounded-2xl border" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
                         <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Rows</div>
-                        <div className="font-sora font-bold text-lg text-white mt-1">
+                        <div className="font-mono font-bold text-lg text-white mt-1">
                           {previewData.rows?.toLocaleString()}
                         </div>
                       </div>
 
                       <div className="p-3.5 rounded-2xl border" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
                         <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Columns</div>
-                        <div className="font-sora font-bold text-lg text-primary mt-1">
+                        <div className="font-mono font-bold text-lg text-primary mt-1">
                           {previewData.columns}
                         </div>
                       </div>
 
                       <div className="p-3.5 rounded-2xl border" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
                         <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Missing Values</div>
-                        <div className="font-sora font-bold text-lg text-warning mt-1">
+                        <div className="font-mono font-bold text-lg text-warning mt-1">
                           {previewData.total_missing ?? 0}
                         </div>
                       </div>
 
                       <div className="p-3.5 rounded-2xl border" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
                         <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Duplicate Rows</div>
-                        <div className="font-sora font-bold text-lg text-emerald-400 mt-1">
+                        <div className="font-mono font-bold text-lg text-emerald-400 mt-1">
                           {previewData.duplicate_count ?? 0}
                         </div>
                       </div>
@@ -629,7 +629,7 @@ export default function DatasetsView() {
                 <button
                   onClick={() => setPreviewDatasetId(null)}
                   className="px-5 py-2 rounded-xl text-xs font-bold text-white shadow-md"
-                  style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+                  style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
                 >
                   Done
                 </button>
@@ -656,7 +656,7 @@ export default function DatasetsView() {
               <div className="w-12 h-12 rounded-2xl mx-auto mb-4 bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6" />
               </div>
-              <h3 className="font-sora font-bold text-base mb-1" style={{ color: 'var(--color-text)' }}>
+              <h3 className="font-display font-semibold text-base mb-1" style={{ color: 'var(--color-text)' }}>
                 Delete Dataset?
               </h3>
               <p className="text-xs leading-relaxed mb-6" style={{ color: 'var(--color-text-muted)' }}>
@@ -695,7 +695,7 @@ export default function DatasetsView() {
                 border: '1px solid var(--color-border)',
               }}
             >
-              <h3 className="font-sora font-bold text-base mb-4" style={{ color: 'var(--color-text)' }}>
+              <h3 className="font-display font-semibold text-base mb-4" style={{ color: 'var(--color-text)' }}>
                 Rename Dataset Display
               </h3>
               <form onSubmit={handleRename} className="space-y-4">
@@ -727,7 +727,7 @@ export default function DatasetsView() {
                   <button
                     type="submit"
                     className="px-4 py-2 rounded-xl text-xs font-bold text-white"
-                    style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+                    style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
                   >
                     Save Changes
                   </button>

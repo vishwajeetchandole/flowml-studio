@@ -31,7 +31,7 @@ const NODE_CATEGORIES = [
       { type: 'encode',       label: 'Encode Labels',     desc: 'One-hot · Label enc.',    icon: SquareFunction, color: '#a855f7' },
       { type: 'scale',        label: 'Scale Features',    desc: 'Standard · MinMax',       icon: Gauge,          color: '#d946ef' },
       { type: 'splitData',    label: 'Split Train/Test',  desc: 'Train / Validation split',icon: GitFork,        color: '#7c3aed' },
-      { type: 'customPython', label: 'Custom Python',     desc: 'Code transformation',     icon: Code,           color: '#6366f1' },
+      { type: 'customPython', label: 'Custom Python',     desc: 'Code transformation',     icon: Code,           color: '#7C3AED' },
     ],
   },
   {
@@ -272,7 +272,7 @@ const Sidebar = () => {
         <div className="px-3 py-3" style={{ borderTop: '1px solid var(--color-border)' }}>
           <div
             className="p-3 rounded-xl text-[10px] leading-relaxed"
-            style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', color: 'var(--color-text-muted)' }}
+            style={{ background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.15)', color: 'var(--color-text-muted)' }}
           >
             <span className="font-bold text-primary">Drag</span> nodes onto the canvas.
             Connect them by pulling from a handle to another node.

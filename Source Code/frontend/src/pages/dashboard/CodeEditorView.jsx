@@ -9,7 +9,7 @@ export default function CodeEditorView() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-600 border border-indigo-200">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-violet-500/10 text-violet-600 border border-violet-200">
               Interactive Lab
             </span>
             <span className="text-xs text-slate-500 flex items-center gap-1">
@@ -33,7 +33,7 @@ export default function CodeEditorView() {
             color: 'var(--color-text-muted)',
           }}
         >
-          <Cpu className="w-4 h-4 text-indigo-500" />
+          <Cpu className="w-4 h-4 text-violet-500" />
           <span>Limits: 1.0 CPU · 256 MB RAM · No Network</span>
         </div>
       </div>

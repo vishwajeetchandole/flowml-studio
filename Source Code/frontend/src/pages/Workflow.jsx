@@ -122,8 +122,8 @@ const initialEdges = [
     source: 'node-1',
     target: 'node-2',
     animated: true,
-    style: { stroke: '#6366F1' },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#6366F1' },
+    style: { stroke: '#7C3AED' },
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#7C3AED' },
   },
 ];
 
@@ -261,8 +261,8 @@ const WorkflowInner = ({ onNodeClick, actionsRef }) => {
           {
             ...params,
             animated: true,
-            style: { stroke: '#6366F1' },
-            markerEnd: { type: MarkerType.ArrowClosed, color: '#6366F1' },
+            style: { stroke: '#7C3AED' },
+            markerEnd: { type: MarkerType.ArrowClosed, color: '#7C3AED' },
           },
           eds
         )
@@ -333,8 +333,8 @@ const WorkflowInner = ({ onNodeClick, actionsRef }) => {
           maxZoom={2}
           defaultEdgeOptions={{
             animated: true,
-            style: { stroke: '#6366F1', strokeWidth: 2.5 },
-            markerEnd: { type: MarkerType.ArrowClosed, color: '#6366F1' },
+            style: { stroke: '#7C3AED', strokeWidth: 2.5 },
+            markerEnd: { type: MarkerType.ArrowClosed, color: '#7C3AED' },
           }}
           style={{ background: 'transparent' }}
         >
@@ -350,7 +350,7 @@ const WorkflowInner = ({ onNodeClick, actionsRef }) => {
                 aiDecision: '#22c55e', explainableAi: '#10b981',
                 prediction: '#ec4899', report: '#f43f5e',
               };
-              return COLORS[n.type] ?? '#6366f1';
+              return COLORS[n.type] ?? '#7C3AED';
             }}
             maskColor="rgba(240,244,248,0.8)"
             style={{ borderRadius: 12 }}

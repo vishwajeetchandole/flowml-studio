@@ -44,7 +44,7 @@ export default class ErrorBoundary extends React.Component {
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-bold font-sora" style={{ color: 'var(--color-text)' }}>Something went wrong</h2>
+              <h2 className="text-xl font-bold font-display" style={{ color: 'var(--color-text)' }}>Something went wrong</h2>
               <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
                 An unexpected error occurred while rendering this view. Your saved data and pipeline configurations remain safe.
               </p>
@@ -62,7 +62,7 @@ export default class ErrorBoundary extends React.Component {
             <div className="flex items-center justify-center gap-3 pt-2">
               <button
                 onClick={this.handleReset}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-lg shadow-indigo-600/20"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-violet-600 hover:bg-violet-700 text-white transition-all shadow-md shadow-violet-600/20 cursor-pointer"
               >
                 <RefreshCw className="w-4 h-4" />
                 Reload View

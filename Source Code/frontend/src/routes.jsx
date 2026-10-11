@@ -60,7 +60,6 @@ export default function AppRoutes() {
       <Route path="/login" element={<Navigate to="/signin" replace />} />
       <Route path="/register" element={<Navigate to="/signup" replace />} />
       <Route path="/dashboard" element={<Navigate to="/app/projects" replace />} />
-      <Route path="/app" element={<Navigate to="/app/projects" replace />} />
 
       {/* ─── Protected Dashboard ───────────────────────────────────────────── */}
       <Route

@@ -118,7 +118,7 @@ const ConsolePanel = ({ isOpen, onClose }) => {
                 <Terminal className="w-4 h-4 text-primary" />
               </div>
               <h3
-                className="font-sora font-semibold text-sm tracking-widest"
+                className="font-display font-semibold text-sm tracking-wider"
                 style={{ color: 'var(--color-text)' }}
               >
                 SYSTEM CONSOLE

@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { checkHealth } from '../../services/api';
 import Toast from '../../components/common/Toast';
+import Logo from '../../components/common/Logo';
 import {
   FolderKanban, Database, Layers, PlayCircle, LayoutTemplate,
   Settings, LogOut, Cpu, Plus, Sparkles, ExternalLink,
@@ -59,15 +60,13 @@ export default function DashboardLayout() {
             onClick={() => navigate('/app/projects')}
           >
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg"
-              style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md"
+              style={{ background: 'linear-gradient(135deg, #7C3AED, #4F46E5)' }}
             >
               <Cpu className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="font-sora font-extrabold text-base tracking-tight leading-tight" style={{ color: 'var(--color-text)' }}>
-                FlowML
-              </div>
+              <Logo size="text-lg" />
               <div className="text-[10px] font-mono tracking-wider text-slate-400">
                 Studio Workspace
               </div>
@@ -95,11 +94,7 @@ export default function DashboardLayout() {
         <div className="p-4">
           <button
             onClick={() => navigate('/studio')}
-            className="w-full py-2.5 px-3 rounded-xl font-bold text-xs text-white flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98] group"
-            style={{
-              background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
-              boxShadow: '0 4px 16px rgba(99, 102, 241, 0.35)',
-            }}
+            className="w-full py-2.5 px-3 rounded-xl font-bold text-xs text-white flex items-center justify-center gap-2 shadow-md shadow-violet-600/25 bg-violet-600 hover:bg-violet-700 transition-all active:scale-[0.98] group cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
             Open Canvas Studio
@@ -118,13 +113,13 @@ export default function DashboardLayout() {
                 to={item.to}
                 className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   active
-                    ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-xs'
+                    ? 'bg-violet-50 text-violet-700 border border-violet-200/80 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${active ? 'text-indigo-600' : 'text-slate-400'}`} />
+                <Icon className={`w-4 h-4 ${active ? 'text-violet-600' : 'text-slate-400'}`} />
                 <span>{item.label}</span>
-                {active && <ChevronRight className="w-3.5 h-3.5 ml-auto text-indigo-600" />}
+                {active && <ChevronRight className="w-3.5 h-3.5 ml-auto text-violet-600" />}
               </NavLink>
             );
           })}
@@ -134,8 +129,7 @@ export default function DashboardLayout() {
         <div className="p-3 border-t" style={{ borderColor: 'var(--color-border)' }}>
           <div className="p-3 rounded-2xl flex items-center gap-3 bg-slate-100/70 border border-slate-200/60">
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs text-white shrink-0 shadow-sm"
-              style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs text-white shrink-0 shadow-sm bg-violet-600"
             >
               {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
             </div>
@@ -172,7 +166,7 @@ export default function DashboardLayout() {
           }}
         >
           <div className="flex items-center gap-4">
-            <h2 className="font-sora text-base font-bold tracking-tight" style={{ color: 'var(--color-text)' }}>
+            <h2 className="font-display text-base font-bold tracking-tight" style={{ color: 'var(--color-text)' }}>
               {navItems.find((n) => location.pathname.startsWith(n.to))?.label || 'Dashboard'}
             </h2>
           </div>
@@ -182,9 +176,9 @@ export default function DashboardLayout() {
             <div
               className="px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold flex items-center gap-1.5"
               style={{
-                background: isDevMode ? 'rgba(99,102,241,0.12)' : 'rgba(34,197,94,0.12)',
-                color: isDevMode ? '#818cf8' : '#22c55e',
-                border: `1px solid ${isDevMode ? 'rgba(99,102,241,0.25)' : 'rgba(34,197,94,0.25)'}`,
+                background: isDevMode ? 'rgba(124,58,237,0.12)' : 'rgba(34,197,94,0.12)',
+                color: isDevMode ? '#7C3AED' : '#22c55e',
+                border: `1px solid ${isDevMode ? 'rgba(124,58,237,0.25)' : 'rgba(34,197,94,0.25)'}`,
               }}
             >
               <ShieldCheck className="w-3.5 h-3.5" />

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   getProjects, saveProject, deleteProject, duplicateProject,
 } from '../../services/api';
@@ -97,7 +97,7 @@ export default function ProjectsView({ initialCreateOpen = false }) {
       {/* Top Banner & Stats */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-sora text-2xl font-bold tracking-tight" style={{ color: 'var(--color-text)' }}>
+          <h1 className="font-display text-2xl font-bold tracking-tight" style={{ color: 'var(--color-text)' }}>
             ML Projects
           </h1>
           <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
@@ -109,8 +109,8 @@ export default function ProjectsView({ initialCreateOpen = false }) {
           onClick={() => setIsCreateOpen(true)}
           className="px-4 py-2.5 rounded-xl font-bold text-xs text-white flex items-center gap-2 shadow-lg transition-all active:scale-95 shrink-0 self-start md:self-auto"
           style={{
-            background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
-            boxShadow: '0 4px 16px rgba(99, 102, 241, 0.35)',
+            background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+            boxShadow: '0 4px 16px rgba(124, 58, 237, 0.35)',
           }}
         >
           <Plus className="w-4 h-4" />
@@ -151,11 +151,11 @@ export default function ProjectsView({ initialCreateOpen = false }) {
         >
           <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#818cf8' }}
+            style={{ background: 'rgba(124, 58, 237, 0.1)', color: '#7C3AED' }}
           >
             <FolderKanban className="w-7 h-7" />
           </div>
-          <h3 className="font-sora font-bold text-base mb-1" style={{ color: 'var(--color-text)' }}>
+          <h3 className="font-display font-bold text-base mb-1" style={{ color: 'var(--color-text)' }}>
             No projects found
           </h3>
           <p className="text-xs max-w-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>
@@ -164,7 +164,7 @@ export default function ProjectsView({ initialCreateOpen = false }) {
           <button
             onClick={() => setIsCreateOpen(true)}
             className="px-4 py-2 rounded-xl text-xs font-bold text-white flex items-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+            style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
           >
             <Plus className="w-3.5 h-3.5" />
             Create First Project
@@ -189,22 +189,22 @@ export default function ProjectsView({ initialCreateOpen = false }) {
                   <div className="flex items-center gap-2.5">
                     <div
                       className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs"
-                      style={{ background: 'rgba(99, 102, 241, 0.12)', color: '#818cf8' }}
+                      style={{ background: 'rgba(124, 58, 237, 0.12)', color: '#7C3AED' }}
                     >
                       <Layers className="w-4 h-4" />
                     </div>
                     <div>
                       <h3
                         onClick={() => handleOpenStudio(proj.id)}
-                        className="font-sora font-bold text-sm tracking-tight hover:text-primary transition-colors cursor-pointer"
+                        className="font-display font-bold text-sm tracking-tight hover:text-primary transition-colors cursor-pointer"
                         style={{ color: 'var(--color-text)' }}
                       >
                         {proj.name}
                       </h3>
                       <span className="text-[10px] font-mono px-2 py-0.5 rounded-full uppercase font-bold"
                         style={{
-                          background: proj.taskType === 'regression' ? 'rgba(249, 115, 22, 0.12)' : 'rgba(99, 102, 241, 0.12)',
-                          color: proj.taskType === 'regression' ? '#f97316' : '#818cf8',
+                          background: proj.taskType === 'regression' ? 'rgba(249, 115, 22, 0.12)' : 'rgba(124, 58, 237, 0.12)',
+                          color: proj.taskType === 'regression' ? '#f97316' : '#7C3AED',
                         }}
                       >
                         {proj.taskType || 'Classification'}
@@ -284,7 +284,7 @@ export default function ProjectsView({ initialCreateOpen = false }) {
               }}
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-sora font-bold text-base" style={{ color: 'var(--color-text)' }}>
+                <h3 className="font-display font-bold text-base" style={{ color: 'var(--color-text)' }}>
                   Create New ML Project
                 </h3>
                 <button
@@ -364,7 +364,7 @@ export default function ProjectsView({ initialCreateOpen = false }) {
                   <button
                     type="submit"
                     className="px-5 py-2 rounded-xl text-xs font-bold text-white shadow-lg"
-                    style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+                    style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
                   >
                     Create Project
                   </button>
@@ -389,7 +389,7 @@ export default function ProjectsView({ initialCreateOpen = false }) {
                 border: '1px solid var(--color-border)',
               }}
             >
-              <h3 className="font-sora font-bold text-base mb-4" style={{ color: 'var(--color-text)' }}>
+              <h3 className="font-display font-bold text-base mb-4" style={{ color: 'var(--color-text)' }}>
                 Rename Project
               </h3>
               <form onSubmit={handleRename} className="space-y-4">
@@ -437,7 +437,7 @@ export default function ProjectsView({ initialCreateOpen = false }) {
                   <button
                     type="submit"
                     className="px-4 py-2 rounded-xl text-xs font-bold text-white"
-                    style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+                    style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
                   >
                     Save Changes
                   </button>
@@ -465,7 +465,7 @@ export default function ProjectsView({ initialCreateOpen = false }) {
               <div className="w-12 h-12 rounded-2xl mx-auto mb-4 bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6" />
               </div>
-              <h3 className="font-sora font-bold text-base mb-1" style={{ color: 'var(--color-text)' }}>
+              <h3 className="font-display font-bold text-base mb-1" style={{ color: 'var(--color-text)' }}>
                 Delete Project?
               </h3>
               <p className="text-xs leading-relaxed mb-6" style={{ color: 'var(--color-text-muted)' }}>

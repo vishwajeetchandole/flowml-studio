@@ -28,7 +28,7 @@ export default function VerifyEmail() {
   };
 
   const handleContinue = () => {
-    navigate('/app');
+    navigate('/app/projects');
   };
 
   return (
@@ -38,7 +38,7 @@ export default function VerifyEmail() {
     >
       <div
         className="absolute top-1/4 right-1/3 w-96 h-96 rounded-full blur-3xl opacity-20 pointer-events-none"
-        style={{ background: '#6366f1' }}
+        style={{ background: '#7C3AED' }}
       />
 
       <motion.div
@@ -53,12 +53,12 @@ export default function VerifyEmail() {
       >
         <div
           className="w-16 h-16 rounded-3xl mx-auto mb-5 flex items-center justify-center shadow-lg"
-          style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+          style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
         >
           <MailCheck className="w-8 h-8 text-white" />
         </div>
 
-        <h1 className="font-sora text-2xl font-bold tracking-tight mb-2" style={{ color: 'var(--color-text)' }}>
+        <h1 className="font-display text-2xl font-bold tracking-tight mb-2 text-[#1F1B2E]">
           Verify your email
         </h1>
         <p className="text-sm leading-relaxed mb-6" style={{ color: 'var(--color-text-muted)' }}>
@@ -78,7 +78,7 @@ export default function VerifyEmail() {
             onClick={handleContinue}
             className="w-full py-3 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98]"
             style={{
-              background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
+              background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
               boxShadow: '0 4px 20px rgba(99, 102, 241, 0.4)',
             }}
           >

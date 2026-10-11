@@ -462,7 +462,7 @@ function TopBar({
         <div className="flex items-center gap-2.5">
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+            style={{ background: 'linear-gradient(135deg, #7C3AED, #4F46E5)' }}
           >
             <Cpu className="w-4 h-4 text-white" />
           </div>
@@ -472,7 +472,7 @@ function TopBar({
               type="text"
               value={workflowName}
               onChange={(e) => setWorkflowName(e.target.value)}
-              className="font-sora font-bold text-sm bg-transparent hover:bg-slate-100 px-2 py-0.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors max-w-[200px] truncate"
+              className="font-display font-bold text-sm bg-transparent hover:bg-slate-100 px-2 py-0.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-violet-500 transition-colors max-w-[200px] truncate"
               style={{ color: 'var(--color-text)' }}
             />
             <div className="text-[10px] text-slate-500 flex items-center gap-1.5 px-2">
@@ -508,9 +508,9 @@ function TopBar({
             onClick={onToggleResults}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border"
             style={{
-              background: showResults ? 'rgba(99,102,241,0.1)' : 'var(--color-bg)',
-              borderColor: showResults ? '#6366f1' : 'var(--color-border)',
-              color: showResults ? '#4f46e5' : 'var(--color-text-muted)',
+              background: showResults ? 'rgba(124, 58, 237, 0.1)' : 'var(--color-bg)',
+              borderColor: showResults ? '#7C3AED' : 'var(--color-border)',
+              color: showResults ? '#7C3AED' : 'var(--color-text-muted)',
             }}
           >
             <BarChart3 className="w-3.5 h-3.5" />
@@ -548,8 +548,7 @@ function TopBar({
         ) : (
           <button
             onClick={onRun}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-lg shadow-primary/30 active:scale-95 transition-all"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md shadow-violet-500/25 active:scale-95 transition-all bg-violet-600 hover:bg-violet-700 cursor-pointer"
           >
             {pipelineState === 'done' ? (
               <>

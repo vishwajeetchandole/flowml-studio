@@ -92,13 +92,13 @@ fig, ax = plt.subplots(figsize=(7, 4))
 if df is not None:
     num_cols = df.select_dtypes(include=[np.number]).columns
     if len(num_cols) > 0:
-        ax.hist(df[num_cols[0]].dropna(), bins=15, color="#6366f1", edgecolor="white", alpha=0.85)
+        ax.hist(df[num_cols[0]].dropna(), bins=15, color="#7C3AED", edgecolor="white", alpha=0.85)
         ax.set_title(f"Distribution of {num_cols[0]}", fontsize=12, fontweight="bold")
     else:
         ax.plot([1, 2, 3], [4, 5, 6])
 else:
     x = np.linspace(0, 10, 100)
-    ax.plot(x, np.sin(x), label="sin(x)", color="#6366f1", linewidth=2)
+    ax.plot(x, np.sin(x), label="sin(x)", color="#7C3AED", linewidth=2)
     ax.plot(x, np.cos(x), label="cos(x)", color="#ec4899", linewidth=2, linestyle="--")
     ax.set_title("Trigonometric Signal Benchmarking", fontsize=12, fontweight="bold")
     ax.legend()
@@ -252,7 +252,7 @@ export default function PythonEditor({
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-[#0e1526] border-b border-white/10 text-xs">
         {/* Left: Starters & Dataset selector */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 font-semibold">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-300 font-semibold">
             <Code2 className="w-3.5 h-3.5" /> Python 3.10 Worker
           </div>
 
@@ -367,7 +367,7 @@ export default function PythonEditor({
             onKeyDown={handleKeyDown}
             placeholder="# Enter Python code here...&#10;# Available: df (upstream DataFrame), np, pd, sklearn, plt"
             spellCheck={false}
-            className="flex-1 p-3 bg-transparent text-slate-100 font-mono text-xs leading-6 resize-none focus:outline-none selection:bg-indigo-500/30"
+            className="flex-1 p-3 bg-transparent text-slate-100 font-mono text-xs leading-6 resize-none focus:outline-none selection:bg-violet-500/30"
           />
         </div>
 
@@ -380,7 +380,7 @@ export default function PythonEditor({
                 onClick={() => setActiveTab('console')}
                 className={`flex items-center gap-1.5 px-3 py-2 font-semibold border-b-2 transition-all ${
                   activeTab === 'console'
-                    ? 'border-indigo-500 text-white'
+                    ? 'border-violet-500 text-white'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -391,13 +391,13 @@ export default function PythonEditor({
                 onClick={() => setActiveTab('plots')}
                 className={`flex items-center gap-1.5 px-3 py-2 font-semibold border-b-2 transition-all ${
                   activeTab === 'plots'
-                    ? 'border-indigo-500 text-white'
+                    ? 'border-violet-500 text-white'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <ImageIcon className="w-3.5 h-3.5" /> Plots
                 {plots.length > 0 && (
-                  <span className="w-4 h-4 rounded-full bg-indigo-500/30 text-[10px] flex items-center justify-center font-bold text-indigo-300">
+                  <span className="w-4 h-4 rounded-full bg-violet-500/30 text-[10px] flex items-center justify-center font-bold text-violet-300">
                     {plots.length}
                   </span>
                 )}
@@ -407,7 +407,7 @@ export default function PythonEditor({
                 onClick={() => setActiveTab('table')}
                 className={`flex items-center gap-1.5 px-3 py-2 font-semibold border-b-2 transition-all ${
                   activeTab === 'table'
-                    ? 'border-indigo-500 text-white'
+                    ? 'border-violet-500 text-white'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -541,7 +541,7 @@ export default function PythonEditor({
             >
               <div className="flex items-center justify-between pb-3 border-b border-white/10">
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <History className="w-4 h-4 text-indigo-400" /> Execution History
+                  <History className="w-4 h-4 text-violet-400" /> Execution History
                 </h3>
                 <button
                   onClick={() => setShowHistoryModal(false)}
@@ -558,7 +558,7 @@ export default function PythonEditor({
                   historyList.map((h) => (
                     <div
                       key={h.run_id}
-                      className="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between hover:border-indigo-500/30 transition-all"
+                      className="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between hover:border-violet-500/30 transition-all"
                     >
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -580,7 +580,7 @@ export default function PythonEditor({
                           handleCodeChange(h.code);
                           setShowHistoryModal(false);
                         }}
-                        className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-500/10 hover:bg-indigo-600 text-indigo-300 hover:text-white transition-all"
+                        className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-violet-500/10 hover:bg-violet-600 text-violet-300 hover:text-white transition-all"
                       >
                         Load
                       </button>

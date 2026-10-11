@@ -24,7 +24,7 @@ const NODE_CONFIG = {
   encode:             { label: 'Encode Labels',       Icon: SquareFunction,    color: '#a855f7', category: 'Processing' },
   scale:              { label: 'Scale Features',      Icon: Gauge,             color: '#d946ef', category: 'Processing' },
   splitData:          { label: 'Split Train/Test',    Icon: GitFork,           color: '#7c3aed', category: 'Processing' },
-  customPython:       { label: 'Custom Python',       Icon: Code,              color: '#6366f1', category: 'Processing' },
+  customPython:       { label: 'Custom Python',       Icon: Code,              color: '#7C3AED', category: 'Processing' },
 
   // Models
   randomForest:       { label: 'Random Forest',       Icon: TreePine,          color: '#f59e0b', category: 'Model'      },
@@ -47,7 +47,7 @@ const NODE_CONFIG = {
 const STATUS_CFG = {
   // Live pipeline statuses
   pending:   { label: 'Pending',   color: '#8892a4', Icon: Clock,         pulse: false },
-  running:   { label: 'Running…',  color: '#6366f1', Icon: Loader2,       pulse: true  },
+  running:   { label: 'Running…',  color: '#7C3AED', Icon: Loader2,       pulse: true  },
   completed: { label: 'Completed', color: '#22c55e', Icon: CheckCircle2,  pulse: false },
   failed:    { label: 'Failed',    color: '#ef4444', Icon: AlertCircle,   pulse: false },
 
@@ -63,7 +63,7 @@ const STATUS_CFG = {
 /* ─── Base node ──────────────────────────────────────────────────────────────── */
 const BaseNode = memo(({ id, data, type, selected }) => {
   const { setNodes, setEdges } = useReactFlow();
-  const cfg = NODE_CONFIG[type] ?? { label: data.label ?? type, Icon: Database, color: '#6366f1', category: 'Node' };
+  const cfg = NODE_CONFIG[type] ?? { label: data.label ?? type, Icon: Database, color: '#7C3AED', category: 'Node' };
   const { Icon, color, category } = cfg;
   const label = data.label ?? cfg.label;
 

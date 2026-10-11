@@ -121,13 +121,15 @@ class LocalDiskStore(StoreBackend):
     # ── internal helpers ──────────────────────────────────────────────────────
 
     def _user_root(self, uid: str) -> Path:
-        return self._root / _sanitise_uid(uid)
+        return (self._root / _sanitise_uid(uid)).resolve()
 
     def _safe_path(self, uid: str, *parts: str) -> Path:
         """Resolve and validate that the final path stays inside the user root."""
         user_root = self._user_root(uid)
         candidate = (user_root / Path(*parts)).resolve()
-        if not str(candidate).startswith(str(user_root)):
+        try:
+            candidate.relative_to(user_root)
+        except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Path traversal detected.",

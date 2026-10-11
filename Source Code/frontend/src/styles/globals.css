@@ -1,26 +1,26 @@
-@import "@fontsource/sora/600.css";
-@import "@fontsource/sora/700.css";
-@import "@fontsource/inter/400.css";
-@import "@fontsource/inter/500.css";
-@import "@fontsource/inter/600.css";
-
 @import "tailwindcss";
 
 /* ─── Design Tokens ──────────────────────────────────────────────────────────── */
 @theme {
-  --font-sora: "Sora", sans-serif;
-  --font-inter: "Inter", sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* FlowML Typography Theme Colors */
+  --color-flow-dark:   #1F1B2E;
+  --color-flow-muted:  #6B6585;
+  --color-flow-purple: #7C3AED;
 
   /* Clean Light palette */
   --color-light-background: #f8fafc;
   --color-light-card:       #ffffff;
   --color-light-border:     #e2e8f0;
-  --color-light-text:       #0f172a;
-  --color-light-text-secondary: #64748b;
+  --color-light-text:       #1F1B2E;
+  --color-light-text-secondary: #6B6585;
 
   /* Brand */
-  --color-primary:   #4f46e5;
-  --color-secondary: #2563eb;
+  --color-primary:   #7C3AED;
+  --color-secondary: #4F46E5;
   --color-success:   #16a34a;
   --color-warning:   #d97706;
   --color-danger:    #dc2626;
@@ -29,8 +29,8 @@
   --color-bg:         #f8fafc;
   --color-surface:    #ffffff;
   --color-border:     #e2e8f0;
-  --color-text:       #0f172a;
-  --color-text-muted: #64748b;
+  --color-text:       #1F1B2E;
+  --color-text-muted: #6B6585;
 }
 
 /* ─── Light Mode Defaults ────────────────────────────────────────────────────── */
@@ -38,8 +38,8 @@
   --color-bg:         #f8fafc;
   --color-surface:    #ffffff;
   --color-border:     #e2e8f0;
-  --color-text:       #0f172a;
-  --color-text-muted: #64748b;
+  --color-text:       #1F1B2E;
+  --color-text-muted: #6B6585;
 }
 
 /* ─── Base ───────────────────────────────────────────────────────────────────── */
@@ -60,17 +60,17 @@
   }
 
   body {
-    @apply font-inter antialiased;
+    font-family: var(--font-sans);
     background-color: var(--color-bg);
-    color: var(--color-text);
-    transition: background-color 0.3s ease, color 0.2s ease;
-    font-size: 15px;
+    color: #1F1B2E;
     line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    font-size: 15px;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-sora font-semibold;
-    color: var(--color-text);
+    font-family: var(--font-display);
+    color: #1F1B2E;
   }
 }
 
@@ -80,18 +80,106 @@
 ::-webkit-scrollbar-thumb       { background: var(--color-border); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
 
-/* ─── Components ─────────────────────────────────────────────────────────────── */
+/* ─── Shared FlowML Type Scale Components ───────────────────────────────────── */
 @layer components {
+  /* Logo wordmark */
+  .logo-wordmark {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    font-size: 1.5rem; /* 24px - 32px */
+    line-height: 1;
+    color: #1F1B2E;
+  }
+
+  /* Headings: H1 */
+  .h1-landing {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    font-size: clamp(3rem, 5.5vw, 4rem); /* 48-64px */
+    line-height: 1.12;
+    color: #1F1B2E;
+  }
+
+  .h1-app {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    font-size: clamp(1.75rem, 2.5vw, 2.25rem); /* 28-36px */
+    line-height: 1.2;
+    color: #1F1B2E;
+  }
+
+  /* Headings: H2 */
+  .h2-landing {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-size: clamp(2rem, 3.5vw, 2.5rem); /* 32-40px */
+    line-height: 1.25;
+    color: #1F1B2E;
+  }
+
+  .h2-app {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-size: clamp(1.375rem, 2vw, 1.75rem); /* 22-28px */
+    line-height: 1.3;
+    color: #1F1B2E;
+  }
+
+  /* H3 / H4 / Card Titles */
+  .card-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.125rem; /* 18-22px */
+    line-height: 1.4;
+    color: #1F1B2E;
+  }
+
+  /* Body Text */
+  .body-text {
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: 0.9375rem; /* 15px (14-16px) */
+    line-height: 1.6;
+    color: #1F1B2E;
+  }
+
+  .body-text-muted {
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: 0.875rem; /* 14px */
+    line-height: 1.6;
+    color: #6B6585;
+  }
+
+  /* Labels, Nav Items, Table Headers */
+  .ui-label {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 0.8125rem; /* 12-14px */
+    color: #6B6585;
+  }
+
+  /* Buttons */
   .btn-primary {
-    @apply flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-white
-           transition-all active:scale-95;
-    background: linear-gradient(135deg, #6366f1, #3b82f6);
-    box-shadow: 0 4px 18px rgba(99,102,241,0.35);
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.875rem; /* 14-15px */
+    @apply flex items-center gap-2 px-4 py-2.5 rounded-xl text-white transition-all active:scale-95 cursor-pointer;
+    background: linear-gradient(135deg, #7C3AED, #4F46E5);
+    box-shadow: 0 4px 18px rgba(124, 58, 237, 0.35);
   }
   .btn-primary:hover { opacity: 0.92; }
 
   .btn-ghost {
-    @apply flex items-center gap-2 px-3 py-2 rounded-xl font-medium transition-all active:scale-95;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.875rem;
+    @apply flex items-center gap-2 px-3 py-2 rounded-xl transition-all active:scale-95 cursor-pointer;
     color:  var(--color-text-muted);
     border: 1px solid var(--color-border);
   }
@@ -104,15 +192,17 @@
   }
 
   .input-field {
+    font-family: var(--font-sans);
     @apply w-full px-3 py-2 rounded-xl text-sm focus:outline-none transition-colors;
     background: var(--color-bg);
     border:     1px solid var(--color-border);
     color:      var(--color-text);
   }
-  .input-field:focus { border-color: rgba(99,102,241,0.5); }
+  .input-field:focus { border-color: rgba(124, 58, 237, 0.5); }
 
   .tag {
-    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold;
+    font-family: var(--font-sans);
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium;
   }
 }
 
@@ -125,23 +215,28 @@
 }
 .react-flow__background pattern rect { fill: transparent !important; }
 
+/* React Flow text typography */
+.react-flow__node {
+  font-family: var(--font-sans);
+}
+
 /* Edges */
 .react-flow__edge-path {
   stroke-width: 2.5;
-  stroke: #6366f1;
+  stroke: #7C3AED;
   opacity: 0.7;
 }
 .react-flow__edge.selected .react-flow__edge-path,
 .react-flow__edge:hover .react-flow__edge-path {
-  stroke: #6366f1;
+  stroke: #7C3AED;
   opacity: 1;
   stroke-width: 3;
 }
 
 /* Selection box */
 .react-flow__selection {
-  background: rgba(99,102,241,0.06) !important;
-  border: 1.5px dashed rgba(99,102,241,0.4) !important;
+  background: rgba(124, 58, 237, 0.06) !important;
+  border: 1.5px dashed rgba(124, 58, 237, 0.4) !important;
 }
 
 /* Controls */
@@ -150,7 +245,7 @@
   border: 1px solid var(--color-border) !important;
   border-radius: 12px !important;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1) !important;
 }
 .react-flow__controls-button {
   border-color: var(--color-border) !important;
@@ -177,7 +272,7 @@
 
 /* Connection line */
 .react-flow__connection-path {
-  stroke: #6366f1 !important;
+  stroke: #7C3AED !important;
   stroke-width: 2.5 !important;
   stroke-dasharray: 6 3;
   opacity: 0.8;
@@ -202,5 +297,5 @@
 .text-success   { color: var(--color-success);   }
 .text-warning   { color: var(--color-warning);   }
 .text-danger    { color: var(--color-danger);    }
-.bg-primary-10  { background: rgba(99,102,241,0.10); }
-.bg-success-10  { background: rgba(34,197,94,0.10);  }
+.bg-primary-10  { background: rgba(124, 58, 237, 0.10); }
+.bg-success-10  { background: rgba(34, 197, 94, 0.10);  }

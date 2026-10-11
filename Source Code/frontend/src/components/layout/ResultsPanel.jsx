@@ -16,7 +16,7 @@ import {
 
 /* ─── Step status config ─────────────────────────────────────────────────────── */
 const STEP_CFG = {
-  running: { color: '#6366f1', bg: 'rgba(99,102,241,0.1)',  Icon: Loader2,       spin: true  },
+  running: { color: '#7C3AED', bg: 'rgba(124,58,237,0.1)',  Icon: Loader2,       spin: true  },
   done:    { color: '#22c55e', bg: 'rgba(34,197,94,0.08)',   Icon: CheckCircle2,  spin: false },
   error:   { color: '#ef4444', bg: 'rgba(239,68,68,0.08)',   Icon: AlertCircle,   spin: false },
   warning: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  Icon: AlertTriangle, spin: false },
@@ -57,8 +57,8 @@ function Leaderboard({ trainResult }) {
               key={m.model_name}
               className="rounded-xl px-3 py-2.5 transition-all"
               style={{
-                background:  isBest ? 'rgba(99,102,241,0.08)' : 'var(--color-bg)',
-                border:      `1px solid ${isBest ? 'rgba(99,102,241,0.3)' : 'var(--color-border)'}`,
+                background:  isBest ? 'rgba(124,58,237,0.08)' : 'var(--color-bg)',
+                border:      `1px solid ${isBest ? 'rgba(124,58,237,0.3)' : 'var(--color-border)'}`,
               }}
             >
               <div className="flex items-center justify-between mb-1.5">
@@ -66,17 +66,17 @@ function Leaderboard({ trainResult }) {
                   <span className="text-[9px] font-mono w-4 text-center" style={{ color: 'var(--color-text-muted)' }}>
                     #{i + 1}
                   </span>
-                  <span className="text-xs font-semibold" style={{ color: isBest ? '#6366f1' : 'var(--color-text)' }}>
+                  <span className="text-xs font-semibold" style={{ color: isBest ? '#7C3AED' : 'var(--color-text)' }}>
                     {m.model_name}
                   </span>
                   {isBest && (
                     <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold text-white"
-                      style={{ background: 'linear-gradient(135deg,#6366f1,#3b82f6)' }}>
+                      style={{ background: 'linear-gradient(135deg,#7C3AED,#6D28D9)' }}>
                       BEST
                     </span>
                   )}
                 </div>
-                <span className="text-xs font-bold font-mono" style={{ color: isBest ? '#6366f1' : 'var(--color-text)' }}>
+                <span className="text-xs font-bold font-mono" style={{ color: isBest ? '#7C3AED' : 'var(--color-text)' }}>
                   {val != null ? (val * (taskType === 'regression' && val < 1 ? 1 : 100)).toFixed(1)
                     + (taskType === 'regression' ? '' : '%') : 'N/A'}
                 </span>
@@ -87,7 +87,7 @@ function Leaderboard({ trainResult }) {
                   className="h-full rounded-full transition-all duration-700"
                   style={{
                     width:      `${Math.min(100, pct)}%`,
-                    background: isBest ? 'linear-gradient(90deg,#6366f1,#3b82f6)' : '#4b5563',
+                    background: isBest ? 'linear-gradient(90deg,#7C3AED,#6D28D9)' : '#4b5563',
                   }}
                 />
               </div>
@@ -152,7 +152,7 @@ function PredTable({ predResult, trainResult }) {
     return Object.fromEntries(uniq.map((v, i) => [v, i]));
   }, [preds]);
 
-  const COLORS = ['#6366f1','#22c55e','#f59e0b','#3b82f6','#ef4444','#ec4899'];
+  const COLORS = ['#7C3AED','#22c55e','#f59e0b','#3b82f6','#ef4444','#ec4899'];
 
   const filtered = useMemo(
     () => preds.filter((p) => String(p).toLowerCase().includes(q.toLowerCase())),
@@ -180,7 +180,7 @@ function PredTable({ predResult, trainResult }) {
           <Hash className="w-3.5 h-3.5" style={{ color: 'var(--color-text-muted)' }} />
           <span className="text-xs font-bold" style={{ color: 'var(--color-text)' }}>Predictions</span>
           <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
-            style={{ background: 'rgba(99,102,241,0.12)', color: '#6366f1' }}>
+            style={{ background: 'rgba(124,58,237,0.12)', color: '#7C3AED' }}>
             {filtered.length.toLocaleString()} rows
           </span>
         </div>
@@ -220,7 +220,7 @@ function PredTable({ predResult, trainResult }) {
               <div key={idx}
                 className="grid grid-cols-12 px-3 py-1.5 items-center transition-colors"
                 style={{ borderBottom: '1px solid var(--color-border)' }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(99,102,241,0.04)')}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,0.04)')}
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
               >
                 <span className="col-span-3 text-[10px] font-mono" style={{ color: 'var(--color-text-muted)' }}>
@@ -233,7 +233,7 @@ function PredTable({ predResult, trainResult }) {
                       {String(p)}
                     </span>
                   ) : (
-                    <span className="text-[10px] font-mono font-semibold" style={{ color: '#6366f1' }}>{String(p)}</span>
+                    <span className="text-[10px] font-mono font-semibold" style={{ color: '#7C3AED' }}>{String(p)}</span>
                   )}
                 </span>
               </div>
@@ -273,7 +273,7 @@ function Charts({ vizResult }) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <BarChart3 className="w-4 h-4" style={{ color: '#6366f1' }} />
+        <BarChart3 className="w-4 h-4" style={{ color: '#7C3AED' }} />
         <span className="text-xs font-bold" style={{ color: 'var(--color-text)' }}>Visualizations</span>
       </div>
       <div className="space-y-3">
@@ -326,7 +326,7 @@ export default function ResultsPanel({ pipelineState, steps, results, onClose, o
     >
       {/* gradient bar */}
       <div className="h-0.5 w-full shrink-0"
-        style={{ background: isError ? '#ef4444' : isDone ? 'linear-gradient(90deg,#6366f1,#22c55e)' : 'linear-gradient(90deg,#6366f1,#3b82f6)' }} />
+        style={{ background: isError ? '#ef4444' : isDone ? 'linear-gradient(90deg,#7C3AED,#22c55e)' : 'linear-gradient(90deg,#7C3AED,#6D28D9)' }} />
 
       {/* header */}
       <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
@@ -372,8 +372,8 @@ export default function ResultsPanel({ pipelineState, steps, results, onClose, o
               onClick={() => setTab(t.id)}
               className="flex-1 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors"
               style={{
-                color:       tab === t.id ? '#6366f1' : 'var(--color-text-muted)',
-                borderBottom: tab === t.id ? '2px solid #6366f1' : '2px solid transparent',
+                color:       tab === t.id ? '#7C3AED' : 'var(--color-text-muted)',
+                borderBottom: tab === t.id ? '2px solid #7C3AED' : '2px solid transparent',
               }}
             >
               {t.label}
@@ -429,7 +429,7 @@ export default function ResultsPanel({ pipelineState, steps, results, onClose, o
           <>
             {/* stat cards */}
             <div className="grid grid-cols-2 gap-2">
-              <StatCard icon={Cpu}        label="Best Model"   value={bestModel ?? '—'}          color="#6366f1" delay={0.05} />
+              <StatCard icon={Cpu}        label="Best Model"   value={bestModel ?? '—'}          color="#7C3AED" delay={0.05} />
               <StatCard icon={TrendingUp} label={taskType === 'regression' ? 'R²' : 'Accuracy'}  value={metric} color="#22c55e" delay={0.1}  />
               <StatCard icon={Hash}       label="Predictions"  value={(predResult?.predictions?.length ?? 0).toLocaleString()} color="#f59e0b" delay={0.15} />
               <StatCard icon={BarChart3}  label="Task Type"    value={taskType ?? '—'}             color="#3b82f6" delay={0.2}  />

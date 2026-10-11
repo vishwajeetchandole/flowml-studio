@@ -11,12 +11,19 @@ function PageHeader({ title, subtitle, badge, icon: Icon }) {
   const navigate = useNavigate();
 
   return (
-    <div className="relative pt-24 pb-12 border-b border-white/5 overflow-hidden">
-      <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div
+      className="relative pt-24 pb-12 border-b overflow-hidden"
+      style={{ borderColor: 'var(--color-border)' }}
+    >
+      <div
+        className="absolute -top-40 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full blur-3xl pointer-events-none"
+        style={{ background: 'rgba(99,102,241,0.07)' }}
+      />
       <div className="max-w-5xl mx-auto px-6 relative z-10">
         <button
           onClick={() => navigate('/')}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors mb-6 group"
+          className="inline-flex items-center gap-2 text-xs font-semibold transition-colors mb-6 group hover:text-violet-600"
+          style={{ color: 'var(--color-text-muted)' }}
         >
           <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
           Back to FlowML
@@ -24,21 +31,21 @@ function PageHeader({ title, subtitle, badge, icon: Icon }) {
 
         <div className="flex items-center gap-3 mb-4">
           {Icon && (
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+            <div className="w-10 h-10 rounded-xl bg-violet-50 border border-violet-200 flex items-center justify-center text-violet-600">
               <Icon className="w-5 h-5" />
             </div>
           )}
           {badge && (
-            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-violet-50 text-violet-600 border border-violet-200">
               {badge}
             </span>
           )}
         </div>
 
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
+        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3" style={{ color: 'var(--color-text)' }}>
           {title}
         </h1>
-        <p className="text-base text-slate-400 max-w-2xl leading-relaxed">
+        <p className="text-base max-w-2xl leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
           {subtitle}
         </p>
       </div>
@@ -50,30 +57,41 @@ function PageLayout({ children, title, subtitle, badge, icon }) {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#080c14] text-slate-100 flex flex-col font-sans">
+    <div
+      className="min-h-screen flex flex-col font-sans"
+      style={{ background: 'var(--color-bg)', color: 'var(--color-text)' }}
+    >
       {/* Top Nav */}
-      <header className="fixed top-0 inset-x-0 z-50 h-16 bg-[#080c14]/90 backdrop-blur-md border-b border-white/5 flex items-center">
+      <header
+        className="fixed top-0 inset-x-0 z-50 h-16 flex items-center"
+        style={{
+          background: 'var(--color-surface)',
+          borderBottom: '1px solid var(--color-border)',
+          backdropFilter: 'blur(12px)',
+        }}
+      >
         <div className="max-w-5xl mx-auto px-6 w-full flex items-center justify-between">
           <div
             onClick={() => navigate('/')}
             className="flex items-center gap-3 cursor-pointer"
           >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-blue-500 flex items-center justify-center shadow-md">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-md" style={{ background: '#7c3aed' }}>
               <Cpu className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-base text-white tracking-tight">FlowML Studio</span>
+            <span className="font-bold text-base tracking-tight" style={{ color: 'var(--color-text)' }}>FlowML Studio</span>
           </div>
 
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('/signin')}
-              className="text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+              className="text-xs font-semibold transition-colors hover:text-violet-600"
+              style={{ color: 'var(--color-text-muted)' }}
             >
               Sign In
             </button>
             <button
               onClick={() => navigate('/app')}
-              className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition-all"
+              className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white shadow-sm transition-all"
             >
               Open App
             </button>
@@ -89,14 +107,17 @@ function PageLayout({ children, title, subtitle, badge, icon }) {
         </div>
       </main>
 
-      {/* Minimal Footer */}
-      <footer className="py-8 border-t border-white/5 bg-[#06090f] text-xs text-slate-500">
+      {/* Footer */}
+      <footer
+        className="py-8 border-t text-xs"
+        style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}
+      >
         <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© 2026 FlowML Studio. Visual AutoML Platform.</p>
           <div className="flex items-center gap-6">
-            <button onClick={() => navigate('/privacy')} className="hover:text-slate-300 transition-colors">Privacy</button>
-            <button onClick={() => navigate('/terms')} className="hover:text-slate-300 transition-colors">Terms</button>
-            <button onClick={() => navigate('/contact')} className="hover:text-slate-300 transition-colors">Contact</button>
+            <button onClick={() => navigate('/privacy')} className="hover:text-violet-600 transition-colors">Privacy</button>
+            <button onClick={() => navigate('/terms')} className="hover:text-violet-600 transition-colors">Terms</button>
+            <button onClick={() => navigate('/contact')} className="hover:text-violet-600 transition-colors">Contact</button>
           </div>
         </div>
       </footer>
@@ -336,7 +357,7 @@ export function DocsPage() {
       icon={BookOpen}
     >
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-white/10 pb-4 mb-8 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-4 mb-8 overflow-x-auto">
         {[
           { id: 'nodes', label: '14 Studio Nodes' },
           { id: 'metrics', label: 'Metrics Glossary' },
@@ -349,8 +370,8 @@ export function DocsPage() {
             onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
               activeTab === tab.id
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
+                : 'text-slate-500 hover:text-violet-600 hover:bg-violet-50'
             }`}
           >
             {tab.label}
@@ -370,39 +391,39 @@ export function DocsPage() {
               placeholder="Search nodes..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="px-3.5 py-1.5 rounded-xl bg-[#0e1422] border border-white/10 text-xs text-white focus:outline-none focus:border-indigo-500 w-56"
+              className="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white text-xs focus:outline-none focus:border-violet-500 w-56"
             />
           </div>
 
           {filteredNodes.map((cat, idx) => (
             <div key={idx} className="space-y-3">
-              <h3 className="text-sm font-extrabold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-indigo-500" /> {cat.category}
+              <h3 className="text-sm font-extrabold text-violet-600 uppercase tracking-wider flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-violet-500" /> {cat.category}
               </h3>
               <div className="grid gap-3">
                 {cat.nodes.map((node, i) => (
-                  <div key={i} className="p-4 rounded-xl bg-[#0e1422] border border-white/5 hover:border-indigo-500/30 transition-all space-y-2">
+                  <div key={i} className="p-4 rounded-xl border border-slate-100 hover:border-violet-200 bg-white transition-all space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
-                        <span className="text-sm font-bold text-white">{node.name}</span>
-                        <code className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-slate-400">
+                        <span className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>{node.name}</span>
+                        <code className="text-[10px] font-mono px-2 py-0.5 rounded border text-slate-500">
                           {node.type}
                         </code>
                       </div>
                     </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">{node.when}</p>
-                    <div className="grid sm:grid-cols-3 gap-2 pt-2 border-t border-white/5 text-[11px]">
+                    <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text)' }}>{node.when}</p>
+                    <div className="grid sm:grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-[11px]">
                       <div>
-                        <span className="text-slate-500 block">Inputs</span>
-                        <span className="text-slate-300 font-mono text-[10px]">{node.inputs}</span>
+                        <span className="text-slate-500 block" style={{}}>Inputs</span>
+                        <span className="text-slate-600 font-mono text-[10px]">{node.inputs}</span>
                       </div>
                       <div>
-                        <span className="text-slate-500 block">Outputs</span>
-                        <span className="text-slate-300 font-mono text-[10px]">{node.outputs}</span>
+                        <span className="text-slate-500 block" style={{}}>Outputs</span>
+                        <span className="text-slate-600 font-mono text-[10px]">{node.outputs}</span>
                       </div>
                       <div>
-                        <span className="text-slate-500 block">Key Parameters</span>
-                        <span className="text-indigo-300 font-mono text-[10px] truncate block">{node.params}</span>
+                        <span className="text-slate-500 block" style={{}}>Key Parameters</span>
+                        <span className="text-violet-300 font-mono text-[10px] truncate block">{node.params}</span>
                       </div>
                     </div>
                   </div>
@@ -416,15 +437,15 @@ export function DocsPage() {
       {/* 2. Metrics Tab */}
       {activeTab === 'metrics' && (
         <div className="space-y-6">
-          <p className="text-xs text-slate-400">
+          <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
             Standard loss metrics and evaluation benchmarks calculated during pipeline runs and model tournament leaderboards.
           </p>
           <div className="grid md:grid-cols-2 gap-4">
             {METRICS.map((m, idx) => (
-              <div key={idx} className="p-5 rounded-2xl bg-[#0e1422] border border-white/5 space-y-2">
+              <div key={idx} className="p-5 rounded-2xl border border-slate-100 bg-white space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-white">{m.name}</h4>
-                  <code className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                  <h4 className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>{m.name}</h4>
+                  <code className="text-[10px] font-mono px-2 py-0.5 rounded bg-violet-500/10 text-violet-300 border border-violet-500/20">
                     {m.formula}
                   </code>
                 </div>
@@ -438,12 +459,12 @@ export function DocsPage() {
       {/* 3. Sandbox & Limits Tab */}
       {activeTab === 'sandbox' && (
         <div className="space-y-6">
-          <div className="p-6 rounded-2xl bg-[#0e1422] border border-indigo-500/20 space-y-4">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Lock className="w-4 h-4 text-indigo-400" />
+          <div className="p-6 rounded-2xl border border-slate-100 bg-white border-violet-200 space-y-4">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Lock className="w-4 h-4 text-violet-400" />
               Isolated Execution Sandbox Architecture
             </h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text)' }}>
               To guarantee zero impact on the primary API server, all user-authored Python code and DAG custom transform blocks execute inside a hardened sandbox container worker. If Docker is unavailable in local environments, the backend seamlessly falls back to a restricted OS child process with active runtime watchdog enforcement.
             </p>
           </div>
@@ -458,9 +479,9 @@ export function DocsPage() {
               { title: 'Root Filesystem', val: 'Read-Only', desc: 'Temp storage limited to a 64MB memory tmpfs mounted at /tmp.' },
             ].map((lim, idx) => (
               <div key={idx} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">{lim.title}</span>
-                <span className="text-base font-black text-indigo-400 font-mono block">{lim.val}</span>
-                <p className="text-xs text-slate-400">{lim.desc}</p>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block" style={{}}>{lim.title}</span>
+                <span className="text-base font-black text-violet-400 font-mono block">{lim.val}</span>
+                <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{lim.desc}</p>
               </div>
             ))}
           </div>
@@ -470,7 +491,7 @@ export function DocsPage() {
       {/* 4. Supported Libraries Tab */}
       {activeTab === 'libraries' && (
         <div className="space-y-6">
-          <p className="text-xs text-slate-400">
+          <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
             The Python sandbox includes production data science and analytics packages:
           </p>
           <div className="grid sm:grid-cols-2 gap-4">
@@ -481,16 +502,16 @@ export function DocsPage() {
               { name: 'Matplotlib', ver: '>= 3.8', desc: 'Charts rendered via headless Agg backend automatically returned as base64 PNGs.' },
               { name: 'Python Standard', ver: '3.10+', desc: 'Standard math, datetime, re (regex), json, collections, and itertools.' }
             ].map((lib, idx) => (
-              <div key={idx} className="p-4 rounded-xl bg-[#0e1422] border border-white/5 flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-mono font-bold text-xs shrink-0">
+              <div key={idx} className="p-4 rounded-xl border border-slate-100 bg-white flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-violet-500/10 text-violet-400 flex items-center justify-center font-mono font-bold text-xs shrink-0">
                   Py
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-xs font-bold text-white">{lib.name}</h4>
+                    <h4 className="text-xs font-bold text-slate-900">{lib.name}</h4>
                     <span className="text-[10px] font-mono text-slate-500">{lib.ver}</span>
                   </div>
-                  <p className="text-xs text-slate-400 mt-1">{lib.desc}</p>
+                  <p className="text-xs text-slate-500 mt-1">{lib.desc}</p>
                 </div>
               </div>
             ))}
@@ -502,12 +523,12 @@ export function DocsPage() {
       {activeTab === 'faq' && (
         <div className="space-y-4">
           {FAQS.map((faq, idx) => (
-            <div key={idx} className="p-5 rounded-2xl bg-[#0e1422] border border-white/5 space-y-2">
-              <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                <HelpCircle className="w-4 h-4 text-indigo-400 shrink-0" />
+            <div key={idx} className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-2">
+              <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <HelpCircle className="w-4 h-4 text-violet-600 shrink-0" />
                 {faq.q}
               </h4>
-              <p className="text-xs text-slate-400 leading-relaxed pl-6">{faq.a}</p>
+              <p className="text-xs text-slate-600 leading-relaxed pl-6">{faq.a}</p>
             </div>
           ))}
         </div>
@@ -626,14 +647,14 @@ print(f"Chart rendered for column: {first_num}")
         {/* Sample Datasets Section */}
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <span className="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">
+            <span className="w-7 h-7 rounded-lg bg-violet-500/20 text-violet-400 flex items-center justify-center font-bold text-xs">
               01
             </span>
-            <h2 className="text-xl font-bold text-white tracking-tight">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
               Pre-Loaded Sample Datasets (1-Click Run)
             </h2>
           </div>
-          <p className="text-xs text-slate-400 mb-6 max-w-2xl">
+          <p className="text-xs text-slate-500 mb-6 max-w-2xl">
             Download our curated sample datasets or launch them directly with ready-made visual pipelines in the Studio.
           </p>
 
@@ -641,34 +662,34 @@ print(f"Chart rendered for column: {first_num}")
             {SAMPLE_DATASETS.map((ds, idx) => (
               <div
                 key={idx}
-                className="p-6 rounded-2xl bg-[#0e1422] border border-white/5 hover:border-indigo-500/30 transition-all flex flex-col justify-between"
+                className="p-6 rounded-2xl border border-slate-200 hover:border-violet-300 bg-white shadow-xs transition-all flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between text-xs mb-3">
-                    <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 font-bold border border-indigo-500/20">
+                    <span className="px-2.5 py-0.5 rounded-full bg-violet-50 text-violet-700 font-bold border border-violet-200">
                       {ds.task}
                     </span>
-                    <span className="text-slate-400 font-mono text-[11px]">{ds.rows} · {ds.cols}</span>
+                    <span className="text-slate-500 font-mono text-[11px]">{ds.rows} · {ds.cols}</span>
                   </div>
-                  <h3 className="text-base font-bold text-white mb-1">{ds.name}</h3>
-                  <p className="text-xs text-slate-400 leading-relaxed mb-4">{ds.desc}</p>
-                  <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-[11px] font-mono text-slate-400 mb-6">
+                  <h3 className="text-base font-bold text-slate-900 mb-1">{ds.name}</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed mb-4">{ds.desc}</p>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-mono text-slate-600 mb-6">
                     <span className="text-slate-500 block text-[10px] uppercase font-sans font-bold">Target Variable</span>
-                    <span className="text-emerald-400">{ds.target}</span>
+                    <span className="text-emerald-600 font-bold">{ds.target}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 pt-3 border-t border-white/5">
+                <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
                   <a
                     href={ds.downloadUrl}
                     download={ds.filename}
-                    className="flex-1 py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white text-center transition-all border border-white/10"
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-800 text-center transition-all border border-slate-200"
                   >
                     Download CSV
                   </a>
                   <button
                     onClick={() => navigate('/app/templates')}
-                    className="flex-1 py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white flex items-center justify-center gap-1.5 transition-all shadow-md shadow-indigo-600/30"
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-xs font-bold text-white flex items-center justify-center gap-1.5 transition-all shadow-md shadow-violet-600/30"
                   >
                     Open Blueprint <ArrowRight className="w-3.5 h-3.5" />
                   </button>
@@ -681,10 +702,10 @@ print(f"Chart rendered for column: {first_num}")
         {/* 4-Step Walkthrough Section */}
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <span className="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">
+            <span className="w-7 h-7 rounded-lg bg-violet-500/20 text-violet-400 flex items-center justify-center font-bold text-xs">
               02
             </span>
-            <h2 className="text-xl font-bold text-white tracking-tight">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
               4-Step Visual Modeling Workflow
             </h2>
           </div>
@@ -715,9 +736,9 @@ print(f"Chart rendered for column: {first_num}")
                 desc: 'Inspect the accuracy leaderboard, confusion matrix, and SHAP explainability charts. Download the production joblib artifact.'
               }
             ].map((step, idx) => (
-              <div key={idx} className="p-5 rounded-2xl bg-[#0e1422] border border-white/5 space-y-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">{step.step}</span>
-                <h4 className="text-sm font-bold text-white">{step.title}</h4>
+              <div key={idx} className="p-5 rounded-2xl border border-slate-100 bg-white space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-violet-400">{step.step}</span>
+                <h4 className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>{step.title}</h4>
                 <p className="text-xs text-slate-400 leading-relaxed">{step.desc}</p>
               </div>
             ))}
@@ -727,10 +748,10 @@ print(f"Chart rendered for column: {first_num}")
         {/* Starter Python Snippets */}
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <span className="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">
+            <span className="w-7 h-7 rounded-lg bg-violet-500/20 text-violet-400 flex items-center justify-center font-bold text-xs">
               03
             </span>
-            <h2 className="text-xl font-bold text-white tracking-tight">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
               Starter Python Sandbox Code Examples
             </h2>
           </div>
@@ -740,11 +761,11 @@ print(f"Chart rendered for column: {first_num}")
 
           <div className="space-y-6">
             {STARTER_CODES.map((item, idx) => (
-              <div key={idx} className="rounded-2xl bg-[#0e1422] border border-white/5 overflow-hidden">
+              <div key={idx} className="rounded-2xl border border-slate-100 bg-white overflow-hidden">
                 <div className="p-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-bold text-white">{item.title}</h3>
-                    <p className="text-xs text-slate-400">{item.desc}</p>
+                    <h3 className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>{item.title}</h3>
+                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{item.desc}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -765,14 +786,14 @@ print(f"Chart rendered for column: {first_num}")
                     </button>
                     <button
                       onClick={() => navigate('/app/code')}
-                      className="px-3 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600 text-xs font-semibold text-indigo-300 hover:text-white transition-all border border-indigo-500/30"
+                      className="px-3 py-1.5 rounded-lg bg-violet-600/30 hover:bg-violet-600 text-xs font-semibold text-violet-300 hover:text-white transition-all border border-violet-500/30"
                     >
                       Open in Studio
                     </button>
                   </div>
                 </div>
-                <div className="p-4 bg-[#080c14]">
-                  <pre className="font-mono text-xs text-indigo-200/90 leading-relaxed overflow-x-auto whitespace-pre">
+                <div className="p-4 bg-slate-50">
+                  <pre className="font-mono text-xs text-violet-200/90 leading-relaxed overflow-x-auto whitespace-pre">
                     {item.code}
                   </pre>
                 </div>
@@ -795,8 +816,8 @@ export function AboutPage() {
       icon={Cpu}
     >
       <div className="max-w-3xl space-y-8">
-        <div className="p-6 rounded-2xl bg-[#0e1422] border border-white/5 space-y-4">
-          <h2 className="text-lg font-bold text-white">Visual Power Without The Black Box</h2>
+        <div className="p-6 rounded-2xl border border-slate-100 bg-white p-6 rounded-2xl space-y-4">
+          <h2 className="text-lg font-bold text-slate-900">Visual Power Without The Black Box</h2>
           <p className="text-sm text-slate-400 leading-relaxed">
             FlowML Studio was created with a clear principle: machine learning should be visual and rapid, without sacrificing the rigour, auditability, and execution performance of state-of-the-art Python toolchains.
           </p>
@@ -807,16 +828,16 @@ export function AboutPage() {
 
         <div className="grid sm:grid-cols-3 gap-4">
           <div className="p-5 rounded-xl bg-white/[0.02] border border-white/5 text-center">
-            <span className="text-2xl font-black text-indigo-400 block mb-1">100%</span>
-            <span className="text-xs text-slate-400">Scikit-Learn Compatible</span>
+            <span className="text-2xl font-black text-violet-400 block mb-1">100%</span>
+            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Scikit-Learn Compatible</span>
           </div>
           <div className="p-5 rounded-xl bg-white/[0.02] border border-white/5 text-center">
             <span className="text-2xl font-black text-blue-400 block mb-1">0ms</span>
-            <span className="text-xs text-slate-400">Cloud Lock-in</span>
+            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Cloud Lock-in</span>
           </div>
           <div className="p-5 rounded-xl bg-white/[0.02] border border-white/5 text-center">
             <span className="text-2xl font-black text-emerald-400 block mb-1">SHAP</span>
-            <span className="text-xs text-slate-400">Explainable Decisions</span>
+            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Explainable Decisions</span>
           </div>
         </div>
       </div>
@@ -841,55 +862,55 @@ export function ContactPage() {
       badge="Get in Touch"
       icon={Mail}
     >
-      <div className="max-w-xl p-8 rounded-2xl bg-[#0e1422] border border-white/5">
+      <div className="max-w-xl p-8 rounded-2xl border border-slate-200 bg-white shadow-sm">
         {submitted ? (
           <div className="text-center py-10 space-y-3">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200">
               <CheckCircle2 className="w-6 h-6" />
             </div>
-            <h3 className="font-bold text-white text-lg">Message Dispatched</h3>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            <h3 className="font-bold text-slate-900 text-lg">Message Dispatched</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
               Thank you for reaching out! Our engineering team will review your inquiry and follow up within 24 hours.
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Full Name</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
               <input
                 required
                 type="text"
                 placeholder="Jane Doe"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#080c14] border border-white/10 text-xs text-white focus:outline-none focus:border-indigo-500"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-violet-500 focus:bg-white transition-all"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Work Email</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Work Email</label>
               <input
                 required
                 type="email"
                 placeholder="jane@company.com"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#080c14] border border-white/10 text-xs text-white focus:outline-none focus:border-indigo-500"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-violet-500 focus:bg-white transition-all"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Message</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Message</label>
               <textarea
                 required
                 rows={4}
                 placeholder="Tell us about your pipeline requirements..."
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#080c14] border border-white/10 text-xs text-white focus:outline-none focus:border-indigo-500 resize-none"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-violet-500 focus:bg-white transition-all resize-none"
               />
             </div>
             <button
               type="submit"
-              className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition-all"
+              className="w-full py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-violet-600/30 transition-all cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" /> Send Inquiry
             </button>
@@ -909,23 +930,23 @@ export function PrivacyPage() {
       badge="Security & Compliance"
       icon={Shield}
     >
-      <div className="max-w-3xl space-y-6 text-sm text-slate-400 leading-relaxed">
-        <section className="p-6 rounded-2xl bg-[#0e1422] border border-white/5 space-y-3">
-          <h2 className="text-base font-bold text-white">1. Data Ownership & Sovereignty</h2>
+      <div className="max-w-3xl space-y-6 text-sm text-slate-600 leading-relaxed">
+        <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+          <h2 className="text-base font-bold text-slate-900 font-display">1. Data Ownership & Sovereignty</h2>
           <p>
             Your datasets, feature columns, and trained models remain 100% your property. FlowML never uses customer datasets to train foundational models or shared services.
           </p>
         </section>
 
-        <section className="p-6 rounded-2xl bg-[#0e1422] border border-white/5 space-y-3">
-          <h2 className="text-base font-bold text-white">2. User Authentication</h2>
+        <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+          <h2 className="text-base font-bold text-slate-900 font-display">2. User Authentication</h2>
           <p>
             Authentication credentials are processed through Firebase Authentication. We store only your email identifier and unique user identification token (UID) to scope file system directories and sandbox isolation.
           </p>
         </section>
 
-        <section className="p-6 rounded-2xl bg-[#0e1422] border border-white/5 space-y-3">
-          <h2 className="text-base font-bold text-white">3. Local & Dev Mode</h2>
+        <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+          <h2 className="text-base font-bold text-slate-900 font-display">3. Local & Dev Mode</h2>
           <p>
             In offline development mode (DEV_AUTH), all storage paths reside locally within your disk workspace storage folder. No network telemetry is sent externally.
           </p>
@@ -944,16 +965,16 @@ export function TermsPage() {
       badge="Legal Agreement"
       icon={FileText}
     >
-      <div className="max-w-3xl space-y-6 text-sm text-slate-400 leading-relaxed">
-        <section className="p-6 rounded-2xl bg-[#0e1422] border border-white/5 space-y-3">
-          <h2 className="text-base font-bold text-white">1. Permitted Use</h2>
+      <div className="max-w-3xl space-y-6 text-sm text-slate-600 leading-relaxed">
+        <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+          <h2 className="text-base font-bold text-slate-900 font-display">1. Permitted Use</h2>
           <p>
             You may use FlowML Studio for personal, educational, research, and commercial machine learning applications. You are solely responsible for ensuring training data meets applicable privacy regulations (such as HIPAA and GDPR).
           </p>
         </section>
 
-        <section className="p-6 rounded-2xl bg-[#0e1422] border border-white/5 space-y-3">
-          <h2 className="text-base font-bold text-white">2. Execution Safety</h2>
+        <section className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+          <h2 className="text-base font-bold text-slate-900 font-display">2. Execution Safety</h2>
           <p>
             Machine learning outputs are probabilistic inferences. You agree that model predictions are advisory and must be verified before deployment in critical safety-of-life or high-liability systems.
           </p>
@@ -1023,28 +1044,28 @@ export function FeaturesPage() {
                 className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all space-y-4"
               >
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                  <div className="w-10 h-10 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center text-violet-600">
                     <FIcon className="w-5 h-5" />
                   </div>
                   <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                     {f.tag}
                   </span>
                 </div>
-                <h3 className="font-sora font-bold text-base text-slate-900">{f.title}</h3>
+                <h3 className="font-display font-bold text-base text-slate-900">{f.title}</h3>
                 <p className="text-sm text-slate-500 leading-relaxed">{f.description}</p>
               </div>
             );
           })}
         </div>
 
-        <div className="p-8 rounded-2xl bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 text-center space-y-4">
-          <h3 className="text-xl font-bold font-sora text-slate-900">Ready to build your first model?</h3>
+        <div className="p-8 rounded-2xl bg-gradient-to-r from-violet-50 to-blue-50 border border-violet-100 text-center space-y-4">
+          <h3 className="text-xl font-bold font-display text-slate-900">Ready to build your first model?</h3>
           <p className="text-sm text-slate-600 max-w-xl mx-auto">
             Choose from ready-made workflow blueprints or upload a CSV dataset to train models in seconds.
           </p>
           <button
             onClick={() => navigate('/studio')}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 transition-all active:scale-95"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/20 transition-all active:scale-95"
           >
             Launch Studio Canvas
             <ArrowRight className="w-4 h-4" />

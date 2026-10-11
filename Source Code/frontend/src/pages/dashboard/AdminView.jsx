@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  ShieldAlert, Users, Server, HardDrive, Cpu, Activity,
-  Sliders, ShieldCheck, UserCheck, UserX, RefreshCw, AlertTriangle,
-  Clock, Lock, CheckCircle2, Save, Terminal, ArrowUpRight
+  Users, Activity, Cpu, HardDrive,
+  Sliders, ShieldCheck, AlertTriangle,
+  CheckCircle2, Save, RefreshCw,
 } from 'lucide-react';
 import {
   adminListUsers,
@@ -12,9 +12,59 @@ import {
   adminGetSystemMetrics,
   adminGetLimits,
   adminUpdateLimits,
-  adminGetAuditLogs
+  adminGetAuditLogs,
 } from '../../services/api';
 
+/* ─── Shared card wrapper ───────────────────────────────────────────────── */
+function Card({ className = '', children }) {
+  return (
+    <div
+      className={`rounded-2xl border shadow-sm ${className}`}
+      style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ─── Metric card ───────────────────────────────────────────────────────── */
+function MetricCard({ label, value, sub, icon: Icon, iconColor }) {
+  return (
+    <Card className="p-4 space-y-1">
+      <div className="flex items-center justify-between" style={{ color: 'var(--color-text-muted)' }}>
+        <span className="text-xs font-medium">{label}</span>
+        <Icon className={`w-4 h-4 ${iconColor}`} />
+      </div>
+      <p className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>{value}</p>
+      <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>{sub}</span>
+    </Card>
+  );
+}
+
+/* ─── Input field ───────────────────────────────────────────────────────── */
+function Field({ label, ...props }) {
+  return (
+    <div>
+      <label
+        className="block text-xs font-semibold mb-1"
+        style={{ color: 'var(--color-text-muted)' }}
+      >
+        {label}
+      </label>
+      <input
+        className="w-full px-3 py-2 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition-all"
+        style={{
+          background: 'var(--color-bg)',
+          border: '1px solid var(--color-border)',
+          color: 'var(--color-text)',
+        }}
+        {...props}
+      />
+    </div>
+  );
+}
+
+/* ─── Main Component ────────────────────────────────────────────────────── */
 export default function AdminView() {
   const [users, setUsers] = useState([]);
   const [jobs, setJobs] = useState({ summary: {}, running_jobs: [], failed_jobs: [] });
@@ -29,7 +79,7 @@ export default function AdminView() {
   const [loading, setLoading] = useState(true);
   const [savingLimits, setSavingLimits] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [activeTab, setActiveTab] = useState('users'); // users | jobs | system | limits | audit
+  const [activeTab, setActiveTab] = useState('users');
 
   const loadData = async () => {
     setLoading(true);
@@ -53,16 +103,12 @@ export default function AdminView() {
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const handleToggleUserStatus = async (uid, currentStatus) => {
     try {
       const res = await adminSetUserStatus(uid, !currentStatus);
-      setUsers((prev) =>
-        prev.map((u) => (u.uid === uid ? { ...u, is_active: res.is_active } : u))
-      );
+      setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, is_active: res.is_active } : u)));
     } catch (err) {
       alert(err?.response?.data?.detail || 'Failed to update user status');
     }
@@ -83,143 +129,145 @@ export default function AdminView() {
     }
   };
 
+  const TABS = [
+    { id: 'users',  label: 'Users',         icon: Users },
+    { id: 'jobs',   label: 'Job Queue',      icon: Activity },
+    { id: 'limits', label: 'Exec Limits',    icon: Sliders },
+    { id: 'audit',  label: 'Audit Logs',     icon: ShieldCheck },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20">
-              Admin Governance
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-50 text-rose-600 border border-rose-200">
+              Admin
             </span>
-            <span className="text-xs text-slate-500">Platform telemetry, limits & audit trail</span>
+            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+              Platform telemetry, limits & audit trail
+            </span>
           </div>
-          <h2 className="text-2xl font-black text-white tracking-tight">Security & Operations Center</h2>
+          <h1 className="font-display text-2xl font-extrabold tracking-[-0.02em] leading-tight" style={{ color: 'var(--color-text)' }}>
+            Security & Operations Center
+          </h1>
         </div>
 
         <button
           onClick={loadData}
           disabled={loading}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5 transition-all self-start sm:self-auto"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all self-start sm:self-auto"
+          style={{
+            background: 'var(--color-surface)',
+            borderColor: 'var(--color-border)',
+            color: 'var(--color-text-muted)',
+          }}
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh Telemetry
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
         </button>
       </div>
 
-      {/* Metric Cards Row */}
+      {/* Metric Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl bg-[#0e1422] border border-white/5 space-y-1">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-medium">Registered Users</span>
-            <Users className="w-4 h-4 text-indigo-400" />
-          </div>
-          <p className="text-2xl font-bold text-white">{users.length}</p>
-          <span className="text-[10px] text-emerald-400">
-            {users.filter((u) => u.is_active).length} Active accounts
-          </span>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-[#0e1422] border border-white/5 space-y-1">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-medium">Active Workers</span>
-            <Activity className="w-4 h-4 text-emerald-400" />
-          </div>
-          <p className="text-2xl font-bold text-white">{jobs.summary?.running || 0}</p>
-          <span className="text-[10px] text-slate-400">
-            {jobs.summary?.queued || 0} Queued in queue
-          </span>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-[#0e1422] border border-white/5 space-y-1">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-medium">Host Memory Load</span>
-            <Cpu className="w-4 h-4 text-amber-400" />
-          </div>
-          <p className="text-2xl font-bold text-white">
-            {system?.memory ? `${system.memory.used_pct}%` : '32%'}
-          </p>
-          <span className="text-[10px] text-slate-400">
-            {system?.memory ? `${system.memory.available_mb}MB free` : 'Sandbox bounded'}
-          </span>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-[#0e1422] border border-white/5 space-y-1">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-medium">Storage Capacity</span>
-            <HardDrive className="w-4 h-4 text-blue-400" />
-          </div>
-          <p className="text-2xl font-bold text-white">
-            {system?.storage ? `${system.storage.used_pct}%` : '18%'}
-          </p>
-          <span className="text-[10px] text-slate-400">
-            {system?.storage ? `${system.storage.free_gb} GB Free` : 'LocalDiskStore'}
-          </span>
-        </div>
+        <MetricCard
+          label="Registered Users" value={users.length}
+          sub={`${users.filter((u) => u.is_active).length} active`}
+          icon={Users} iconColor="text-violet-500"
+        />
+        <MetricCard
+          label="Active Workers" value={jobs.summary?.running || 0}
+          sub={`${jobs.summary?.queued || 0} queued`}
+          icon={Activity} iconColor="text-emerald-500"
+        />
+        <MetricCard
+          label="Memory Load"
+          value={system?.memory ? `${system.memory.used_pct}%` : '—'}
+          sub={system?.memory ? `${system.memory.available_mb} MB free` : 'Bounded'}
+          icon={Cpu} iconColor="text-amber-500"
+        />
+        <MetricCard
+          label="Storage"
+          value={system?.storage ? `${system.storage.used_pct}%` : '—'}
+          sub={system?.storage ? `${system.storage.free_gb} GB free` : 'Local store'}
+          icon={HardDrive} iconColor="text-blue-500"
+        />
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-white/10 pb-2 text-xs font-semibold">
-        {[
-          { id: 'users', label: 'User Governance', icon: Users },
-          { id: 'jobs', label: 'Job Queue Monitor', icon: Activity },
-          { id: 'limits', label: 'Execution Limits', icon: Sliders },
-          { id: 'audit', label: 'Security Audit Logs', icon: ShieldCheck },
-        ].map((tab) => {
+      {/* Tabs */}
+      <div
+        className="flex items-center gap-1 border-b text-xs font-semibold pb-0"
+        style={{ borderColor: 'var(--color-border)' }}
+      >
+        {TABS.map((tab) => {
           const Icon = tab.icon;
+          const active = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl transition-all ${
-                activeTab === tab.id
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+              className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-t-xl transition-all border-b-2 -mb-px ${
+                active
+                  ? 'bg-violet-50 text-violet-700 border-violet-500'
+                  : 'border-transparent hover:bg-slate-50'
               }`}
+              style={{ color: active ? undefined : 'var(--color-text-muted)' }}
             >
-              <Icon className="w-3.5 h-3.5" /> {tab.label}
+              <Icon className="w-3.5 h-3.5" />
+              {tab.label}
             </button>
           );
         })}
       </div>
 
-      {/* Tab 1: Users Table */}
+      {/* Tab: Users */}
       {activeTab === 'users' && (
-        <div className="rounded-2xl bg-[#0e1422] border border-white/5 overflow-hidden">
-          <div className="p-4 border-b border-white/5 flex items-center justify-between">
-            <h3 className="font-bold text-sm text-white">Managed Accounts</h3>
-            <span className="text-xs text-slate-500 font-mono">{users.length} accounts indexed</span>
+        <Card className="overflow-hidden">
+          <div
+            className="p-4 border-b flex items-center justify-between"
+            style={{ borderColor: 'var(--color-border)' }}
+          >
+            <h3 className="font-display font-semibold text-sm" style={{ color: 'var(--color-text)' }}>
+              Managed Accounts
+            </h3>
+            <span className="text-xs font-mono" style={{ color: 'var(--color-text-muted)' }}>
+              {users.length} accounts
+            </span>
           </div>
-
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#141b2d] text-slate-400 uppercase tracking-wider text-[10px]">
+              <thead
+                className="text-[10px] uppercase tracking-wider font-bold"
+                style={{ background: 'var(--color-bg)', color: 'var(--color-text-muted)' }}
+              >
                 <tr>
-                  <th className="px-4 py-3">UID Identifier</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Datasets</th>
-                  <th className="px-4 py-3">Models</th>
-                  <th className="px-4 py-3">Runs</th>
-                  <th className="px-4 py-3">Disk Usage</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
+                  {['UID', 'Status', 'Datasets', 'Models', 'Runs', 'Storage', 'Actions'].map((h) => (
+                    <th key={h} className="px-4 py-3">{h}</th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-slate-300">
+              <tbody style={{ color: 'var(--color-text)' }}>
                 {users.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={7} className="px-4 py-8 text-center" style={{ color: 'var(--color-text-muted)' }}>
                       No user accounts found.
                     </td>
                   </tr>
                 ) : (
                   users.map((u) => (
-                    <tr key={u.uid} className="hover:bg-white/[0.02]">
-                      <td className="px-4 py-3 font-mono font-medium text-white">{u.uid}</td>
+                    <tr
+                      key={u.uid}
+                      className="border-t transition-colors hover:bg-slate-50"
+                      style={{ borderColor: 'var(--color-border)' }}
+                    >
+                      <td className="px-4 py-3 font-mono font-semibold">{u.uid}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                             u.is_active
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                              : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : 'bg-rose-50 text-rose-600 border border-rose-200'
                           }`}
                         >
                           {u.is_active ? 'Active' : 'Deactivated'}
@@ -234,8 +282,8 @@ export default function AdminView() {
                           onClick={() => handleToggleUserStatus(u.uid, u.is_active)}
                           className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
                             u.is_active
-                              ? 'bg-rose-500/10 hover:bg-rose-600 text-rose-300 hover:text-white'
-                              : 'bg-emerald-500/10 hover:bg-emerald-600 text-emerald-300 hover:text-white'
+                              ? 'bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200'
+                              : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
                           }`}
                         >
                           {u.is_active ? 'Deactivate' : 'Activate'}
@@ -247,185 +295,184 @@ export default function AdminView() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
 
-      {/* Tab 2: Job Queue Monitor */}
+      {/* Tab: Jobs */}
       {activeTab === 'jobs' && (
-        <div className="space-y-4">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="p-4 rounded-2xl bg-[#0e1422] border border-white/5 space-y-3">
-              <h4 className="font-bold text-sm text-white flex items-center gap-2">
-                <Activity className="w-4 h-4 text-emerald-400" /> Currently Running ({jobs.running_jobs.length})
-              </h4>
-              {jobs.running_jobs.length === 0 ? (
-                <p className="text-xs text-slate-500 py-4">No active pipeline jobs running.</p>
-              ) : (
-                <div className="space-y-2">
-                  {jobs.running_jobs.map((j) => (
-                    <div key={j.run_id} className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-xs font-mono">
-                      <div className="flex items-center justify-between text-emerald-400 font-bold mb-1">
-                        <span>{j.run_id}</span>
-                        <span className="animate-pulse">● Running</span>
-                      </div>
-                      <div className="text-slate-400">UID: {j.uid}</div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Card className="p-4 space-y-3">
+            <h4 className="font-display font-semibold text-sm flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
+              <Activity className="w-4 h-4 text-emerald-500" />
+              Running Jobs ({jobs.running_jobs.length})
+            </h4>
+            {jobs.running_jobs.length === 0 ? (
+              <p className="text-xs py-4" style={{ color: 'var(--color-text-muted)' }}>
+                No active pipeline jobs running.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {jobs.running_jobs.map((j) => (
+                  <div
+                    key={j.run_id}
+                    className="p-3 rounded-xl text-xs font-mono"
+                    style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }}
+                  >
+                    <div className="flex items-center justify-between text-emerald-600 font-bold mb-1">
+                      <span>{j.run_id}</span>
+                      <span className="animate-pulse">● Running</span>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    <div style={{ color: 'var(--color-text-muted)' }}>UID: {j.uid}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
 
-            <div className="p-4 rounded-2xl bg-[#0e1422] border border-white/5 space-y-3">
-              <h4 className="font-bold text-sm text-white flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-rose-400" /> Recent Failures ({jobs.failed_jobs.length})
-              </h4>
-              {jobs.failed_jobs.length === 0 ? (
-                <p className="text-xs text-slate-500 py-4">Zero failed executions recorded.</p>
-              ) : (
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {jobs.failed_jobs.map((j) => (
-                    <div key={j.run_id} className="p-3 rounded-xl bg-rose-950/20 border border-rose-500/20 text-xs font-mono">
-                      <div className="flex items-center justify-between text-rose-300 font-bold mb-1">
-                        <span>{j.run_id}</span>
-                        <span>Failed</span>
-                      </div>
-                      <div className="text-slate-400 truncate">Err: {j.error || 'Execution halted'}</div>
+          <Card className="p-4 space-y-3">
+            <h4 className="font-display font-semibold text-sm flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
+              <AlertTriangle className="w-4 h-4 text-rose-500" />
+              Recent Failures ({jobs.failed_jobs.length})
+            </h4>
+            {jobs.failed_jobs.length === 0 ? (
+              <p className="text-xs py-4" style={{ color: 'var(--color-text-muted)' }}>
+                Zero failed executions recorded.
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {jobs.failed_jobs.map((j) => (
+                  <div
+                    key={j.run_id}
+                    className="p-3 rounded-xl text-xs font-mono bg-rose-50 border border-rose-200"
+                  >
+                    <div className="flex items-center justify-between text-rose-600 font-bold mb-1">
+                      <span>{j.run_id}</span>
+                      <span>Failed</span>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+                    <div className="truncate" style={{ color: 'var(--color-text-muted)' }}>
+                      Err: {j.error || 'Execution halted'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
         </div>
       )}
 
-      {/* Tab 3: Configurable Limits Form */}
+      {/* Tab: Limits */}
       {activeTab === 'limits' && (
-        <form onSubmit={handleSaveLimits} className="p-6 rounded-2xl bg-[#0e1422] border border-white/5 max-w-xl space-y-5">
-          <div className="flex items-center justify-between border-b border-white/5 pb-3">
-            <div>
-              <h3 className="font-bold text-sm text-white">Platform Execution Limits</h3>
-              <p className="text-xs text-slate-400">Sandbox boundaries enforced across all worker processes</p>
+        <Card className="p-6 max-w-xl">
+          <form onSubmit={handleSaveLimits} className="space-y-5">
+            <div
+              className="flex items-center justify-between border-b pb-3"
+              style={{ borderColor: 'var(--color-border)' }}
+            >
+              <div>
+                <h3 className="font-display font-semibold text-sm" style={{ color: 'var(--color-text)' }}>
+                  Platform Execution Limits
+                </h3>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                  Sandbox boundaries enforced across all worker processes
+                </p>
+              </div>
+              {saveSuccess && (
+                <span className="flex items-center gap-1 text-xs text-emerald-600 font-bold">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Updated
+                </span>
+              )}
             </div>
-            {saveSuccess && (
-              <span className="flex items-center gap-1 text-xs text-emerald-400 font-bold">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Updated
-              </span>
-            )}
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                Timeout Limit (Seconds)
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="120"
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field
+                label="Timeout Limit (Seconds)"
+                type="number" min="1" max="120"
                 value={limits.execution_timeout_sec}
-                onChange={(e) =>
-                  setLimits({ ...limits, execution_timeout_sec: parseInt(e.target.value) || 15 })
-                }
-                className="w-full px-3 py-2 rounded-xl bg-[#080d19] border border-white/10 text-xs text-white focus:outline-none focus:border-indigo-500"
+                onChange={(e) => setLimits({ ...limits, execution_timeout_sec: parseInt(e.target.value) || 15 })}
               />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                Worker RAM Limit (MB)
-              </label>
-              <input
-                type="number"
-                min="64"
-                max="2048"
-                step="64"
+              <Field
+                label="Worker RAM Limit (MB)"
+                type="number" min="64" max="2048" step="64"
                 value={limits.memory_limit_mb}
-                onChange={(e) =>
-                  setLimits({ ...limits, memory_limit_mb: parseInt(e.target.value) || 256 })
-                }
-                className="w-full px-3 py-2 rounded-xl bg-[#080d19] border border-white/10 text-xs text-white focus:outline-none focus:border-indigo-500"
+                onChange={(e) => setLimits({ ...limits, memory_limit_mb: parseInt(e.target.value) || 256 })}
               />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                Max Upload File Size (MB)
-              </label>
-              <input
-                type="number"
-                min="5"
-                max="500"
+              <Field
+                label="Max Upload Size (MB)"
+                type="number" min="5" max="500"
                 value={limits.max_upload_size_mb}
-                onChange={(e) =>
-                  setLimits({ ...limits, max_upload_size_mb: parseInt(e.target.value) || 50 })
-                }
-                className="w-full px-3 py-2 rounded-xl bg-[#080d19] border border-white/10 text-xs text-white focus:outline-none focus:border-indigo-500"
+                onChange={(e) => setLimits({ ...limits, max_upload_size_mb: parseInt(e.target.value) || 50 })}
               />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                Per-User Dataset Quota
-              </label>
-              <input
-                type="number"
-                min="5"
-                max="200"
+              <Field
+                label="Per-User Dataset Quota"
+                type="number" min="5" max="200"
                 value={limits.per_user_quota_datasets}
-                onChange={(e) =>
-                  setLimits({ ...limits, per_user_quota_datasets: parseInt(e.target.value) || 25 })
-                }
-                className="w-full px-3 py-2 rounded-xl bg-[#080d19] border border-white/10 text-xs text-white focus:outline-none focus:border-indigo-500"
+                onChange={(e) => setLimits({ ...limits, per_user_quota_datasets: parseInt(e.target.value) || 25 })}
               />
             </div>
-          </div>
 
-          <button
-            type="submit"
-            disabled={savingLimits}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all"
-          >
-            <Save className="w-3.5 h-3.5" /> {savingLimits ? 'Saving…' : 'Save Platform Limits'}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={savingLimits}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs shadow-md transition-all disabled:opacity-60"
+            >
+              <Save className="w-3.5 h-3.5" />
+              {savingLimits ? 'Saving…' : 'Save Platform Limits'}
+            </button>
+          </form>
+        </Card>
       )}
 
-      {/* Tab 4: Security Audit Trail */}
+      {/* Tab: Audit Logs */}
       {activeTab === 'audit' && (
-        <div className="rounded-2xl bg-[#0e1422] border border-white/5 overflow-hidden">
-          <div className="p-4 border-b border-white/5 flex items-center justify-between">
-            <h3 className="font-bold text-sm text-white">Security Event Trail</h3>
-            <span className="text-xs text-slate-500">Chronological tamper-evident audit records</span>
+        <Card className="overflow-hidden">
+          <div
+            className="p-4 border-b flex items-center justify-between"
+            style={{ borderColor: 'var(--color-border)' }}
+          >
+            <h3 className="font-display font-semibold text-sm" style={{ color: 'var(--color-text)' }}>
+              Security Audit Trail
+            </h3>
+            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+              Chronological tamper-evident records
+            </span>
           </div>
-
-          <div className="divide-y divide-white/5">
+          <div>
             {auditLogs.length === 0 ? (
-              <p className="p-8 text-center text-xs text-slate-500">No security audit events recorded.</p>
+              <p className="p-8 text-center text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                No security audit events recorded.
+              </p>
             ) : (
               auditLogs.map((evt, idx) => (
-                <div key={idx} className="p-3.5 hover:bg-white/[0.02] flex items-start justify-between gap-4 text-xs font-mono">
+                <div
+                  key={idx}
+                  className="p-3.5 flex items-start justify-between gap-4 text-xs font-mono border-b transition-colors hover:bg-slate-50"
+                  style={{ borderColor: 'var(--color-border)' }}
+                >
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
                       <span
                         className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                           evt.severity === 'WARNING'
-                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                            : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                            : 'bg-violet-50 text-violet-700 border border-violet-200'
                         }`}
                       >
                         {evt.event_type}
                       </span>
-                      <span className="text-slate-300 font-semibold">{evt.actor_uid}</span>
+                      <span className="font-semibold" style={{ color: 'var(--color-text)' }}>{evt.actor_uid}</span>
                     </div>
-                    <p className="text-[11px] text-slate-400">{JSON.stringify(evt.details)}</p>
+                    <p className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
+                      {JSON.stringify(evt.details)}
+                    </p>
                   </div>
-                  <span className="text-[10px] text-slate-500 whitespace-nowrap">{evt.timestamp}</span>
+                  <span className="text-[10px] whitespace-nowrap" style={{ color: 'var(--color-text-muted)' }}>
+                    {evt.timestamp}
+                  </span>
                 </div>
               ))
             )}
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

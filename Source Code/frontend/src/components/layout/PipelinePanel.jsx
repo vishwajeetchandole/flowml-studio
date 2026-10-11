@@ -33,7 +33,7 @@ const TYPE_META = {
   encode:             { label: 'Encode Labels',         color: '#a855f7', Icon: Wrench  },
   scale:              { label: 'Scale Features',        color: '#d946ef', Icon: Wrench  },
   splitData:          { label: 'Split Train/Test',      color: '#7c3aed', Icon: GitFork },
-  customPython:       { label: 'Custom Python',         color: '#6366f1', Icon: Code    },
+  customPython:       { label: 'Custom Python',         color: '#7C3AED', Icon: Code    },
 
   // Models
   randomForest:       { label: 'Random Forest',         color: '#f59e0b', Icon: Layers  },
@@ -79,8 +79,8 @@ const Msg = ({ type, text }) => {
   const cfg = {
     success: { bg: 'rgba(34,197,94,0.08)',  border: 'rgba(34,197,94,0.25)',  color: '#22c55e', Icon: CheckCircle2 },
     error:   { bg: 'rgba(239,68,68,0.08)',  border: 'rgba(239,68,68,0.25)',  color: '#ef4444', Icon: AlertCircle  },
-    info:    { bg: 'rgba(99,102,241,0.08)', border: 'rgba(99,102,241,0.25)', color: '#6366f1', Icon: Info         },
-    loading: { bg: 'rgba(99,102,241,0.08)', border: 'rgba(99,102,241,0.25)', color: '#6366f1', Icon: Loader2      },
+    info:    { bg: 'rgba(124,58,237,0.08)', border: 'rgba(124,58,237,0.25)', color: '#7C3AED', Icon: Info         },
+    loading: { bg: 'rgba(124,58,237,0.08)', border: 'rgba(124,58,237,0.25)', color: '#7C3AED', Icon: Loader2      },
   };
   const c = cfg[type] ?? cfg.info;
   return (
@@ -123,9 +123,9 @@ function UploadConfig({ node, onUpdate }) {
 
       <div
         className="border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all"
-        style={{ borderColor: uploading ? '#6366f1' : 'var(--color-border)' }}
+        style={{ borderColor: uploading ? '#7C3AED' : 'var(--color-border)' }}
         onClick={() => fileRef.current?.click()}
-        onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#6366f1')}
+        onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#7C3AED')}
         onMouseLeave={(e) => { if (!uploading) e.currentTarget.style.borderColor = 'var(--color-border)'; }}
       >
         {fileName ? (
@@ -594,8 +594,8 @@ print(f"Dropped {len(cols_to_drop)} columns exceeding {threshold*100}% nulls: {c
           disabled={testing || !d.code?.trim()}
           className="w-full py-2.5 px-3 rounded-xl font-bold text-xs text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50"
           style={{
-            background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-            boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)'
+            background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+            boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)'
           }}
         >
           {testing ? (
@@ -644,7 +644,7 @@ print(f"Dropped {len(cols_to_drop)} columns exceeding {threshold*100}% nulls: {c
 
 /* ─── Main PipelinePanel ─────────────────────────────────────────────────────── */
 export default function PipelinePanel({ node, onClose, onUpdateNodeData }) {
-  const meta = TYPE_META[node.type] ?? { label: node.data.label ?? node.type, color: '#6366f1', Icon: Settings };
+  const meta = TYPE_META[node.type] ?? { label: node.data.label ?? node.type, color: '#7C3AED', Icon: Settings };
   const { Icon, color } = meta;
 
   const renderContent = () => {

@@ -770,8 +770,8 @@ const OutputPanel = ({ node, onUpdateNodeData, uploadedDataset, trainedConfig, o
             exit={{ opacity: 0 }}
             className="flex items-start gap-2 p-3 rounded-xl text-xs leading-relaxed"
             style={{
-              background: step === 'error' ? 'rgba(239,68,68,0.08)' : step === 'done' ? 'rgba(34,197,94,0.08)' : 'rgba(99,102,241,0.08)',
-              border:     `1px solid ${step === 'error' ? 'rgba(239,68,68,0.25)' : step === 'done' ? 'rgba(34,197,94,0.25)' : 'rgba(99,102,241,0.25)'}`,
+              background: step === 'error' ? 'rgba(239,68,68,0.08)' : step === 'done' ? 'rgba(34,197,94,0.08)' : 'rgba(124,58,237,0.08)',
+              border:     `1px solid ${step === 'error' ? 'rgba(239,68,68,0.25)' : step === 'done' ? 'rgba(34,197,94,0.25)' : 'rgba(124,58,237,0.25)'}`,
               color:      step === 'error' ? '#ef4444' : step === 'done' ? '#22c55e' : 'var(--color-text)',
             }}
           >
@@ -1090,7 +1090,7 @@ const RightPanel = ({
             <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: varColor }}>
               {meta.label}
             </div>
-            <h3 className="font-sora font-semibold text-sm leading-tight" style={{ color: 'var(--color-text)' }}>
+            <h3 className="font-display font-semibold text-sm leading-tight" style={{ color: 'var(--color-text)' }}>
               {node.data.label}
             </h3>
           </div>

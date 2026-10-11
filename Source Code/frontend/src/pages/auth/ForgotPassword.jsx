@@ -6,6 +6,7 @@ import {
   Cpu, Mail, ArrowRight, Loader2, AlertCircle,
   CheckCircle2, ArrowLeft, KeyRound,
 } from 'lucide-react';
+import Logo from '../../components/common/Logo';
 
 export default function ForgotPassword() {
   const { resetPassword } = useAuth();
@@ -35,25 +36,23 @@ export default function ForgotPassword() {
 
   return (
     <div
-      className="min-h-screen w-full flex items-center justify-center p-6 relative overflow-hidden"
+      className="min-h-screen w-full flex items-center justify-center p-6 relative overflow-hidden font-sans"
       style={{ background: 'var(--color-bg)' }}
     >
       <div
         className="absolute top-1/4 left-1/3 w-96 h-96 rounded-full blur-3xl opacity-20 pointer-events-none"
-        style={{ background: '#6366f1' }}
+        style={{ background: '#7C3AED' }}
       />
 
       <div className="absolute top-6 inset-x-6 max-w-7xl mx-auto flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5">
           <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+            className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md"
+            style={{ background: 'linear-gradient(135deg, #7C3AED, #4F46E5)' }}
           >
             <Cpu className="w-4 h-4 text-white" />
           </div>
-          <span className="font-sora font-extrabold text-base tracking-tight" style={{ color: 'var(--color-text)' }}>
-            FlowML
-          </span>
+          <Logo size="text-xl" />
         </Link>
       </div>
 
@@ -61,7 +60,7 @@ export default function ForgotPassword() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md rounded-3xl p-8 relative shadow-2xl z-10"
+        className="w-full max-w-md rounded-3xl p-8 relative shadow-xl z-10"
         style={{
           background: 'var(--color-surface)',
           border: '1px solid var(--color-border)',
@@ -69,12 +68,11 @@ export default function ForgotPassword() {
       >
         <div className="text-center mb-8">
           <div
-            className="w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center"
-            style={{ background: 'rgba(99, 102, 241, 0.12)', color: '#818cf8', border: '1px solid rgba(99, 102, 241, 0.25)' }}
+            className="w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center bg-purple-50 text-purple-700 border border-purple-200"
           >
             <KeyRound className="w-6 h-6" />
           </div>
-          <h1 className="font-sora text-2xl font-bold tracking-tight mb-2" style={{ color: 'var(--color-text)' }}>
+          <h1 className="font-display text-2xl font-bold tracking-tight mb-2 text-[#1F1B2E]">
             Reset your password
           </h1>
           <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
@@ -136,7 +134,7 @@ export default function ForgotPassword() {
               disabled={loading}
               className="w-full py-3 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98] disabled:opacity-60"
               style={{
-                background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
+                background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
                 boxShadow: '0 4px 20px rgba(99, 102, 241, 0.4)',
               }}
             >

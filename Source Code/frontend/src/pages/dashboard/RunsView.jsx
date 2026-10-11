@@ -10,7 +10,7 @@ import {
 
 const STATUS_CONFIG = {
   Completed: { label: 'Completed', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.12)', border: 'rgba(34, 197, 94, 0.25)', icon: CheckCircle2 },
-  Running:   { label: 'Running',   color: '#6366f1', bg: 'rgba(99, 102, 241, 0.12)', border: 'rgba(99, 102, 241, 0.25)', icon: Loader2, spin: true },
+  Running:   { label: 'Running',   color: '#7C3AED', bg: 'rgba(124, 58, 237, 0.12)', border: 'rgba(124, 58, 237, 0.25)', icon: Loader2, spin: true },
   Failed:    { label: 'Failed',    color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.25)', icon: AlertCircle },
   Stopping:  { label: 'Stopping',  color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)', border: 'rgba(245, 158, 11, 0.25)', icon: StopCircle },
   Queued:    { label: 'Queued',    color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.12)', border: 'rgba(59, 130, 246, 0.25)', icon: Clock },
@@ -122,7 +122,7 @@ export default function RunsView() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-sora text-2xl font-bold tracking-tight" style={{ color: 'var(--color-text)' }}>
+          <h1 className="font-display text-2xl font-extrabold tracking-[-0.02em] leading-tight" style={{ color: 'var(--color-text)' }}>
             Execution Run History
           </h1>
           <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
@@ -148,8 +148,8 @@ export default function RunsView() {
             onClick={() => navigate('/studio')}
             className="px-4 py-2.5 rounded-xl font-bold text-xs text-white flex items-center gap-2 shadow-lg transition-all active:scale-95"
             style={{
-              background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
-              boxShadow: '0 4px 16px rgba(99, 102, 241, 0.35)',
+              background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+              boxShadow: '0 4px 16px rgba(124, 58, 237, 0.35)',
             }}
           >
             <PlayCircle className="w-4 h-4" />
@@ -174,11 +174,11 @@ export default function RunsView() {
         >
           <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#818cf8' }}
+            style={{ background: 'rgba(124, 58, 237, 0.1)', color: '#7C3AED' }}
           >
             <PlayCircle className="w-7 h-7" />
           </div>
-          <h3 className="font-sora font-bold text-base mb-1" style={{ color: 'var(--color-text)' }}>
+          <h3 className="font-display font-semibold text-base mb-1" style={{ color: 'var(--color-text)' }}>
             No execution runs yet
           </h3>
           <p className="text-xs max-w-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>
@@ -187,7 +187,7 @@ export default function RunsView() {
           <button
             onClick={() => navigate('/studio')}
             className="px-4 py-2 rounded-xl text-xs font-bold text-white flex items-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+            style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
           >
             <Sparkles className="w-3.5 h-3.5" />
             Open Studio
@@ -329,7 +329,7 @@ export default function RunsView() {
                 <div>
                   <div className="flex items-center gap-2">
                     <Terminal className="w-5 h-5 text-primary" />
-                    <h3 className="font-sora font-bold text-base" style={{ color: 'var(--color-text)' }}>
+                    <h3 className="font-display font-semibold text-base" style={{ color: 'var(--color-text)' }}>
                       Run Detail: <span className="font-mono text-primary">{selectedRunId}</span>
                     </h3>
                   </div>
@@ -372,7 +372,7 @@ export default function RunsView() {
                         <button
                           onClick={() => handleRerun(selectedRunId)}
                           className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white flex items-center gap-1.5"
-                          style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+                          style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
                           Rerun in Studio
@@ -425,7 +425,7 @@ export default function RunsView() {
                 <button
                   onClick={() => setSelectedRunId(null)}
                   className="px-5 py-2 rounded-xl text-xs font-bold text-white shadow-md"
-                  style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+                  style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
                 >
                   Close
                 </button>

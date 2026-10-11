@@ -122,7 +122,7 @@ export default function ModelsView() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-sora text-2xl font-bold tracking-tight" style={{ color: 'var(--color-text)' }}>
+          <h1 className="font-display text-2xl font-extrabold tracking-[-0.02em] leading-tight" style={{ color: 'var(--color-text)' }}>
             Model Registry
           </h1>
           <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
@@ -148,8 +148,8 @@ export default function ModelsView() {
             onClick={handleLaunchStudio}
             className="px-4 py-2.5 rounded-xl font-bold text-xs text-white flex items-center gap-2 shadow-lg transition-all active:scale-95"
             style={{
-              background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
-              boxShadow: '0 4px 16px rgba(99, 102, 241, 0.35)',
+              background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+              boxShadow: '0 4px 16px rgba(124, 58, 237, 0.35)',
             }}
           >
             <Sparkles className="w-4 h-4" />
@@ -200,7 +200,7 @@ export default function ModelsView() {
           >
             <Layers className="w-7 h-7" />
           </div>
-          <h3 className="font-sora font-bold text-base mb-1" style={{ color: 'var(--color-text)' }}>
+          <h3 className="font-display font-semibold text-base mb-1" style={{ color: 'var(--color-text)' }}>
             No models found
           </h3>
           <p className="text-xs max-w-sm mb-6" style={{ color: 'var(--color-text-muted)' }}>
@@ -209,7 +209,7 @@ export default function ModelsView() {
           <button
             onClick={handleLaunchStudio}
             className="px-4 py-2 rounded-xl text-xs font-bold text-white flex items-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+            style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
           >
             <Sparkles className="w-3.5 h-3.5" />
             Launch Studio Canvas
@@ -240,14 +240,14 @@ export default function ModelsView() {
                       <div
                         className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0"
                         style={{
-                          background: isReg ? 'rgba(249, 115, 22, 0.15)' : 'rgba(99, 102, 241, 0.15)',
-                          color: isReg ? '#f97316' : '#818cf8',
+                          background: isReg ? 'rgba(249, 115, 22, 0.15)' : 'rgba(124, 58, 237, 0.15)',
+                          color: isReg ? '#f97316' : '#7C3AED',
                         }}
                       >
                         <Zap className="w-4 h-4" />
                       </div>
                       <div>
-                        <h3 className="font-sora font-bold text-sm tracking-tight" style={{ color: 'var(--color-text)' }}>
+                        <h3 className="font-display font-semibold text-sm tracking-tight" style={{ color: 'var(--color-text)' }}>
                           {m.algorithm}
                         </h3>
                         <div className="flex items-center gap-2 mt-0.5">
@@ -256,7 +256,7 @@ export default function ModelsView() {
                           </span>
                           <span
                             className="text-[10px] font-mono font-semibold uppercase"
-                            style={{ color: isReg ? '#f97316' : '#818cf8' }}
+                            style={{ color: isReg ? '#f97316' : '#7C3AED' }}
                           >
                             {m.task_type || 'Classification'}
                           </span>
@@ -297,7 +297,7 @@ export default function ModelsView() {
                       <div className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">
                         {primaryMetric.label}
                       </div>
-                      <div className="font-sora font-bold text-sm text-emerald-400 mt-0.5">
+                      <div className="font-mono font-bold text-sm text-emerald-400 mt-0.5">
                         {primaryMetric.val}
                       </div>
                     </div>
@@ -350,7 +350,7 @@ export default function ModelsView() {
               <div className="w-12 h-12 rounded-2xl mx-auto mb-4 bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6" />
               </div>
-              <h3 className="font-sora font-bold text-base mb-1" style={{ color: 'var(--color-text)' }}>
+              <h3 className="font-display font-semibold text-base mb-1" style={{ color: 'var(--color-text)' }}>
                 Delete Model?
               </h3>
               <p className="text-xs leading-relaxed mb-6" style={{ color: 'var(--color-text-muted)' }}>
@@ -389,7 +389,7 @@ export default function ModelsView() {
                 border: '1px solid var(--color-border)',
               }}
             >
-              <h3 className="font-sora font-bold text-base mb-4" style={{ color: 'var(--color-text)' }}>
+              <h3 className="font-display font-semibold text-base mb-4" style={{ color: 'var(--color-text)' }}>
                 Rename Model Identifier
               </h3>
               <form onSubmit={handleRename} className="space-y-4">
@@ -421,7 +421,7 @@ export default function ModelsView() {
                   <button
                     type="submit"
                     className="px-4 py-2 rounded-xl text-xs font-bold text-white"
-                    style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+                    style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
                   >
                     Save Changes
                   </button>

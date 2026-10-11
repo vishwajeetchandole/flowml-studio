@@ -16,13 +16,13 @@ export default function ProtectedRoute({ children }) {
         <div className="relative flex items-center justify-center mb-4">
           <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-2xl relative"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+            style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
           >
             <Cpu className="w-7 h-7 text-white animate-pulse" />
           </div>
           <div
             className="absolute -inset-2 rounded-3xl blur-xl opacity-40 animate-pulse"
-            style={{ background: '#6366f1' }}
+            style={{ background: '#7C3AED' }}
           />
         </div>
         <div className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>

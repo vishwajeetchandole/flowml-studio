@@ -19,8 +19,8 @@ export default function TemplatesView() {
       id: 'template-classification',
       title: 'Customer Churn Intelligence',
       badge: 'Classification',
-      badgeColor: '#818cf8',
-      badgeBg: 'rgba(99, 102, 241, 0.12)',
+      badgeColor: '#7C3AED',
+      badgeBg: 'rgba(124, 58, 237, 0.12)',
       description: 'Complete binary classification pipeline predicting churn with median imputation, feature scaling, Random Forest ensemble, and SHAP explainability.',
       dataset: 'telecom_churn.csv (7,043 rows)',
       target: 'Churn (Yes / No)',
@@ -34,10 +34,10 @@ export default function TemplatesView() {
         { id: 'node-5', type: 'explainableAi', data: { label: 'Explainable AI', method: 'shap' }, position: { x: 1050, y: 150 } },
       ],
       edges: [
-        { id: 'e1-2', source: 'node-1', target: 'node-2', animated: true, style: { stroke: '#6366F1' } },
-        { id: 'e2-3', source: 'node-2', target: 'node-3', animated: true, style: { stroke: '#6366F1' } },
-        { id: 'e3-4', source: 'node-3', target: 'node-4', animated: true, style: { stroke: '#6366F1' } },
-        { id: 'e4-5', source: 'node-4', target: 'node-5', animated: true, style: { stroke: '#6366F1' } },
+        { id: 'e1-2', source: 'node-1', target: 'node-2', animated: true, style: { stroke: '#7C3AED' } },
+        { id: 'e2-3', source: 'node-2', target: 'node-3', animated: true, style: { stroke: '#7C3AED' } },
+        { id: 'e3-4', source: 'node-3', target: 'node-4', animated: true, style: { stroke: '#7C3AED' } },
+        { id: 'e4-5', source: 'node-4', target: 'node-5', animated: true, style: { stroke: '#7C3AED' } },
       ],
     },
     {
@@ -60,11 +60,11 @@ export default function TemplatesView() {
         { id: 'node-6', type: 'report', data: { label: 'Report' }, position: { x: 1300, y: 150 } },
       ],
       edges: [
-        { id: 'e1-2', source: 'node-1', target: 'node-2', animated: true, style: { stroke: '#6366F1' } },
-        { id: 'e2-3', source: 'node-2', target: 'node-3', animated: true, style: { stroke: '#6366F1' } },
-        { id: 'e3-4', source: 'node-3', target: 'node-4', animated: true, style: { stroke: '#6366F1' } },
-        { id: 'e4-5', source: 'node-4', target: 'node-5', animated: true, style: { stroke: '#6366F1' } },
-        { id: 'e5-6', source: 'node-5', target: 'node-6', animated: true, style: { stroke: '#6366F1' } },
+        { id: 'e1-2', source: 'node-1', target: 'node-2', animated: true, style: { stroke: '#7C3AED' } },
+        { id: 'e2-3', source: 'node-2', target: 'node-3', animated: true, style: { stroke: '#7C3AED' } },
+        { id: 'e3-4', source: 'node-3', target: 'node-4', animated: true, style: { stroke: '#7C3AED' } },
+        { id: 'e4-5', source: 'node-4', target: 'node-5', animated: true, style: { stroke: '#7C3AED' } },
+        { id: 'e5-6', source: 'node-5', target: 'node-6', animated: true, style: { stroke: '#7C3AED' } },
       ],
     },
     {
@@ -86,10 +86,10 @@ export default function TemplatesView() {
         { id: 'node-5', type: 'report', data: { label: 'Report' }, position: { x: 1050, y: 150 } },
       ],
       edges: [
-        { id: 'e1-2', source: 'node-1', target: 'node-2', animated: true, style: { stroke: '#6366F1' } },
-        { id: 'e2-3', source: 'node-2', target: 'node-3', animated: true, style: { stroke: '#6366F1' } },
-        { id: 'e3-4', source: 'node-3', target: 'node-4', animated: true, style: { stroke: '#6366F1' } },
-        { id: 'e4-5', source: 'node-4', target: 'node-5', animated: true, style: { stroke: '#6366F1' } },
+        { id: 'e1-2', source: 'node-1', target: 'node-2', animated: true, style: { stroke: '#7C3AED' } },
+        { id: 'e2-3', source: 'node-2', target: 'node-3', animated: true, style: { stroke: '#7C3AED' } },
+        { id: 'e3-4', source: 'node-3', target: 'node-4', animated: true, style: { stroke: '#7C3AED' } },
+        { id: 'e4-5', source: 'node-4', target: 'node-5', animated: true, style: { stroke: '#7C3AED' } },
       ],
     },
   ];
@@ -118,7 +118,7 @@ export default function TemplatesView() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <div>
-        <h1 className="font-sora text-2xl font-bold tracking-tight" style={{ color: 'var(--color-text)' }}>
+        <h1 className="font-display text-2xl font-extrabold tracking-[-0.02em] leading-tight" style={{ color: 'var(--color-text)' }}>
           Pre-built Workflow Templates
         </h1>
         <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
@@ -155,7 +155,7 @@ export default function TemplatesView() {
                 <Sparkles className="w-4 h-4" style={{ color: tpl.badgeColor }} />
               </div>
 
-              <h3 className="font-sora font-bold text-base mb-2" style={{ color: 'var(--color-text)' }}>
+              <h3 className="font-display font-semibold text-base mb-2" style={{ color: 'var(--color-text)' }}>
                 {tpl.title}
               </h3>
 
@@ -198,8 +198,8 @@ export default function TemplatesView() {
               onClick={() => handleUseTemplate(tpl)}
               className="w-full py-2.5 rounded-xl font-bold text-xs text-white flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98]"
               style={{
-                background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
-                boxShadow: '0 4px 16px rgba(99, 102, 241, 0.35)',
+                background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+                boxShadow: '0 4px 16px rgba(124, 58, 237, 0.35)',
               }}
             >
               Open in Studio Canvas

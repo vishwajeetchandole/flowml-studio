@@ -34,7 +34,7 @@ export default function SettingsView() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
-        <h1 className="font-sora text-2xl font-bold tracking-tight" style={{ color: 'var(--color-text)' }}>
+        <h1 className="font-display text-2xl font-extrabold tracking-[-0.02em] leading-tight" style={{ color: 'var(--color-text)' }}>
           Account & Environment Settings
         </h1>
         <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
@@ -50,7 +50,7 @@ export default function SettingsView() {
           borderColor: 'var(--color-border)',
         }}
       >
-        <h3 className="font-sora font-bold text-base mb-4 flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
+        <h3 className="font-display font-semibold text-base mb-4 flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
           <User className="w-4 h-4 text-primary" />
           Active Profile
         </h3>
@@ -58,13 +58,13 @@ export default function SettingsView() {
         <div className="flex flex-col sm:flex-row sm:items-center gap-5">
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-xl text-white shadow-lg shrink-0"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+            style={{ background: 'linear-gradient(135deg, #7C3AED, #8b5cf6)' }}
           >
             {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
           </div>
 
           <div className="space-y-1 min-w-0 flex-1">
-            <h4 className="font-bold text-base" style={{ color: 'var(--color-text)' }}>
+            <h4 className="font-display font-semibold text-base" style={{ color: 'var(--color-text)' }}>
               {user?.displayName || 'FlowML Engineer'}
             </h4>
             <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
@@ -111,16 +111,16 @@ export default function SettingsView() {
         }}
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-sora font-bold text-base flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
+          <h3 className="font-display font-semibold text-base flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
             <Shield className="w-4 h-4 text-primary" />
             Authentication Infrastructure Status
           </h3>
           <span
             className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold"
             style={{
-              background: isDevMode ? 'rgba(99, 102, 241, 0.12)' : 'rgba(34, 197, 94, 0.12)',
-              color: isDevMode ? '#818cf8' : '#22c55e',
-              border: `1px solid ${isDevMode ? 'rgba(99, 102, 241, 0.25)' : 'rgba(34, 197, 94, 0.25)'}`,
+              background: isDevMode ? 'rgba(124, 58, 237, 0.12)' : 'rgba(34, 197, 94, 0.12)',
+              color: isDevMode ? '#7C3AED' : '#22c55e',
+              border: `1px solid ${isDevMode ? 'rgba(124, 58, 237, 0.25)' : 'rgba(34, 197, 94, 0.25)'}`,
             }}
           >
             {isDevMode ? 'DEV_AUTH Mock Active' : 'Live Firebase Auth'}
@@ -159,7 +159,7 @@ export default function SettingsView() {
           borderColor: 'var(--color-border)',
         }}
       >
-        <h3 className="font-sora font-bold text-base mb-4 flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
+        <h3 className="font-display font-semibold text-base mb-4 flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
           <Settings className="w-4 h-4 text-primary" />
           Workspace Preferences
         </h3>

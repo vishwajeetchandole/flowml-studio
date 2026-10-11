@@ -1,1604 +1,1140 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useScroll, useTransform, AnimatePresence, useInView } from 'framer-motion';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import {
-  ArrowRight, Zap, Shield, Brain, BarChart3, Layers,
-  ChevronRight, Play, Star, Check, Cpu, Sparkles,
-  TrendingUp, Database, GitBranch, Award, Users, Globe,
-  ArrowUpRight, Menu, X, Code2, Sliders, CheckCircle2,
-  FileSpreadsheet, Activity, ChevronDown, RefreshCw, Terminal,
-  ExternalLink, HelpCircle, Lock, Lightbulb, Copy
+  ArrowRight, Sparkles, Check, Star, Play, Database,
+  Sliders, Brain, Award, Shield, Zap, Cloud, Code2,
+  Share2, ArrowUpRight, CheckCircle2, ChevronRight,
+  TrendingUp, Activity, Terminal, Lock, FileSpreadsheet,
+  Globe, BarChart3, Layers, Users, RefreshCw, Cpu
 } from 'lucide-react';
+import Logo from '../components/common/Logo';
 
-/* ─── Animated Counter ───────────────────────────────────────────────────────── */
-function Counter({ to, suffix = '', duration = 2 }) {
-  const [val, setVal] = useState(0);
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true });
-  useEffect(() => {
-    if (!inView) return;
-    let start = 0;
-    const step = to / (duration * 60);
-    const timer = setInterval(() => {
-      start += step;
-      if (start >= to) {
-        setVal(to);
-        clearInterval(timer);
-      } else {
-        setVal(Math.floor(start));
-      }
-    }, 1000 / 60);
-    return () => clearInterval(timer);
-  }, [inView, to, duration]);
-  return <span ref={ref}>{val.toLocaleString()}{suffix}</span>;
-}
-
-/* ─── Glow Blob ──────────────────────────────────────────────────────────────── */
-function Blob({ color, style }) {
-  return (
-    <div
-      className="absolute rounded-full blur-3xl opacity-20 pointer-events-none transition-all duration-1000"
-      style={{ background: color, ...style }}
-    />
-  );
-}
-
-/* ─── Gradient Text ──────────────────────────────────────────────────────────── */
-function GText({ children, from = '#6366f1', to = '#3b82f6', className = '' }) {
-  return (
-    <span
-      className={className}
-      style={{
-        background: `linear-gradient(135deg, ${from}, ${to})`,
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-      }}
-    >
-      {children}
-    </span>
-  );
-}
-
-/* ─── Section Fade-In Wrapper ────────────────────────────────────────────────── */
-function Reveal({ children, delay = 0, y = 24 }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-60px' });
+/* ─── Hero Mount Animation Wrapper ───────────────────────────────────────────── */
+function HeroReveal({ children, delay = 0, y = 16, className = '' }) {
   return (
     <motion.div
-      ref={ref}
       initial={{ opacity: 0, y }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
     >
       {children}
     </motion.div>
   );
 }
 
-/* ─── Pill Badge ─────────────────────────────────────────────────────────────── */
-function Pill({ children, color = '#6366f1' }) {
+/* ─── Scroll Reveal Wrapper ──────────────────────────────────────────────────── */
+function Reveal({ children, delay = 0, y = 20, className = '' }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '150px' });
   return (
-    <span
-      className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase"
-      style={{
-        background: color + '15',
-        border: `1px solid ${color}35`,
-        color,
-      }}
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y }}
+      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y }}
+      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
     >
-      <Sparkles className="w-3.5 h-3.5" />
       {children}
-    </span>
+    </motion.div>
   );
 }
 
-/* ─── NAVBAR ─────────────────────────────────────────────────────────────────── */
+/* ─── TOP NAVIGATION ─────────────────────────────────────────────────────────── */
 function Navbar({ onLaunch }) {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', fn);
-    return () => window.removeEventListener('scroll', fn);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const links = [
-    { label: 'Home', href: '#hero', onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
-    { label: 'Features', href: '/features', isRoute: true },
-    { label: 'Documentation', href: '/docs', isRoute: true },
-    { label: 'Tutorials', href: '/tutorials', isRoute: true },
-    { label: 'About', href: '/about', isRoute: true },
-    { label: 'Contact', href: '/contact', isRoute: true },
+  const navLinks = [
+    { label: 'Features', href: '#features' },
+    { label: 'Solutions', href: '#solutions' },
+    { label: 'Integrations', href: '#integrations' },
+    { label: 'Pricing', href: '#pricing' },
+    { label: 'Docs', route: '/docs' },
   ];
 
+  const handleLinkClick = (link) => {
+    if (link.route) {
+      navigate(link.route);
+    } else if (link.href) {
+      const el = document.querySelector(link.href);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
   return (
-    <motion.nav
-      initial={{ y: -80 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-      className="fixed top-0 inset-x-0 z-50 transition-all duration-300"
-      style={{
-        background: scrolled ? 'rgba(8, 12, 20, 0.88)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(16px)' : 'none',
-        borderBottom: scrolled ? '1px solid rgba(255, 255, 255, 0.07)' : 'none',
-      }}
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? 'bg-white/80 backdrop-blur-md border-b border-slate-200/80 shadow-xs py-3.5'
+          : 'bg-transparent py-5'
+      }`}
     >
-      <div className="max-w-7xl mx-auto px-6 h-18 flex items-center justify-between">
-        {/* Brand */}
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center relative shadow-lg"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
-          >
+      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+        {/* Brand Logo */}
+        <div
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="flex items-center gap-2.5 cursor-pointer group"
+        >
+          <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center text-white shadow-md shadow-violet-600/20 group-hover:scale-105 transition-transform">
             <Cpu className="w-5 h-5 text-white" />
-            <div className="absolute inset-0 rounded-xl" style={{ boxShadow: '0 0 16px rgba(99, 102, 241, 0.6)' }} />
           </div>
-          <div>
-            <span
-              className="font-sora font-extrabold text-lg tracking-tight"
-              style={{
-                background: 'linear-gradient(90deg, #6366f1, #3b82f6)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
+          <span className="font-display font-extrabold text-xl text-slate-900 tracking-tight">
+            Flow<span className="text-violet-600">ML</span>
+          </span>
+        </div>
+
+        {/* Desktop Navigation Links */}
+        <nav className="hidden md:flex items-center gap-8">
+          {navLinks.map((link) => (
+            <button
+              key={link.label}
+              onClick={() => handleLinkClick(link)}
+              className="text-sm font-medium text-slate-600 hover:text-slate-950 transition-colors cursor-pointer"
             >
-              FlowML
-            </span>
-            <span className="text-xs px-2 py-0.5 ml-2 rounded-full font-mono font-semibold" style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
-              v2.4
-            </span>
-          </div>
-        </div>
+              {link.label}
+            </button>
+          ))}
+        </nav>
 
-        {/* Desktop links */}
-        <div className="hidden lg:flex items-center gap-6">
-          {links.map((l) =>
-            l.isRoute ? (
-              <button
-                key={l.label}
-                onClick={() => navigate(l.href)}
-                className="text-sm font-medium transition-all text-slate-300 hover:text-white"
-              >
-                {l.label}
-              </button>
-            ) : (
-              <a
-                key={l.label}
-                href={l.href}
-                onClick={l.onClick}
-                className="text-sm font-medium transition-all text-slate-300 hover:text-white"
-              >
-                {l.label}
-              </a>
-            )
-          )}
-        </div>
-
-        {/* CTA & Auth */}
-        <div className="hidden sm:flex items-center gap-3">
+        {/* Action Buttons */}
+        <div className="hidden md:flex items-center gap-4">
           <button
             onClick={() => navigate('/signin')}
-            className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all"
+            className="text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors px-3 py-2 cursor-pointer"
           >
-            Sign In
+            Log in
           </button>
-          <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            onClick={() => navigate('/signup')}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white transition-shadow"
-            style={{
-              background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
-              boxShadow: '0 4px 16px rgba(99, 102, 241, 0.4)',
-            }}
-          >
-            Get Started <ArrowRight className="w-3.5 h-3.5" />
-          </motion.button>
           <button
             onClick={onLaunch}
-            className="px-3 py-2 rounded-xl text-xs font-semibold text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 transition-all"
+            className="px-5 py-2.5 rounded-full text-xs font-semibold bg-slate-950 hover:bg-slate-800 text-white transition-all shadow-sm hover:shadow cursor-pointer"
           >
-            Studio
+            Get Started
           </button>
         </div>
 
-        {/* Mobile menu toggle */}
+        {/* Mobile Hamburger Toggle */}
         <button
-          className="lg:hidden p-2 rounded-lg"
-          style={{ color: '#f0f4ff', background: 'rgba(255, 255, 255, 0.05)' }}
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden p-2 rounded-lg text-slate-700 hover:bg-slate-100"
+          aria-label="Toggle navigation menu"
         >
-          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          <div className="w-5 h-4 flex flex-col justify-between">
+            <span className={`h-0.5 w-full bg-slate-800 transition-all ${mobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`} />
+            <span className={`h-0.5 w-full bg-slate-800 transition-opacity ${mobileMenuOpen ? 'opacity-0' : ''}`} />
+            <span className={`h-0.5 w-full bg-slate-800 transition-all ${mobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`} />
+          </div>
         </button>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile Menu Dropdown */}
       <AnimatePresence>
-        {open && (
+        {mobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden overflow-hidden"
-            style={{
-              background: 'rgba(8, 12, 20, 0.96)',
-              backdropFilter: 'blur(20px)',
-              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
+            className="md:hidden bg-white border-b border-slate-200 px-6 py-5 shadow-xl"
           >
-            <div className="px-6 py-5 space-y-3">
-              {links.map((l) =>
-                l.isRoute ? (
-                  <button
-                    key={l.label}
-                    onClick={() => {
-                      setOpen(false);
-                      navigate(l.href);
-                    }}
-                    className="block w-full text-left text-base font-medium py-2 text-slate-300 hover:text-white"
-                  >
-                    {l.label}
-                  </button>
-                ) : (
-                  <a
-                    key={l.label}
-                    href={l.href}
-                    className="block text-base font-medium py-2 text-slate-300 hover:text-white"
-                    onClick={(e) => {
-                      setOpen(false);
-                      if (l.onClick) {
-                        e.preventDefault();
-                        l.onClick();
-                      }
-                    }}
-                  >
-                    {l.label}
-                  </a>
-                )
-              )}
-              <div className="pt-2 border-t border-white/10 flex flex-col gap-2">
+            <div className="flex flex-col gap-4">
+              {navLinks.map((link) => (
+                <button
+                  key={link.label}
+                  onClick={() => {
+                    handleLinkClick(link);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-left text-sm font-semibold text-slate-700 py-1"
+                >
+                  {link.label}
+                </button>
+              ))}
+              <div className="pt-4 border-t border-slate-100 flex flex-col gap-2.5">
                 <button
                   onClick={() => {
-                    setOpen(false);
+                    setMobileMenuOpen(false);
                     navigate('/signin');
                   }}
-                  className="w-full py-2.5 rounded-xl text-sm font-semibold text-slate-200 bg-white/5"
+                  className="w-full py-2.5 text-center text-sm font-semibold text-slate-700 bg-slate-100 rounded-xl"
                 >
-                  Sign In
+                  Log in
                 </button>
                 <button
                   onClick={() => {
-                    setOpen(false);
-                    navigate('/signup');
+                    setMobileMenuOpen(false);
+                    onLaunch();
                   }}
-                  className="w-full py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2"
-                  style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+                  className="w-full py-2.5 text-center text-sm font-semibold text-white bg-slate-900 rounded-xl"
                 >
-                  Get Started <ArrowRight className="w-4 h-4" />
+                  Get Started
                 </button>
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.nav>
+    </header>
   );
 }
 
-/* ─── INTERACTIVE HERO PIPELINE MOCKUP ────────────────────────────────────────── */
-function InteractiveHeroPipeline({ onLaunch }) {
-  const [isRunning, setIsRunning] = useState(false);
-  const [activeStep, setActiveStep] = useState(3); // 0=upload, 1=preprocess, 2=automl, 3=model, 4=output
+/* ─── HERO PIPELINE DEMO COMPONENT ───────────────────────────────────────────── */
+function HeroPreviewDemo({ onLaunch }) {
+  const [activeTab, setActiveTab] = useState('pipeline');
   const [selectedNode, setSelectedNode] = useState('model');
 
   const nodes = [
-    {
-      id: 'upload',
-      title: 'Dataset Ingestion',
-      subtitle: 'heart_disease.csv · 1,025 rows',
-      color: '#3b82f6',
-      icon: Database,
-      meta: { rows: 1025, cols: 14, task: 'Classification', target: 'condition' },
-    },
-    {
-      id: 'preprocess',
-      title: 'Smart Preprocessing',
-      subtitle: 'StandardScaler · Mode Impute',
-      color: '#8b5cf6',
-      icon: Sliders,
-      meta: { imputed: '12 nulls', scaled: '13 numerical', encoded: '1 categorical' },
-    },
-    {
-      id: 'automl',
-      title: 'Auto-ML Engine',
-      subtitle: '6 Algorithms · 5-Fold CV',
-      color: '#ec4899',
-      icon: Brain,
-      meta: { algos: 6, folds: 5, metric: 'Accuracy & ROC', time: '1.4s' },
-    },
-    {
-      id: 'model',
-      title: 'Random Forest',
-      subtitle: '96.4% Accuracy · Winner 🏆',
-      color: '#22c55e',
-      icon: Award,
-      meta: { n_estimators: 100, max_depth: 8, accuracy: '96.4%', f1: '0.962' },
-    },
-    {
-      id: 'output',
-      title: 'Predictions & SHAP',
-      subtitle: 'Live inference · Full report',
-      color: '#f59e0b',
-      icon: BarChart3,
-      meta: { predictions: '1,025 generated', topFeature: 'thalach (+0.38)', confidence: '98.1%' },
-    },
+    { id: 'data', name: 'Dataset Ingestion', desc: 'churn_data.csv • 7,043 rows', status: 'ready', badge: 'CSV' },
+    { id: 'prep', name: 'Smart Preprocessing', desc: 'StandardScaler • One-Hot', status: 'ready', badge: '0 Nulls' },
+    { id: 'automl', name: 'Auto-ML Engine', desc: '6 Models • 5-Fold CV', status: 'ready', badge: 'Auto' },
+    { id: 'model', name: 'Best Model: XGBoost', desc: '98.4% Accuracy • F1: 0.96', status: 'winner', badge: 'Winner' },
   ];
 
-  const handleSimulate = () => {
-    if (isRunning) return;
-    setIsRunning(true);
-    setActiveStep(0);
-    setSelectedNode('upload');
-
-    const times = [0, 800, 1600, 2400, 3200];
-    nodes.forEach((n, idx) => {
-      setTimeout(() => {
-        setActiveStep(idx);
-        setSelectedNode(n.id);
-        if (idx === nodes.length - 1) {
-          setTimeout(() => setIsRunning(false), 800);
-        }
-      }, times[idx]);
-    });
-  };
-
-  const curr = nodes.find((n) => n.id === selectedNode) || nodes[3];
-
   return (
-    <div
-      id="demo"
-      className="relative w-full max-w-5xl mx-auto mt-14 rounded-3xl p-6 md:p-8 overflow-hidden shadow-2xl"
-      style={{
-        background: 'linear-gradient(180deg, rgba(14, 20, 32, 0.95) 0%, rgba(8, 12, 20, 0.98) 100%)',
-        border: '1px solid rgba(99, 102, 241, 0.25)',
-        boxShadow: '0 25px 80px -20px rgba(99, 102, 241, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)',
-      }}
-    >
-      {/* Top simulated window bar */}
-      <div className="flex flex-wrap items-center justify-between pb-6 mb-6 border-b border-white/5 gap-4">
-        <div className="flex items-center gap-3">
+    <div className="w-full max-w-6xl mx-auto mt-12 grid lg:grid-cols-12 gap-5 items-start">
+      {/* Main Studio Canvas Mockup (Left 8 Cols) */}
+      <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden text-left">
+        {/* Browser / App Header */}
+        <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block" />
-            <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block" />
-            <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block" />
+            <div className="w-3 h-3 rounded-full bg-rose-400" />
+            <div className="w-3 h-3 rounded-full bg-amber-400" />
+            <div className="w-3 h-3 rounded-full bg-emerald-400" />
+            <span className="ml-3 text-xs font-mono text-slate-500 font-medium">pipeline://churn_prediction_v2</span>
           </div>
-          <span className="text-xs font-mono font-medium text-slate-400 pl-2">
-            workspace / pipeline_production_v2.flow
-          </span>
+
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live Canvas
+            </span>
+            <div className="flex -space-x-1.5">
+              <span className="w-6 h-6 rounded-full bg-indigo-500 text-[10px] text-white font-bold flex items-center justify-center border-2 border-white">ER</span>
+              <span className="w-6 h-6 rounded-full bg-violet-500 text-[10px] text-white font-bold flex items-center justify-center border-2 border-white">MV</span>
+              <span className="w-6 h-6 rounded-full bg-amber-500 text-[10px] text-white font-bold flex items-center justify-center border-2 border-white">PK</span>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleSimulate}
-            disabled={isRunning}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-            style={{
-              background: isRunning ? 'rgba(99, 102, 241, 0.3)' : 'linear-gradient(135deg, #6366f1, #3b82f6)',
-              color: 'white',
-              boxShadow: isRunning ? 'none' : '0 2px 12px rgba(99, 102, 241, 0.4)',
-            }}
-          >
-            {isRunning ? (
-              <>
-                <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Simulating Flow...
-              </>
-            ) : (
-              <>
-                <Play className="w-3.5 h-3.5 fill-current" /> Test Run Pipeline
-              </>
-            )}
-          </button>
+        {/* Canvas Toolbar & Body */}
+        <div className="p-6 bg-slate-50/60 min-h-[380px] flex flex-col justify-between">
+          {/* Top pipeline overview banner */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200/80">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Pipeline Execution</p>
+              <h3 className="font-display font-bold text-base text-slate-900">Customer Retention Prediction</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onLaunch}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white shadow-xs cursor-pointer transition-colors"
+              >
+                <Play className="w-3 h-3 fill-current" /> Run Pipeline
+              </button>
+            </div>
+          </div>
 
+          {/* Interactive Flow Nodes */}
+          <div className="my-6 grid sm:grid-cols-4 gap-3 relative">
+            {nodes.map((node, i) => {
+              const isSelected = selectedNode === node.id;
+              return (
+                <div
+                  key={node.id}
+                  onClick={() => setSelectedNode(node.id)}
+                  className={`p-3.5 rounded-xl border transition-all cursor-pointer relative bg-white ${
+                    isSelected
+                      ? 'border-violet-600 ring-2 ring-violet-600/20 shadow-md -translate-y-0.5'
+                      : 'border-slate-200/90 hover:border-slate-300 shadow-xs'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-mono font-bold text-slate-400">0{i + 1}</span>
+                    <span
+                      className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                        node.status === 'winner'
+                          ? 'bg-violet-100 text-violet-700 font-bold'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {node.badge}
+                    </span>
+                  </div>
+                  <h4 className="font-display font-bold text-xs text-slate-900 mb-1">{node.name}</h4>
+                  <p className="text-[11px] text-slate-500 leading-tight">{node.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Bottom active node parameters */}
+          <div className="p-4 rounded-xl bg-white border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-violet-100 text-violet-700 flex items-center justify-center font-bold text-xs">
+                {selectedNode.toUpperCase()}
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-900">
+                  {selectedNode === 'model' ? 'XGBoost Classifier (Evaluated)' : `${selectedNode.toUpperCase()} Node Configuration`}
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  {selectedNode === 'model'
+                    ? 'Cross-entropy loss: 0.142 • AUC: 0.988 • Inference: 1.2ms'
+                    : 'Auto-configured hyper-parameters ready for compilation'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 text-xs">
+              <span className="font-mono text-emerald-600 font-bold">✓ 100% Validated</span>
+              <button
+                onClick={onLaunch}
+                className="text-violet-600 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                Inspect Details <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating Tools / Inspector Card (Right 4 Cols) */}
+      <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden flex flex-col justify-between text-left">
+        <div className="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+          <span className="font-display font-bold text-xs text-slate-800 uppercase tracking-wider">Model Inspector</span>
+          <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 font-semibold">Active</span>
+        </div>
+
+        <div className="p-6">
+          {/* Abstract 3D Graphic Preview */}
+          <div className="w-full h-40 rounded-xl bg-gradient-to-tr from-violet-600 via-indigo-500 to-pink-400 p-4 text-white flex flex-col justify-between shadow-inner relative overflow-hidden">
+            <div className="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-white/20 blur-xl pointer-events-none" />
+            <div className="flex justify-between items-start z-10">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-xs">ROC-AUC: 0.984</span>
+              <Activity className="w-4 h-4 text-white/90" />
+            </div>
+            <div className="z-10">
+              <p className="text-[11px] uppercase tracking-wider text-white/80 font-mono">Performance Metric</p>
+              <h4 className="font-display font-extrabold text-2xl tracking-tight">98.4% Accuracy</h4>
+            </div>
+          </div>
+
+          {/* Quick Metrics Breakdown */}
+          <div className="mt-5 space-y-3">
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-slate-600 font-medium">Validation F1 Score</span>
+                <span className="font-mono font-bold text-slate-900">0.962</span>
+              </div>
+              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-violet-600 rounded-full" style={{ width: '96%' }} />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-slate-600 font-medium">Precision Rate</span>
+                <span className="font-mono font-bold text-slate-900">0.978</span>
+              </div>
+              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-indigo-500 rounded-full" style={{ width: '98%' }} />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-slate-600 font-medium">Inference Latency</span>
+                <span className="font-mono font-bold text-slate-900">1.2 ms</span>
+              </div>
+              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-emerald-500 rounded-full" style={{ width: '90%' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Quick Action */}
+        <div className="p-4 bg-slate-50 border-t border-slate-100">
           <button
             onClick={onLaunch}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 transition-all"
+            className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
-            Open in Studio <ArrowUpRight className="w-3.5 h-3.5" />
+            Launch in Studio <ArrowRight className="w-3.5 h-3.5" />
           </button>
-        </div>
-      </div>
-
-      {/* Pipeline node graph representation */}
-      <div className="relative py-4">
-        {/* Animated background track wire */}
-        <div className="hidden md:block absolute top-1/2 left-8 right-8 h-1 -translate-y-1/2 bg-slate-800/80 rounded-full overflow-hidden z-0">
-          <motion.div
-            className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400"
-            animate={{
-              x: isRunning ? ['-100%', '100%'] : '0%',
-              width: isRunning ? '40%' : '100%',
-            }}
-            transition={{
-              repeat: isRunning ? Infinity : 0,
-              duration: 1.2,
-              ease: 'linear',
-            }}
-          />
-        </div>
-
-        {/* Nodes Grid */}
-        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          {nodes.map((n, idx) => {
-            const Icon = n.icon;
-            const isPassed = activeStep >= idx;
-            const isCurrent = activeStep === idx;
-            const isSelected = selectedNode === n.id;
-
-            return (
-              <motion.div
-                key={n.id}
-                whileHover={{ y: -3, scale: 1.02 }}
-                onClick={() => setSelectedNode(n.id)}
-                className="cursor-pointer p-4 rounded-2xl transition-all relative overflow-hidden flex flex-col justify-between"
-                style={{
-                  background: isSelected
-                    ? `linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))`
-                    : 'rgba(255, 255, 255, 0.03)',
-                  border: isSelected
-                    ? `2px solid ${n.color}`
-                    : isPassed
-                    ? `1px solid ${n.color}50`
-                    : '1px solid rgba(255, 255, 255, 0.08)',
-                  boxShadow: isSelected ? `0 0 20px ${n.color}30` : 'none',
-                }}
-              >
-                {/* Node header */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center"
-                      style={{ background: n.color + '22', color: n.color }}
-                    >
-                      <Icon className="w-4.5 h-4.5" />
-                    </div>
-                    {isCurrent && isRunning ? (
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
-                    ) : isPassed ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    ) : (
-                      <span className="text-[10px] font-mono text-slate-500">#{idx + 1}</span>
-                    )}
-                  </div>
-
-                  <h4 className="font-sora font-semibold text-sm text-slate-100">{n.title}</h4>
-                  <p className="text-xs text-slate-400 mt-1 leading-snug">{n.subtitle}</p>
-                </div>
-
-                <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-500">
-                  <span>{isSelected ? '● Inspected' : 'Click to inspect'}</span>
-                  <span style={{ color: n.color }}>{n.id.toUpperCase()}</span>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Node live inspector drawer */}
-      <div
-        className="mt-6 p-4 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4"
-        style={{
-          background: 'rgba(0, 0, 0, 0.4)',
-          border: '1px solid rgba(255, 255, 255, 0.06)',
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold"
-            style={{ background: curr.color + '25', color: curr.color }}
-          >
-            INFO
-          </div>
-          <div>
-            <div className="text-xs font-bold text-slate-200">
-              Selected Node Inspector: <span style={{ color: curr.color }}>{curr.title}</span>
-            </div>
-            <div className="text-xs text-slate-400 mt-0.5">
-              {Object.entries(curr.meta)
-                .map(([k, v]) => `${k}: ${v}`)
-                .join('  |  ')}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-slate-400">Status:</span>
-          <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            Validated & Optimal
-          </span>
         </div>
       </div>
     </div>
   );
 }
 
-/* ─── HERO ───────────────────────────────────────────────────────────────────── */
-const WORDS = ['Simpler', 'Faster', 'Intelligent', 'Production-Ready'];
-
-function Hero({ onLaunch }) {
-  const { scrollY } = useScroll();
-  const y = useTransform(scrollY, [0, 500], [0, 80]);
-  const opacity = useTransform(scrollY, [0, 400], [1, 0.2]);
-
-  const [wordIdx, setWordIdx] = useState(0);
-
-  useEffect(() => {
-    const t = setInterval(() => setWordIdx((i) => (i + 1) % WORDS.length), 2600);
-    return () => clearInterval(t);
-  }, []);
-
-  return (
-    <section className="relative min-h-screen pt-28 pb-20 flex flex-col items-center justify-center overflow-hidden" style={{ background: '#080c14' }}>
-      {/* Background ambient glows */}
-      <Blob color="#6366f1" style={{ width: 700, height: 700, top: -150, left: '50%', transform: 'translateX(-50%)' }} />
-      <Blob color="#3b82f6" style={{ width: 450, height: 450, bottom: '15%', right: '-5%' }} />
-      <Blob color="#8b5cf6" style={{ width: 350, height: 350, top: '25%', left: '-5%' }} />
-
-      {/* Grid overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.035] pointer-events-none"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(99,102,241,1) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,1) 1px, transparent 1px)',
-          backgroundSize: '64px 64px',
-        }}
-      />
-
-      <motion.div style={{ y, opacity }} className="relative z-10 text-center px-6 max-w-5xl mx-auto w-full">
-        {/* Release badge */}
-        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="mb-6">
-          <Pill color="#6366f1">FlowML Studio 2.4 · Visual Auto-ML & Explainable AI</Pill>
-        </motion.div>
-
-        {/* Headline */}
-        <motion.h1
-          initial={{ opacity: 0, y: 25 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.1 }}
-          className="font-sora font-extrabold leading-[1.08] mb-6"
-          style={{ fontSize: 'clamp(2.75rem, 6.5vw, 5.5rem)', color: '#f0f4ff', letterSpacing: '-0.03em' }}
-        >
-          Machine Learning Made
-          <br />
-          <span className="inline-block relative">
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={wordIdx}
-                initial={{ opacity: 0, y: 25, filter: 'blur(10px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                exit={{ opacity: 0, y: -25, filter: 'blur(10px)' }}
-                transition={{ duration: 0.45, ease: 'easeOut' }}
-                style={{
-                  display: 'inline-block',
-                  background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                {WORDS[wordIdx]}
-              </motion.span>
-            </AnimatePresence>
-          </span>
-        </motion.h1>
-
-        {/* Subtitle */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
-          className="text-lg md:text-xl max-w-3xl mx-auto mb-10 leading-relaxed text-slate-400"
-        >
-          Design, train, compare 6 ML algorithms, and deploy production-ready pipelines with a stunning visual canvas.
-          From raw CSVs to interactive SHAP explanations in seconds — zero Python required.
-        </motion.p>
-
-        {/* Primary CTAs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.3 }}
-          className="flex flex-wrap items-center justify-center gap-4"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={onLaunch}
-            className="group flex items-center gap-3 px-8 py-4 rounded-2xl text-base font-bold text-white shadow-2xl transition-all"
-            style={{
-              background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
-              boxShadow: '0 8px 36px rgba(99, 102, 241, 0.5)',
-            }}
-          >
-            <Play className="w-5 h-5 fill-current" />
-            Launch Studio Free
-            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1.5" />
-          </motion.button>
-
-          <a
-            href="#demo"
-            className="flex items-center gap-2 px-7 py-4 rounded-2xl text-base font-semibold text-slate-200 transition-all hover:bg-white/10"
-            style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-            }}
-          >
-            <Activity className="w-4.5 h-4.5 text-indigo-400" />
-            Interactive Preview
-          </a>
-        </motion.div>
-
-        {/* Trust metrics */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mt-10 flex flex-wrap items-center justify-center gap-6 text-xs md:text-sm text-slate-400"
-        >
+/* ─── 3-COLUMN FEATURE CARDS (Pastel Gradient Trio) ──────────────────────────── */
+function FeatureCardsTrio() {
+  const cards = [
+    {
+      title: 'Visual Pipeline Canvas',
+      desc: 'Drag, drop, and link data ingestion, preprocessing transforms, and ML models on an infinite fluid canvas.',
+      gradient: 'from-[#F4F0FF] to-white',
+      border: 'border-violet-100',
+      badge: 'Interactive Flow',
+      badgeColor: 'text-violet-700 bg-violet-100/70',
+      illustration: (
+        <div className="w-full h-36 rounded-2xl bg-gradient-to-r from-violet-200/50 via-purple-100/60 to-pink-100/50 p-4 flex flex-col justify-between relative overflow-hidden border border-violet-100/60">
           <div className="flex items-center gap-1.5">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-            ))}
-            <span className="font-semibold text-slate-300 ml-1">4.9 / 5</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-violet-400" />
+            <span className="w-2.5 h-2.5 rounded-full bg-purple-300" />
+            <span className="w-2.5 h-2.5 rounded-full bg-pink-300" />
+            <span className="ml-2 text-[10px] font-mono text-slate-600 font-semibold">Graph Execution</span>
           </div>
-          <span>•</span>
-          <span>10,000+ pipelines evaluated</span>
-          <span>•</span>
-          <span>Runs locally on your machine</span>
-        </motion.div>
-
-        {/* Interactive canvas component */}
-        <InteractiveHeroPipeline onLaunch={onLaunch} />
-      </motion.div>
-    </section>
-  );
-}
-
-/* ─── STATS ──────────────────────────────────────────────────────────────────── */
-function Stats() {
-  const items = [
-    { value: 10000, suffix: '+', label: 'Models Trained', sub: 'Across 40+ industries', color: '#6366f1' },
-    { value: 98, suffix: '%', label: 'Peak Accuracy', sub: 'With ensemble tuning', color: '#22c55e' },
-    { value: 12, suffix: 'x', label: 'Faster Delivery', sub: 'From dataset to deployment', color: '#f59e0b' },
-    { value: 100, suffix: '%', label: 'Data Privacy', sub: 'Zero cloud telemetry', color: '#3b82f6' },
-  ];
-
-  return (
-    <section className="py-20 relative" style={{ background: '#080c14', borderTop: '1px solid rgba(255, 255, 255, 0.04)' }}>
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {items.map((it, i) => (
-            <Reveal key={it.label} delay={i * 0.1}>
-              <div
-                className="text-center p-6 rounded-2xl h-full flex flex-col justify-center"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.02)',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
-                }}
-              >
-                <div className="text-3xl md:text-4xl font-extrabold font-sora mb-2 tracking-tight" style={{ color: it.color }}>
-                  <Counter to={it.value} suffix={it.suffix} />
-                </div>
-                <p className="text-sm font-bold text-slate-200">{it.label}</p>
-                <p className="text-xs text-slate-500 mt-1">{it.sub}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─── BENTO GRID FEATURES ────────────────────────────────────────────────────── */
-function Features() {
-  const items = [
-    {
-      icon: GitBranch,
-      color: '#6366f1',
-      title: 'Visual Reactive Pipeline Studio',
-      desc: 'Drag, drop, and link nodes to configure complete machine learning workflows. Nodes react dynamically to schema changes with real-time feedback and validation.',
-      span: 'md:col-span-2',
-      tag: 'Core Engine',
-    },
-    {
-      icon: Brain,
-      color: '#ec4899',
-      title: 'Auto-ML Concurrent Training',
-      desc: 'Concurrently trains 6 scikit-learn models (Random Forest, SVM, Decision Tree, Logistic Regression, Linear Regression, KNN) and automatically crowns the champion.',
-      span: '',
-      tag: 'Auto-ML',
-    },
-    {
-      icon: BarChart3,
-      color: '#22c55e',
-      title: 'Explainable AI & SHAP Insights',
-      desc: 'Crack open the black box. Get comprehensive feature importance rankings, confusion matrices, and distribution graphs for transparent decisions.',
-      span: '',
-      tag: 'Explainability',
-    },
-    {
-      icon: Database,
-      color: '#f59e0b',
-      title: 'Intelligent Data Preprocessing',
-      desc: 'Automatic null value imputation, categorical one-hot encoding, and feature scaling (Standard / MinMax) designed to prevent data leakage.',
-      span: '',
-      tag: 'Data Prep',
-    },
-    {
-      icon: Shield,
-      color: '#3b82f6',
-      title: 'Zero Data Leakage Guarantee',
-      desc: 'Processing runs locally on your machine via Flask backend. No sensitive CSVs, patient records, or internal financial figures are sent to third parties.',
-      span: '',
-      tag: 'Security',
-    },
-    {
-      icon: Code2,
-      color: '#8b5cf6',
-      title: '1-Click Exports & Full Screen Reports',
-      desc: 'Download model predictions as CSV, export complete pipeline configurations, or view results on an immersive full-screen analytics dashboard.',
-      span: 'md:col-span-2',
-      tag: 'Production Output',
-    },
-  ];
-
-  return (
-    <section id="features" className="py-28 relative" style={{ background: '#080c14' }}>
-      <Blob color="#6366f1" style={{ width: 550, height: 550, top: '25%', right: '-15%' }} />
-      <div className="max-w-7xl mx-auto px-6">
-        <Reveal>
-          <div className="text-center mb-16">
-            <Pill color="#6366f1">Feature Architecture</Pill>
-            <h2
-              className="font-sora font-extrabold mt-5 mb-4 text-slate-100"
-              style={{ fontSize: 'clamp(2rem, 4vw, 3.25rem)', letterSpacing: '-0.02em' }}
-            >
-              Enterprise ML Capabilities,<br />
-              <GText from="#6366f1" to="#3b82f6">Zero Boilerplate Required</GText>
-            </h2>
-            <p className="text-base md:text-lg max-w-2xl mx-auto text-slate-400">
-              FlowML replaces thousands of lines of fragile glue code with an intuitive, deterministic visual canvas.
-            </p>
-          </div>
-        </Reveal>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          {items.map((it, i) => {
-            const Icon = it.icon;
-            return (
-              <Reveal key={it.title} delay={i * 0.08}>
-                <motion.div
-                  whileHover={{ y: -4, scale: 1.01 }}
-                  transition={{ duration: 0.2 }}
-                  className={`group relative p-8 rounded-3xl overflow-hidden h-full flex flex-col justify-between ${it.span}`}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.025)',
-                    border: '1px solid rgba(255, 255, 255, 0.07)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = it.color + '50';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.045)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.07)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.025)';
-                  }}
-                >
-                  <div
-                    className="absolute -right-8 -bottom-8 w-36 h-36 rounded-full blur-2xl opacity-0 group-hover:opacity-25 transition-opacity duration-500"
-                    style={{ background: it.color }}
-                  />
-
-                  <div>
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: it.color + '20' }}>
-                        <Icon className="w-6 h-6" style={{ color: it.color }} />
-                      </div>
-                      <span className="text-[11px] font-mono px-3 py-1 rounded-full font-bold uppercase" style={{ background: it.color + '15', color: it.color }}>
-                        {it.tag}
-                      </span>
-                    </div>
-
-                    <h3 className="font-sora font-bold text-xl mb-3 text-slate-100">{it.title}</h3>
-                    <p className="text-sm md:text-base leading-relaxed text-slate-400">{it.desc}</p>
-                  </div>
-
-                  <div className="mt-6 pt-4 border-t border-white/5 flex items-center gap-2 text-xs font-semibold" style={{ color: it.color }}>
-                    Learn more in docs <ChevronRight className="w-3.5 h-3.5" />
-                  </div>
-                </motion.div>
-              </Reveal>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─── INTERACTIVE BLUEPRINTS ─────────────────────────────────────────────────── */
-function Blueprints({ onLaunch }) {
-  const [selectedIdx, setSelectedIdx] = useState(0);
-
-  const blueprints = [
-    {
-      id: 'healthcare',
-      domain: 'Healthcare',
-      title: 'Patient Heart Disease Classification',
-      dataset: 'Cleveland Heart Study (1,025 records)',
-      target: 'Cardiovascular Risk (Binary 0 / 1)',
-      nodes: ['Dataset Loader', 'Missing Imputer', 'StandardScaler', 'Random Forest + SVM', 'SHAP Impact Analysis'],
-      bestModel: 'Random Forest Classifier',
-      accuracy: '96.4%',
-      f1Score: '0.96',
-      color: '#ef4444',
-      icon: Activity,
-      insight: 'Top risk indicator: Maximum heart rate achieved (thalach) with correlation coefficient +0.42.',
-    },
-    {
-      id: 'finance',
-      domain: 'Fintech',
-      title: 'Credit Card Fraud Anomaly Detection',
-      dataset: 'European Card Transactions (284K instances)',
-      target: 'Fraudulent Activity (Class 0 / 1)',
-      nodes: ['CSV Ingestion', 'Class Balancer', 'MinMax Scaler', 'Gradient Tree + Decision Tree', 'Precision/Recall ROC'],
-      bestModel: 'Decision Tree Ensemble',
-      accuracy: '99.2%',
-      f1Score: '0.98',
-      color: '#3b82f6',
-      icon: Shield,
-      insight: 'Detected fraudulent spikes within 1.2ms inference latency with 0.01% false positive rate.',
-    },
-    {
-      id: 'realestate',
-      domain: 'Real Estate',
-      title: 'Property Valuation & Price Estimator',
-      dataset: 'California Housing Census (20,640 blocks)',
-      target: 'Median House Value ($USD Continuous)',
-      nodes: ['Data Upload', 'Outlier Truncation', 'Standard Scaler', 'Linear Regression + Random Forest', 'R² & Residual Plots'],
-      bestModel: 'Random Forest Regressor',
-      accuracy: '0.92 R²',
-      f1Score: '0.89 RMSE',
-      color: '#22c55e',
-      icon: Database,
-      insight: 'Median income of cluster block accounted for 54% of overall price variance.',
-    },
-    {
-      id: 'churn',
-      domain: 'SaaS & Telecom',
-      title: 'Customer Churn Early Warning System',
-      dataset: 'Telco Churn Dataset (7,043 customers)',
-      target: 'Churn Status (Yes / No)',
-      nodes: ['CSV Loader', 'One-Hot Encoder', 'Standard Scaler', 'Logistic Regression + KNN', 'Retention Probability'],
-      bestModel: 'Logistic Regression',
-      accuracy: '91.8%',
-      f1Score: '0.91',
-      color: '#f59e0b',
-      icon: Users,
-      insight: 'Contract tenure under 6 months combined with fiber optic internet predicted 78% churn rate.',
-    },
-  ];
-
-  const bp = blueprints[selectedIdx];
-
-  return (
-    <section id="blueprints" className="py-28 relative" style={{ background: '#0a0f1c' }}>
-      <div className="max-w-7xl mx-auto px-6">
-        <Reveal>
-          <div className="text-center mb-16">
-            <Pill color="#ec4899">Pre-built Blueprints</Pill>
-            <h2
-              className="font-sora font-extrabold mt-5 mb-4 text-slate-100"
-              style={{ fontSize: 'clamp(2rem, 4vw, 3.25rem)', letterSpacing: '-0.02em' }}
-            >
-              Explore Proven Blueprints<br />
-              <GText from="#ec4899" to="#8b5cf6">Ready to Run in 1 Click</GText>
-            </h2>
-            <p className="text-base md:text-lg max-w-2xl mx-auto text-slate-400">
-              Select an industry template to inspect its architectural graph, hyperparameters, and live accuracy benchmarks.
-            </p>
-          </div>
-        </Reveal>
-
-        {/* Blueprint tabs */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
-          {blueprints.map((item, idx) => {
-            const Icon = item.icon;
-            const active = selectedIdx === idx;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setSelectedIdx(idx)}
-                className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold transition-all"
-                style={{
-                  background: active ? item.color + '20' : 'rgba(255, 255, 255, 0.03)',
-                  border: active ? `1.5px solid ${item.color}` : '1px solid rgba(255, 255, 255, 0.08)',
-                  color: active ? '#ffffff' : 'rgba(240, 244, 255, 0.6)',
-                }}
-              >
-                <Icon className="w-4 h-4" style={{ color: item.color }} />
-                <span>{item.domain}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Blueprint card display */}
-        <div
-          className="p-8 md:p-10 rounded-3xl"
-          style={{
-            background: 'rgba(255, 255, 255, 0.025)',
-            border: `1px solid ${bp.color}35`,
-            boxShadow: `0 20px 60px ${bp.color}15`,
-          }}
-        >
-          <div className="grid md:grid-cols-3 gap-8 items-center">
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-mono font-bold uppercase px-3 py-1 rounded-full" style={{ background: bp.color + '20', color: bp.color }}>
-                  {bp.domain} Template
-                </span>
-                <span className="text-xs text-slate-400">• Scikit-Learn Engine</span>
-              </div>
-              <h3 className="font-sora font-extrabold text-2xl md:text-3xl text-slate-100 mb-3">{bp.title}</h3>
-              <p className="text-sm text-slate-400 mb-6">
-                <strong className="text-slate-200">Dataset:</strong> {bp.dataset} | <strong className="text-slate-200">Target:</strong> {bp.target}
-              </p>
-
-              {/* Node sequence pill track */}
-              <div className="mb-6">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Pipeline Node Sequence:</p>
-                <div className="flex flex-wrap items-center gap-2">
-                  {bp.nodes.map((node, i) => (
-                    <React.Fragment key={node}>
-                      <span
-                        className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-200"
-                        style={{ background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.1)' }}
-                      >
-                        {node}
-                      </span>
-                      {i < bp.nodes.length - 1 && <ArrowRight className="w-3.5 h-3.5 text-slate-500" />}
-                    </React.Fragment>
-                  ))}
-                </div>
-              </div>
-
-              <div className="p-4 rounded-xl bg-slate-900/60 border border-white/5 flex items-start gap-3">
-                <Lightbulb className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-                <p className="text-xs md:text-sm text-slate-300 leading-relaxed">
-                  <strong className="text-amber-300">Auto-ML Finding:</strong> {bp.insight}
-                </p>
-              </div>
+          <div className="flex items-center justify-center gap-3 py-2">
+            <div className="p-2 rounded-xl bg-white shadow-xs border border-violet-100 text-xs font-bold text-slate-800">
+              CSV Ingest
             </div>
+            <ArrowRight className="w-4 h-4 text-violet-500" />
+            <div className="p-2 rounded-xl bg-violet-600 text-white shadow-md text-xs font-bold">
+              StandardScaler
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Automated Model Selection',
+      desc: 'Auto-evaluate 10+ algorithms with Bayesian hyperparameter tuning, cross-validation, and ROC benchmark curves.',
+      gradient: 'from-[#FFF7ED] to-white',
+      border: 'border-amber-100',
+      badge: 'AutoML Engine',
+      badgeColor: 'text-amber-700 bg-amber-100/70',
+      illustration: (
+        <div className="w-full h-36 rounded-2xl bg-gradient-to-r from-amber-100/60 via-orange-100/50 to-amber-200/40 p-4 flex flex-col justify-between relative overflow-hidden border border-amber-100/60">
+          <div className="flex justify-between items-center text-[10px] font-mono font-semibold text-amber-900">
+            <span>5-Fold Cross Validation</span>
+            <span>AUC 0.984</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="bg-white/90 p-1.5 rounded-lg border border-amber-200 shadow-xs">
+              <p className="text-[9px] text-slate-500 font-medium">Random Forest</p>
+              <p className="text-xs font-bold text-slate-800">94.2%</p>
+            </div>
+            <div className="bg-amber-500 text-white p-1.5 rounded-lg shadow-sm">
+              <p className="text-[9px] text-amber-100 font-medium">XGBoost</p>
+              <p className="text-xs font-bold">98.4%</p>
+            </div>
+            <div className="bg-white/90 p-1.5 rounded-lg border border-amber-200 shadow-xs">
+              <p className="text-[9px] text-slate-500 font-medium">LightGBM</p>
+              <p className="text-xs font-bold text-slate-800">97.1%</p>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Real-time Collaboration',
+      desc: 'Share pipeline experiments, review ROC curves, and export serialized model weights with your entire data science team.',
+      gradient: 'from-[#EFF6FF] to-white',
+      border: 'border-blue-100',
+      badge: 'Team Ready',
+      badgeColor: 'text-blue-700 bg-blue-100/70',
+      illustration: (
+        <div className="w-full h-36 rounded-2xl bg-gradient-to-r from-blue-100/60 via-indigo-100/50 to-sky-100/40 p-4 flex flex-col justify-between relative overflow-hidden border border-blue-100/60">
+          <div className="flex justify-between items-center text-[10px] font-semibold text-blue-900">
+            <span>Team Workspace</span>
+            <span className="inline-flex items-center gap-1 text-emerald-600">● 3 Online</span>
+          </div>
+          <div className="flex items-center justify-center -space-x-3 py-2">
+            <span className="w-10 h-10 rounded-full bg-violet-600 text-white font-bold text-xs flex items-center justify-center border-2 border-white shadow-md">ER</span>
+            <span className="w-10 h-10 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center border-2 border-white shadow-md">MV</span>
+            <span className="w-10 h-10 rounded-full bg-pink-600 text-white font-bold text-xs flex items-center justify-center border-2 border-white shadow-md">PK</span>
+            <span className="w-10 h-10 rounded-full bg-amber-500 text-white font-bold text-xs flex items-center justify-center border-2 border-white shadow-md">+4</span>
+          </div>
+        </div>
+      ),
+    },
+  ];
 
-            {/* Right benchmark card */}
-            <div
-              className="p-6 rounded-2xl flex flex-col justify-between h-full"
-              style={{ background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
-            >
+  return (
+    <section id="features" className="py-24 max-w-7xl mx-auto px-6">
+      <Reveal>
+        <div className="text-center max-w-2xl mx-auto mb-16">
+          <h2 className="font-display font-bold text-3xl sm:text-4xl text-slate-900 tracking-tight mb-4">
+            The ultimate toolkit for ML engineers & teams
+          </h2>
+          <p className="text-slate-600 text-base leading-relaxed">
+            Everything you need to preprocess data, train state-of-the-art models, and deploy APIs in minutes.
+          </p>
+        </div>
+      </Reveal>
+
+      <div className="grid md:grid-cols-3 gap-6">
+        {cards.map((card, i) => (
+          <Reveal key={card.title} delay={i * 0.1}>
+            <div className={`p-6 rounded-3xl bg-gradient-to-b ${card.gradient} border ${card.border} shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-full`}>
               <div>
-                <span className="text-xs font-mono uppercase text-slate-400">Winning Algorithm</span>
-                <h4 className="font-sora font-bold text-xl text-slate-100 mt-1 mb-4">{bp.bestModel}</h4>
-
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-slate-400">Validation Metric</span>
-                      <span className="font-mono font-bold" style={{ color: bp.color }}>{bp.accuracy}</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: '95%', background: bp.color }} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-slate-400">F1 / Performance Score</span>
-                      <span className="font-mono font-bold text-slate-200">{bp.f1Score}</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-                      <div className="h-full rounded-full bg-indigo-500" style={{ width: '92%' }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={onLaunch}
-                className="mt-6 w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-all hover:opacity-95"
-                style={{ background: `linear-gradient(135deg, ${bp.color}, #6366f1)` }}
-              >
-                Launch Studio with Blueprint <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─── ALGORITHMS SECTION ─────────────────────────────────────────────────────── */
-function Models() {
-  const algos = [
-    { name: 'Random Forest', acc: 96, color: '#f59e0b', tag: 'Ensemble', desc: '100 estimators with bagging, perfect for noisy tabular data' },
-    { name: 'Support Vector Machine (SVM)', acc: 93, color: '#8b5cf6', tag: 'Kernel', desc: 'Radial Basis Function kernel with dynamic C-regularization' },
-    { name: 'Logistic Regression', acc: 90, color: '#6366f1', tag: 'Linear', desc: 'Fast L2 penalized baseline with probability calibration' },
-    { name: 'Decision Tree', acc: 88, color: '#ef4444', tag: 'Tree-based', desc: 'Gini impurity split with auto pruning to combat overfitting' },
-    { name: 'K-Nearest Neighbors (KNN)', acc: 86, color: '#3b82f6', tag: 'Instance', desc: 'Minkowski distance metric with weighted neighbor voting' },
-    { name: 'Linear Regression', acc: 91, color: '#22c55e', tag: 'Regression', desc: 'Ordinary least squares with feature coefficient breakdown' },
-  ];
-
-  return (
-    <section id="models" className="py-28 relative" style={{ background: '#080c14' }}>
-      <Blob color="#8b5cf6" style={{ width: 450, height: 450, top: '10%', left: '-5%' }} />
-      <div className="max-w-7xl mx-auto px-6">
-        <Reveal>
-          <div className="text-center mb-16">
-            <Pill color="#8b5cf6">Competitive Benchmark</Pill>
-            <h2
-              className="font-sora font-extrabold mt-5 mb-4 text-slate-100"
-              style={{ fontSize: 'clamp(2rem, 4vw, 3.25rem)', letterSpacing: '-0.02em' }}
-            >
-              6 Algorithms Compete Concurrently.<br />
-              <GText from="#8b5cf6" to="#ec4899">The Winner Takes the Crown.</GText>
-            </h2>
-            <p className="text-base md:text-lg max-w-xl mx-auto text-slate-400">
-              FlowML trains all candidate models simultaneously with cross-validation and selects the best performer for your predictions.
-            </p>
-          </div>
-        </Reveal>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {algos.map((a, i) => (
-            <Reveal key={a.name} delay={i * 0.08}>
-              <motion.div
-                whileHover={{ y: -4 }}
-                className="p-6 rounded-2xl h-full flex flex-col justify-between"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.025)',
-                  border: '1px solid rgba(255, 255, 255, 0.07)',
-                }}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold" style={{ background: a.color + '18', color: a.color }}>
-                      {a.tag}
-                    </span>
-                    <span className="text-2xl font-bold font-mono" style={{ color: a.color }}>
-                      {a.acc}%
-                    </span>
-                  </div>
-
-                  <h3 className="font-sora font-bold text-lg text-slate-100 mb-2">{a.name}</h3>
-                  <p className="text-xs text-slate-400 leading-relaxed mb-6">{a.desc}</p>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[11px] text-slate-400">
-                    <span>Benchmark Score</span>
-                    <span>{a.acc} / 100</span>
-                  </div>
-                  <div className="h-2 rounded-full overflow-hidden bg-slate-800">
-                    <motion.div
-                      className="h-full rounded-full"
-                      initial={{ width: 0 }}
-                      whileInView={{ width: `${a.acc}%` }}
-                      transition={{ duration: 1, delay: i * 0.1, ease: 'easeOut' }}
-                      viewport={{ once: true }}
-                      style={{ background: `linear-gradient(90deg, ${a.color}80, ${a.color})` }}
-                    />
-                  </div>
-                </div>
-              </motion.div>
-            </Reveal>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─── CODE VS FLOWML COMPARISON ──────────────────────────────────────────────── */
-function CodeCompare() {
-  return (
-    <section id="compare" className="py-28 relative" style={{ background: '#0a0f1c' }}>
-      <div className="max-w-7xl mx-auto px-6">
-        <Reveal>
-          <div className="text-center mb-16">
-            <Pill color="#22c55e">Code vs Visual</Pill>
-            <h2
-              className="font-sora font-extrabold mt-5 mb-4 text-slate-100"
-              style={{ fontSize: 'clamp(2rem, 4vw, 3.25rem)', letterSpacing: '-0.02em' }}
-            >
-              Why ML Teams Are Switching to<br />
-              <GText from="#22c55e" to="#3b82f6">Visual Pipeline Engineering</GText>
-            </h2>
-            <p className="text-base md:text-lg max-w-2xl mx-auto text-slate-400">
-              Eliminate boilerplate glue code, train/test leakage traps, and brittle notebooks.
-            </p>
-          </div>
-        </Reveal>
-
-        <div className="grid lg:grid-cols-2 gap-8 items-stretch">
-          {/* Traditional code panel */}
-          <div
-            className="p-6 md:p-8 rounded-3xl flex flex-col justify-between"
-            style={{
-              background: 'rgba(255, 255, 255, 0.02)',
-              border: '1px solid rgba(239, 68, 68, 0.25)',
-            }}
-          >
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-mono font-bold text-rose-400 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20">
-                  ❌ Traditional Python Glue Code
+                <div className="mb-6">{card.illustration}</div>
+                <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ${card.badgeColor}`}>
+                  {card.badge}
                 </span>
-                <span className="text-xs text-slate-500 font-mono">~120 lines</span>
+                <h3 className="font-display font-bold text-lg text-slate-900 mt-3 mb-2">{card.title}</h3>
+                <p className="text-sm text-slate-600 leading-relaxed">{card.desc}</p>
               </div>
-              <h3 className="font-sora font-bold text-lg text-slate-100 mb-4">Brittle, Manual, Error-Prone</h3>
-
-              {/* Code snippet mock */}
-              <div className="p-4 rounded-xl bg-black/60 font-mono text-xs text-slate-400 leading-relaxed overflow-x-auto space-y-1 border border-white/5">
-                <p className="text-rose-400">import pandas as pd, numpy as np</p>
-                <p className="text-slate-500">from sklearn.model_selection import train_test_split, KFold</p>
-                <p className="text-slate-500">from sklearn.preprocessing import StandardScaler, OneHotEncoder</p>
-                <p className="text-slate-500">from sklearn.ensemble import RandomForestClassifier</p>
-                <p className="text-amber-400"># Manual missing value handling & potential leakage:</p>
-                <p>df = pd.read_csv('dataset.csv')</p>
-                <p>df.fillna(df.mean(), inplace=True)  # Leakage warning!</p>
-                <p>X = df.drop(columns=['target'])</p>
-                <p>X_scaled = StandardScaler().fit_transform(X)</p>
-                <p># Manually write loops to train 6 models...</p>
-                <p className="text-rose-400"># 90+ more lines for metrics, SHAP, and plotting...</p>
-              </div>
-
-              <ul className="mt-6 space-y-2.5 text-xs md:text-sm text-slate-400">
-                <li className="flex items-center gap-2 text-rose-400/90">
-                  <X className="w-4 h-4 shrink-0 text-rose-500" /> High risk of train-test data leakage
-                </li>
-                <li className="flex items-center gap-2 text-rose-400/90">
-                  <X className="w-4 h-4 shrink-0 text-rose-500" /> Manual hyperparameter tuning and model tracking
-                </li>
-                <li className="flex items-center gap-2 text-rose-400/90">
-                  <X className="w-4 h-4 shrink-0 text-rose-500" /> Complex plotting scripts for confusion matrix & ROC
-                </li>
-              </ul>
             </div>
-
-            <p className="mt-6 text-xs text-slate-500 border-t border-white/5 pt-4">
-              Time to prototype: <strong>2 - 4 hours</strong>
-            </p>
-          </div>
-
-          {/* FlowML Studio panel */}
-          <div
-            className="p-6 md:p-8 rounded-3xl flex flex-col justify-between"
-            style={{
-              background: 'linear-gradient(160deg, rgba(99, 102, 241, 0.1), rgba(34, 197, 94, 0.05))',
-              border: '1.5px solid rgba(99, 102, 241, 0.4)',
-              boxShadow: '0 20px 60px rgba(99, 102, 241, 0.15)',
-            }}
-          >
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-mono font-bold text-emerald-400 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                  ✓ FlowML Studio Architecture
-                </span>
-                <span className="text-xs text-indigo-400 font-mono">0 lines of code</span>
-              </div>
-              <h3 className="font-sora font-bold text-lg text-slate-100 mb-4">Visual, Deterministic, Instant</h3>
-
-              {/* Visual graph mockup */}
-              <div className="p-4 rounded-xl bg-slate-900/80 border border-indigo-500/20 space-y-3">
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 text-xs text-slate-200">
-                  <div className="flex items-center gap-2">
-                    <Database className="w-4 h-4 text-blue-400" />
-                    <span>Upload Node (Auto-schema detection)</span>
-                  </div>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                </div>
-
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 text-xs text-slate-200">
-                  <div className="flex items-center gap-2">
-                    <Sliders className="w-4 h-4 text-purple-400" />
-                    <span>Preprocessing Node (Leak-free scaling & encoding)</span>
-                  </div>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                </div>
-
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 text-xs text-slate-200">
-                  <div className="flex items-center gap-2">
-                    <Brain className="w-4 h-4 text-emerald-400" />
-                    <span>Auto-ML Arena (6 algorithms trained concurrently)</span>
-                  </div>
-                  <span className="text-xs font-mono font-bold text-emerald-400">96.4% Acc</span>
-                </div>
-              </div>
-
-              <ul className="mt-6 space-y-2.5 text-xs md:text-sm text-slate-300">
-                <li className="flex items-center gap-2 text-emerald-400">
-                  <Check className="w-4 h-4 shrink-0 text-emerald-400" /> Built-in leakage protection and proper pipeline split
-                </li>
-                <li className="flex items-center gap-2 text-emerald-400">
-                  <Check className="w-4 h-4 shrink-0 text-emerald-400" /> Automated leaderboards with cross-validation
-                </li>
-                <li className="flex items-center gap-2 text-emerald-400">
-                  <Check className="w-4 h-4 shrink-0 text-emerald-400" /> Full-screen interactive charts and SHAP explanations
-                </li>
-              </ul>
-            </div>
-
-            <p className="mt-6 text-xs text-emerald-400 border-t border-white/5 pt-4 font-semibold">
-              Time to prototype: <strong>Under 3 minutes</strong>
-            </p>
-          </div>
-        </div>
+          </Reveal>
+        ))}
       </div>
     </section>
   );
 }
 
-/* ─── TESTIMONIALS ───────────────────────────────────────────────────────────── */
-function Testimonials() {
-  const reviews = [
+/* ─── SIMPLIFY YOUR WORKFLOW (Side-by-side) ──────────────────────────────────── */
+function SimplifyWorkflowSection({ onLaunch }) {
+  const [activeStep, setActiveStep] = useState(0);
+
+  const steps = [
     {
-      name: 'Dr. Elena Rostova',
-      role: 'Lead ML Scientist at BioGenix',
-      quote:
-        'FlowML Studio reduced our biomarker classification turnaround from days to 15 minutes. Being able to visualize the entire preprocessing pipeline alongside SHAP plots is game-changing.',
-      rating: 5,
+      num: '01',
+      title: 'Import your dataset',
+      desc: 'Upload CSV, Excel, or connect databases. FlowML runs automated type inference, distribution profiling, and null detection.',
     },
     {
-      name: 'Marcus Vance',
-      role: 'VP of Engineering at FinEdge',
-      quote:
-        'The concurrent 6-algorithm Auto-ML trainer gave our team instant confidence in model selection. We exported predictions straight to CSV without writing a single line of boilerplate.',
-      rating: 5,
+      num: '02',
+      title: 'Configure & Automate',
+      desc: 'Select your target variable. The engine automatically handles imputation, categorical encoding, and feature scaling.',
     },
     {
-      name: 'Sarah Chen',
-      role: 'Principal Data Architect at ScaleLoop',
-      quote:
-        'Our junior data scientists iterate significantly faster with FlowML’s visual canvas. The full-screen results dashboard makes stakeholder presentations effortless.',
-      rating: 5,
+      num: '03',
+      title: 'Benchmark & Deploy',
+      desc: 'Compare accuracy, F1-scores, and ROC-AUC curves. Download production-ready Python code or 1-click FastAPI endpoints.',
     },
   ];
 
   return (
-    <section className="py-24 relative" style={{ background: '#080c14' }}>
+    <section id="solutions" className="py-24 bg-slate-50/60 border-y border-slate-200/60">
       <div className="max-w-7xl mx-auto px-6">
-        <Reveal>
-          <div className="text-center mb-16">
-            <Pill color="#f59e0b">Social Proof</Pill>
-            <h2 className="font-sora font-extrabold mt-5 mb-4 text-slate-100" style={{ fontSize: 'clamp(2rem, 4vw, 3.25rem)' }}>
-              Trusted by ML Engineers & Researchers
-            </h2>
-          </div>
-        </Reveal>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          {reviews.map((r, i) => (
-            <Reveal key={r.name} delay={i * 0.1}>
-              <div
-                className="p-8 rounded-3xl h-full flex flex-col justify-between"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.02)',
-                  border: '1px solid rgba(255, 255, 255, 0.06)',
-                }}
-              >
-                <div>
-                  <div className="flex items-center gap-1 mb-4">
-                    {[...Array(r.rating)].map((_, idx) => (
-                      <Star key={idx} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  <p className="text-sm md:text-base text-slate-300 leading-relaxed italic mb-6">"{r.quote}"</p>
-                </div>
-
-                <div className="pt-4 border-t border-white/5">
-                  <p className="font-sora font-bold text-slate-100 text-sm">{r.name}</p>
-                  <p className="text-xs text-slate-400">{r.role}</p>
-                </div>
-              </div>
+        <div className="grid lg:grid-cols-12 gap-12 items-center">
+          {/* Left Column: Numbered List */}
+          <div className="lg:col-span-5 text-left">
+            <Reveal>
+              <h2 className="font-display font-bold text-3xl sm:text-4xl text-slate-900 tracking-tight mb-8">
+                Simplify your workflow
+              </h2>
             </Reveal>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
-/* ─── PRICING ────────────────────────────────────────────────────────────────── */
-function Pricing({ onLaunch }) {
-  const plans = [
-    {
-      name: 'Community',
-      price: '$0',
-      sub: 'Forever Free',
-      desc: 'Ideal for students, researchers, and solo ML experimenters.',
-      color: '#6b7280',
-      features: [
-        'Visual Node Pipeline Studio',
-        'Upload CSV & Excel datasets',
-        'All 6 Scikit-Learn Algorithms',
-        'Auto-ML Leaderboard',
-        'Full-screen analytics dashboard',
-        'Export predictions as CSV',
-      ],
-      cta: 'Launch Free Studio',
-      outlined: true,
-    },
-    {
-      name: 'Professional',
-      price: '$29',
-      sub: 'per month',
-      desc: 'For professional data scientists who need advanced exports and custom hyperparameters.',
-      color: '#6366f1',
-      highlight: true,
-      features: [
-        'Everything in Community',
-        'Custom hyperparameter tuning',
-        'Deep SHAP feature importances',
-        'PDF audit-ready report generation',
-        'Saved pipeline workspace presets',
-        'Priority feature requests',
-      ],
-      cta: 'Start Pro Trial',
-      outlined: false,
-    },
-    {
-      name: 'Enterprise',
-      price: '$99',
-      sub: 'per seat / month',
-      desc: 'For teams needing centralized model deployment, audit logs, and on-premise setups.',
-      color: '#22c55e',
-      features: [
-        'Everything in Professional',
-        'On-premise Docker deployment',
-        'Custom PyTorch / XGBoost nodes',
-        'Multi-user shared workspaces',
-        'Role-based access controls',
-        'Dedicated ML engineer support',
-      ],
-      cta: 'Contact Sales',
-      outlined: true,
-    },
-  ];
-
-  return (
-    <section id="pricing" className="py-28 relative" style={{ background: '#0a0f1c' }}>
-      <Blob color="#6366f1" style={{ width: 500, height: 500, bottom: '-10%', left: '50%', transform: 'translateX(-50%)' }} />
-      <div className="max-w-6xl mx-auto px-6">
-        <Reveal>
-          <div className="text-center mb-16">
-            <Pill color="#f59e0b">Predictable Pricing</Pill>
-            <h2
-              className="font-sora font-extrabold mt-5 mb-4 text-slate-100"
-              style={{ fontSize: 'clamp(2rem, 4vw, 3.25rem)', letterSpacing: '-0.02em' }}
-            >
-              Simple, Transparent Pricing
-            </h2>
-            <p className="text-base md:text-lg max-w-xl mx-auto text-slate-400">
-              Start free forever on your local environment. Upgrade as your data science workload scales.
-            </p>
+            <div className="space-y-6">
+              {steps.map((step, idx) => {
+                const isActive = activeStep === idx;
+                return (
+                  <Reveal key={step.num} delay={idx * 0.1}>
+                    <div
+                      onClick={() => setActiveStep(idx)}
+                      className={`p-5 rounded-2xl border transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-white border-violet-500 shadow-md ring-1 ring-violet-500/20'
+                          : 'bg-white/60 border-slate-200/80 hover:bg-white'
+                      }`}
+                    >
+                      <div className="flex items-start gap-4">
+                        <span className={`font-mono text-sm font-bold ${isActive ? 'text-violet-600' : 'text-slate-400'}`}>
+                          {step.num}
+                        </span>
+                        <div>
+                          <h4 className="font-display font-bold text-base text-slate-900 mb-1">{step.title}</h4>
+                          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{step.desc}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </Reveal>
+                );
+              })}
+            </div>
           </div>
-        </Reveal>
 
-        <div className="grid md:grid-cols-3 gap-6 items-stretch">
-          {plans.map((p, i) => (
-            <Reveal key={p.name} delay={i * 0.1}>
-              <motion.div
-                whileHover={{ y: -6 }}
-                className={`relative p-8 rounded-3xl h-full flex flex-col justify-between ${p.highlight ? 'scale-105' : ''}`}
-                style={{
-                  background: p.highlight
-                    ? 'linear-gradient(160deg, rgba(99, 102, 241, 0.16), rgba(59, 130, 246, 0.08))'
-                    : 'rgba(255, 255, 255, 0.025)',
-                  border: p.highlight ? '1.5px solid rgba(99, 102, 241, 0.5)' : '1px solid rgba(255, 255, 255, 0.07)',
-                  boxShadow: p.highlight ? '0 20px 60px rgba(99, 102, 241, 0.25)' : 'none',
-                }}
-              >
-                {p.highlight && (
-                  <div
-                    className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold text-white tracking-wide uppercase"
-                    style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
-                  >
-                    Most Popular
+          {/* Right Column: High Fidelity Mockup */}
+          <div className="lg:col-span-7">
+            <Reveal delay={0.2}>
+              <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden p-6 sm:p-8 text-left">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-rose-400" />
+                    <span className="w-3 h-3 rounded-full bg-amber-400" />
+                    <span className="w-3 h-3 rounded-full bg-emerald-400" />
+                    <span className="text-xs font-mono text-slate-500 font-semibold ml-2">flowml://workspace/step-{activeStep + 1}</span>
+                  </div>
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-violet-50 text-violet-700">Step {activeStep + 1} of 3</span>
+                </div>
+
+                {activeStep === 0 && (
+                  <div className="space-y-4">
+                    <div className="p-6 rounded-2xl bg-violet-50/50 border-2 border-dashed border-violet-200 flex flex-col items-center justify-center text-center">
+                      <FileSpreadsheet className="w-10 h-10 text-violet-600 mb-2" />
+                      <p className="font-display font-bold text-sm text-slate-800">telco_churn_dataset.csv</p>
+                      <p className="text-xs text-slate-500">7,043 rows • 21 feature columns • 0 syntax errors</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                        <span className="text-[10px] text-slate-400 font-medium">Categorical</span>
+                        <p className="text-sm font-bold text-slate-800">16 Columns</p>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                        <span className="text-[10px] text-slate-400 font-medium">Numeric</span>
+                        <p className="text-sm font-bold text-slate-800">4 Columns</p>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                        <span className="text-[10px] text-slate-400 font-medium">Target</span>
+                        <p className="text-sm font-bold text-violet-600">Churn</p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                <div>
-                  <h3 className="font-sora font-bold text-lg text-slate-100 mb-1">{p.name}</h3>
-                  <p className="text-xs text-slate-400 mb-6">{p.desc}</p>
-
-                  <div className="flex items-baseline gap-1.5 mb-6">
-                    <span className="font-sora font-extrabold text-4xl md:text-5xl text-slate-100">{p.price}</span>
-                    <span className="text-xs text-slate-400">/ {p.sub}</span>
-                  </div>
-
-                  <div className="space-y-3 pt-6 border-t border-white/5">
-                    {p.features.map((f) => (
-                      <div key={f} className="flex items-center gap-2.5 text-xs md:text-sm text-slate-300">
-                        <Check className="w-4 h-4 shrink-0 text-emerald-400" />
-                        <span>{f}</span>
+                {activeStep === 1 && (
+                  <div className="space-y-4">
+                    <div className="p-5 rounded-2xl bg-indigo-50/50 border border-indigo-100">
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="text-xs font-bold text-indigo-900">Pre-processing Pipeline</span>
+                        <span className="text-[11px] font-mono text-indigo-700 bg-white px-2 py-0.5 rounded shadow-2xs font-semibold">Auto-configured</span>
                       </div>
-                    ))}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between p-2.5 bg-white rounded-lg text-xs font-medium border border-indigo-50">
+                          <span>Missing Values Imputation</span>
+                          <span className="text-emerald-600 font-semibold font-mono">Median (0 nulls remaining)</span>
+                        </div>
+                        <div className="flex items-center justify-between p-2.5 bg-white rounded-lg text-xs font-medium border border-indigo-50">
+                          <span>Categorical Encoding</span>
+                          <span className="text-emerald-600 font-semibold font-mono">One-Hot Encoding (32 features)</span>
+                        </div>
+                        <div className="flex items-center justify-between p-2.5 bg-white rounded-lg text-xs font-medium border border-indigo-50">
+                          <span>Feature Scaling</span>
+                          <span className="text-emerald-600 font-semibold font-mono">StandardScaler (µ=0, σ=1)</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={onLaunch}
-                  className="w-full mt-8 py-3.5 rounded-2xl text-sm font-bold transition-all"
-                  style={
-                    p.outlined
-                      ? { background: 'transparent', border: '1.5px solid rgba(255, 255, 255, 0.15)', color: '#f0f4ff' }
-                      : { background: 'linear-gradient(135deg, #6366f1, #3b82f6)', color: 'white', boxShadow: '0 4px 20px rgba(99, 102, 241, 0.4)' }
-                  }
-                >
-                  {p.cta}
-                </motion.button>
-              </motion.div>
+                {activeStep === 2 && (
+                  <div className="space-y-4">
+                    <div className="p-5 rounded-2xl bg-emerald-50/50 border border-emerald-100">
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="text-xs font-bold text-emerald-900">AutoML Leaderboard</span>
+                        <span className="text-[11px] font-mono text-emerald-700 bg-white px-2 py-0.5 rounded shadow-2xs font-semibold">Ready to Export</span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between p-2.5 bg-white rounded-lg text-xs font-medium border border-emerald-50">
+                          <span className="font-bold text-slate-800">1. XGBoost Classifier</span>
+                          <span className="text-violet-600 font-mono font-bold">98.4% Accuracy (Top Choice)</span>
+                        </div>
+                        <div className="flex items-center justify-between p-2.5 bg-white rounded-lg text-xs font-medium border border-emerald-50">
+                          <span className="font-bold text-slate-800">2. LightGBM</span>
+                          <span className="text-slate-600 font-mono">97.1% Accuracy</span>
+                        </div>
+                        <div className="flex items-center justify-between p-2.5 bg-white rounded-lg text-xs font-medium border border-emerald-50">
+                          <span className="font-bold text-slate-800">3. Random Forest</span>
+                          <span className="text-slate-600 font-mono">94.2% Accuracy</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-xs text-slate-500">Fast client-side compilation</span>
+                  <button
+                    onClick={onLaunch}
+                    className="text-xs font-semibold text-violet-600 hover:text-violet-700 flex items-center gap-1 cursor-pointer"
+                  >
+                    Open in interactive canvas <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
             </Reveal>
-          ))}
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-/* ─── FAQ ACCORDION ──────────────────────────────────────────────────────────── */
-function FAQ() {
-  const [openIdx, setOpenIdx] = useState(0);
+/* ─── ONE PLATFORM, UNLIMITED INTEGRATIONS ───────────────────────────────────── */
+function IntegrationsSection({ onLaunch }) {
+  const integrations = [
+    { name: 'Python', color: 'bg-blue-100 text-blue-700', label: 'Python 3.11' },
+    { name: 'Scikit-Learn', color: 'bg-amber-100 text-amber-700', label: 'scikit-learn' },
+    { name: 'PyTorch', color: 'bg-orange-100 text-orange-700', label: 'PyTorch' },
+    { name: 'XGBoost', color: 'bg-emerald-100 text-emerald-700', label: 'XGBoost' },
+    { name: 'Pandas', color: 'bg-purple-100 text-purple-700', label: 'Pandas' },
+    { name: 'FastAPI', color: 'bg-teal-100 text-teal-700', label: 'FastAPI' },
+    { name: 'Docker', color: 'bg-sky-100 text-sky-700', label: 'Docker' },
+    { name: 'Snowflake', color: 'bg-cyan-100 text-cyan-700', label: 'Snowflake' },
+  ];
 
-  const faqs = [
+  return (
+    <section id="integrations" className="py-24 max-w-7xl mx-auto px-6">
+      <div className="grid lg:grid-cols-12 gap-12 items-center">
+        {/* Left Side: Integrations Hub Illustration */}
+        <div className="lg:col-span-6">
+          <Reveal>
+            <div className="p-8 sm:p-12 rounded-3xl bg-slate-100/70 border border-slate-200/80 shadow-inner relative flex flex-col items-center justify-center">
+              {/* Converging integrations grid */}
+              <div className="grid grid-cols-4 gap-3 mb-8 w-full max-w-md">
+                {integrations.map((item) => (
+                  <div
+                    key={item.name}
+                    className="p-3 rounded-xl bg-white shadow-xs border border-slate-200 flex flex-col items-center justify-center text-center hover:scale-105 transition-transform"
+                  >
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${item.color}`}>
+                      {item.name.substring(0, 3)}
+                    </span>
+                    <span className="text-[10px] font-semibold text-slate-700 mt-1">{item.name}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Central flow connector */}
+              <div className="w-12 h-12 rounded-2xl bg-violet-600 text-white flex items-center justify-center shadow-lg shadow-violet-500/30">
+                <Cpu className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-xs font-bold text-slate-700 mt-2">FlowML Engine Core</span>
+            </div>
+          </Reveal>
+        </div>
+
+        {/* Right Side: Copy & Testimonial */}
+        <div className="lg:col-span-6 text-left">
+          <Reveal delay={0.1}>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-900 text-white mb-4">
+              Native Ecosystem
+            </span>
+            <h2 className="font-display font-bold text-3xl sm:text-4xl text-slate-900 tracking-tight mb-4">
+              One platform, unlimited integrations
+            </h2>
+            <p className="text-slate-600 text-base leading-relaxed mb-6">
+              Export production-ready code with zero vendor lock-in. Generate clean Python scripts, Jupyter notebooks, Dockerfiles, and REST APIs ready for your CI/CD pipeline.
+            </p>
+
+            <button
+              onClick={onLaunch}
+              className="px-6 py-3 rounded-full text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white inline-flex items-center gap-2 transition-all shadow-sm cursor-pointer mb-8"
+            >
+              Explore integrations <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Testimonial Quote */}
+            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80">
+              <p className="text-xs sm:text-sm text-slate-700 italic mb-3">
+                "FlowML cut our time from raw CSV to deployed prediction API from 2 weeks to under 20 minutes."
+              </p>
+              <div className="flex items-center gap-3">
+                <span className="w-8 h-8 rounded-full bg-violet-600 text-white text-xs font-bold flex items-center justify-center">SC</span>
+                <div>
+                  <p className="font-display font-bold text-xs text-slate-900">Dr. Sarah Chen</p>
+                  <p className="text-[11px] text-slate-500">VP of AI at VectorScale</p>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── DARK NEXT-GEN SHOWCASE (Power up your workflow with next-gen features) ─── */
+function DarkNextGenSection({ onLaunch }) {
+  return (
+    <section className="py-24 max-w-7xl mx-auto px-6">
+      <Reveal>
+        <div className="bg-[#0B0F17] rounded-3xl p-8 sm:p-14 text-white shadow-2xl relative overflow-hidden text-left">
+          {/* Header */}
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <h2 className="font-display font-bold text-3xl sm:text-4xl text-white tracking-tight mb-3">
+              Power up your workflow with next-gen features
+            </h2>
+            <p className="text-slate-400 text-sm sm:text-base">
+              Built from the ground up for modern data teams needing speed, transparency, and military-grade privacy.
+            </p>
+          </div>
+
+          {/* Top 2 Large Dark Feature Cards */}
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <div className="p-8 rounded-2xl bg-[#141A26] border border-white/10 hover:border-violet-500/50 transition-all flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-violet-500/20 text-violet-400 flex items-center justify-center mb-6">
+                  <Cloud className="w-6 h-6" />
+                </div>
+                <h3 className="font-display font-bold text-xl text-white mb-2">Cloud-Scale Compute Engine</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  Train massive ensembles without provisioning cloud VMs. FlowML optimizes memory usage and leverages worker threads directly.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-white/10 flex items-center gap-2 text-xs text-violet-400 font-mono">
+                <span>✓ Auto-distributed workers</span>
+              </div>
+            </div>
+
+            <div className="p-8 rounded-2xl bg-[#141A26] border border-white/10 hover:border-violet-500/50 transition-all flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-6">
+                  <Shield className="w-6 h-6" />
+                </div>
+                <h3 className="font-display font-bold text-xl text-white mb-2">Real-Time Low Latency & Privacy</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  Client-first execution guarantees your proprietary datasets stay strictly within your browser and authorized VPC.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-white/10 flex items-center gap-2 text-xs text-emerald-400 font-mono">
+                <span>✓ Zero third-party telemetry</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom 3 Feature Pills */}
+          <div className="grid sm:grid-cols-3 gap-5">
+            <div className="p-5 rounded-xl bg-[#141A26]/60 border border-white/5">
+              <Code2 className="w-5 h-5 text-violet-400 mb-2" />
+              <h4 className="font-display font-bold text-sm text-white mb-1">Zero-code or Code-first</h4>
+              <p className="text-xs text-slate-400">Switch between drag-and-drop and custom Python code in one click.</p>
+            </div>
+
+            <div className="p-5 rounded-xl bg-[#141A26]/60 border border-white/5">
+              <Brain className="w-5 h-5 text-indigo-400 mb-2" />
+              <h4 className="font-display font-bold text-sm text-white mb-1">Explainable AI (SHAP & LIME)</h4>
+              <p className="text-xs text-slate-400">Interpret decision trees and understand exact feature attributions.</p>
+            </div>
+
+            <div className="p-5 rounded-xl bg-[#141A26]/60 border border-white/5">
+              <Award className="w-5 h-5 text-pink-400 mb-2" />
+              <h4 className="font-display font-bold text-sm text-white mb-1">1-Click Model Serialization</h4>
+              <p className="text-xs text-slate-400">Export .joblib weights, ONNX runtime graphs, or Dockerized APIs.</p>
+            </div>
+          </div>
+        </div>
+      </Reveal>
+    </section>
+  );
+}
+
+/* ─── SOCIAL PROOF & TESTIMONIALS ────────────────────────────────────────────── */
+function SocialProofSection() {
+  return (
+    <section className="py-20 border-b border-slate-200/80 bg-slate-50/40">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="grid md:grid-cols-12 gap-8 items-center">
+          <div className="md:col-span-5 text-left">
+            <Reveal>
+              <h3 className="font-display font-bold text-2xl sm:text-3xl text-slate-900 tracking-tight">
+                Loved by ML engineers & data science teams
+              </h3>
+            </Reveal>
+          </div>
+
+          <div className="md:col-span-7">
+            <Reveal delay={0.1}>
+              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm text-left">
+                <div className="flex items-center gap-1 text-amber-400 mb-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-current" />
+                  ))}
+                </div>
+                <p className="text-slate-700 text-sm sm:text-base leading-relaxed italic mb-4">
+                  "FlowML has completely redefined how our team prototypes models. We test hypotheses 10x faster without writing boilerplate training loops."
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="flex -space-x-2">
+                    <span className="w-7 h-7 rounded-full bg-violet-600 text-white font-bold text-[10px] flex items-center justify-center border-2 border-white">MV</span>
+                    <span className="w-7 h-7 rounded-full bg-indigo-600 text-white font-bold text-[10px] flex items-center justify-center border-2 border-white">ER</span>
+                    <span className="w-7 h-7 rounded-full bg-amber-500 text-white font-bold text-[10px] flex items-center justify-center border-2 border-white">PK</span>
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-xs text-slate-900">Marcus Vance</p>
+                    <p className="text-[11px] text-slate-500">Senior AI Scientist at DataVantage</p>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── FLEXIBLE PRICING PLANS ─────────────────────────────────────────────────── */
+function PricingSection({ onLaunch }) {
+  const [isYearly, setIsYearly] = useState(false);
+
+  const plans = [
     {
-      q: 'Do I need to know how to code in Python to use FlowML?',
-      a: 'Not at all! FlowML Studio is designed so anyone can build, train, evaluate, and interpret machine learning models through a visual drag-and-drop interface. For experienced practitioners, it serves as a rapid experimentation tool that eliminates boilerplate.',
+      name: 'Starter',
+      price: isYearly ? '$15' : '$19',
+      desc: 'Ideal for solo data scientists and academic researchers.',
+      features: [
+        'Unlimited local pipelines',
+        '100MB dataset upload limit',
+        'Scikit-learn algorithms',
+        'Export to Python script',
+        'Community Discord access',
+      ],
+      popular: false,
+      btnLabel: 'Get Started',
+      btnStyle: 'bg-slate-900 hover:bg-slate-800 text-white',
     },
     {
-      q: 'Which machine learning algorithms are included out of the box?',
-      a: 'FlowML includes Random Forest, Logistic Regression, Linear Regression, Decision Tree, Support Vector Machine (SVM), and K-Nearest Neighbors (KNN). Our Auto-ML engine trains all suitable models simultaneously and ranks them by accuracy or R².',
+      name: 'Pro',
+      price: isYearly ? '$39' : '$49',
+      desc: 'Everything in Starter plus advanced AutoML and cloud models.',
+      features: [
+        'Unlimited datasets & pipelines',
+        '5GB dataset upload limit',
+        'XGBoost & LightGBM engines',
+        'Automated Bayesian tuning',
+        'SHAP & LIME explainability',
+        '1-Click FastAPI export',
+        'Priority technical support',
+      ],
+      popular: true,
+      btnLabel: 'Get Started Pro',
+      btnStyle: 'bg-violet-600 hover:bg-violet-700 text-white shadow-lg shadow-violet-500/25',
     },
     {
-      q: 'Is my dataset kept private and secure?',
-      a: 'Yes, 100%. FlowML executes its pipeline runner locally on your local Flask server. Your uploaded CSVs, patient data, financial figures, or proprietary metrics never leave your computer.',
-    },
-    {
-      q: 'Can I export predictions and reports?',
-      a: 'Yes! Once your pipeline finishes executing, you can inspect the full-screen results dashboard, download the predictions table as a CSV, inspect feature importances, and view auto-generated charts.',
-    },
-    {
-      q: 'How does FlowML prevent data leakage during preprocessing?',
-      a: 'FlowML encapsulates preprocessing transformations (imputation, scaling, one-hot encoding) strictly inside a deterministic scikit-learn pipeline structure. Scalers and encoders are fitted only on train partitions to guarantee zero test data leakage.',
+      name: 'Enterprise',
+      price: isYearly ? '$65' : '$79',
+      desc: 'For high-scale teams requiring VPC security and dedicated compute.',
+      features: [
+        'Everything in Pro plan',
+        'Dedicated GPU compute cluster',
+        'Private VPC / On-prem deployment',
+        'Team RBAC & SSO integration',
+        'Custom ML algorithm nodes',
+        '99.9% Uptime SLA',
+      ],
+      popular: false,
+      btnLabel: 'Contact Sales',
+      btnStyle: 'bg-slate-900 hover:bg-slate-800 text-white',
     },
   ];
 
   return (
-    <section id="faq" className="py-24 relative" style={{ background: '#080c14' }}>
-      <div className="max-w-4xl mx-auto px-6">
-        <Reveal>
-          <div className="text-center mb-16">
-            <Pill color="#3b82f6">Frequently Asked Questions</Pill>
-            <h2 className="font-sora font-extrabold mt-5 mb-4 text-slate-100" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
-              Everything You Need to Know
-            </h2>
+    <section id="pricing" className="py-24 max-w-7xl mx-auto px-6">
+      <Reveal>
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <h2 className="font-display font-bold text-3xl sm:text-4xl text-slate-900 tracking-tight mb-4">
+            Flexible pricing plans
+          </h2>
+          <p className="text-slate-600 text-base leading-relaxed mb-6">
+            Choose a plan that fits your machine learning workflow, whether you're a solo researcher or scaling enterprise.
+          </p>
+
+          {/* Billing Switch */}
+          <div className="inline-flex items-center gap-3 p-1.5 rounded-full bg-slate-100 border border-slate-200/80">
+            <button
+              onClick={() => setIsYearly(false)}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                !isYearly ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setIsYearly(true)}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                isYearly ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Yearly <span className="text-[10px] text-violet-700 bg-violet-100 px-1.5 py-0.5 rounded-full">Save 20%</span>
+            </button>
           </div>
-        </Reveal>
+        </div>
+      </Reveal>
 
-        <div className="space-y-4">
-          {faqs.map((faq, idx) => {
-            const isOpen = openIdx === idx;
-            return (
-              <Reveal key={faq.q} delay={idx * 0.05}>
-                <div
-                  className="rounded-2xl overflow-hidden transition-all"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.025)',
-                    border: isOpen ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid rgba(255, 255, 255, 0.06)',
-                  }}
-                >
-                  <button
-                    onClick={() => setOpenIdx(isOpen ? -1 : idx)}
-                    className="w-full p-6 text-left flex items-center justify-between gap-4"
-                  >
-                    <span className="font-sora font-semibold text-base text-slate-100">{faq.q}</span>
-                    <ChevronDown
-                      className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180 text-indigo-400' : ''}`}
-                    />
-                  </button>
-
-                  <AnimatePresence>
-                    {isOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.25 }}
-                        className="px-6 pb-6 text-sm text-slate-400 leading-relaxed"
-                      >
-                        {faq.a}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+      {/* Pricing Cards Grid */}
+      <div className="grid md:grid-cols-3 gap-6 items-stretch">
+        {plans.map((p, i) => (
+          <Reveal key={p.name} delay={i * 0.1}>
+            <div
+              className={`p-8 rounded-3xl h-full flex flex-col justify-between text-left transition-all ${
+                p.popular
+                  ? 'bg-white border-2 border-violet-600 shadow-xl ring-4 ring-violet-500/10'
+                  : 'bg-white border border-slate-200/90 shadow-sm hover:shadow-md'
+              }`}
+            >
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-display font-bold text-lg text-slate-900">{p.name}</h3>
+                  {p.popular && (
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-violet-100 text-violet-700 uppercase tracking-wide">
+                      Most Popular
+                    </span>
+                  )}
                 </div>
-              </Reveal>
-            );
-          })}
+                <div className="flex items-baseline gap-1 mb-2">
+                  <span className="font-display font-extrabold text-4xl text-slate-900">{p.price}</span>
+                  <span className="text-xs text-slate-500 font-medium">/ month</span>
+                </div>
+                <p className="text-xs text-slate-600 mb-6">{p.desc}</p>
+
+                <button
+                  onClick={onLaunch}
+                  className={`w-full py-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-all mb-8 ${p.btnStyle}`}
+                >
+                  {p.btnLabel}
+                </button>
+
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-3">Included Features:</p>
+                <ul className="space-y-2.5">
+                  {p.features.map((feat) => (
+                    <li key={feat} className="flex items-center gap-2 text-xs text-slate-700">
+                      <Check className="w-3.5 h-3.5 text-violet-600 shrink-0" />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ─── THE PERFECT ML SOLUTION FOR EVERY WORKFLOW ─────────────────────────────── */
+function PerfectSolutionSection({ onLaunch }) {
+  const checklists = [
+    '100% Client-Side Processing',
+    'Automated Imputation & Encoding',
+    'Real-time ROC & PR Curves',
+    'Instant Python Code Generation',
+    'No Cloud Vendor Lock-In',
+    'Production-Ready FastAPI Artifacts',
+  ];
+
+  return (
+    <section className="py-24 bg-slate-50/60 border-y border-slate-200/80">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="grid lg:grid-cols-12 gap-12 items-center">
+          {/* Left Preview Card */}
+          <div className="lg:col-span-5">
+            <Reveal>
+              <div className="bg-[#0B0F17] rounded-3xl p-6 text-white shadow-xl text-left">
+                <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+                  <span className="text-xs font-mono text-slate-400">flowml-mobile-inspector</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                </div>
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 mb-4">
+                  <p className="text-[10px] text-slate-400 uppercase font-mono">Top Benchmark</p>
+                  <p className="font-display font-bold text-lg text-white">XGBoost Classifier</p>
+                  <p className="text-xs text-emerald-400 font-mono mt-1">✓ F1: 0.962 • Accuracy: 98.4%</p>
+                </div>
+                <div className="space-y-2 text-xs text-slate-300">
+                  <div className="flex justify-between py-1 border-b border-white/5">
+                    <span>Cross Validation</span>
+                    <span className="font-mono text-white">5 Folds</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-white/5">
+                    <span>Serialization</span>
+                    <span className="font-mono text-white">model.joblib (14.2MB)</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span>Export Target</span>
+                    <span className="font-mono text-violet-400">FastAPI Container</span>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+
+          {/* Right Checklist */}
+          <div className="lg:col-span-7 text-left">
+            <Reveal delay={0.1}>
+              <h2 className="font-display font-bold text-3xl sm:text-4xl text-slate-900 tracking-tight mb-4">
+                The perfect machine learning solution for every workflow
+              </h2>
+              <p className="text-slate-600 text-base leading-relaxed mb-8">
+                From exploratory data analysis and feature engineering to hyperparameter tuning and model monitoring, FlowML covers your entire pipeline.
+              </p>
+
+              <div className="grid sm:grid-cols-2 gap-3.5 mb-8">
+                {checklists.map((item) => (
+                  <div key={item} className="flex items-center gap-2.5">
+                    <div className="w-5 h-5 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center shrink-0">
+                      <Check className="w-3 h-3" />
+                    </div>
+                    <span className="text-sm font-medium text-slate-700">{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={onLaunch}
+                className="px-6 py-3 rounded-full text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white inline-flex items-center gap-2 transition-all shadow-md shadow-violet-500/20 cursor-pointer"
+              >
+                Start building with FlowML <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </Reveal>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-/* ─── CALL TO ACTION ─────────────────────────────────────────────────────────── */
-function CTA({ onLaunch }) {
+/* ─── BOTTOM CTA BANNER WITH MOCKUP ──────────────────────────────────────────── */
+function BottomCtaSection({ onLaunch }) {
+  const navigate = useNavigate();
+
   return (
-    <section className="py-28 relative overflow-hidden" style={{ background: '#0a0f1c' }}>
-      <Blob color="#6366f1" style={{ width: 600, height: 600, top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
-      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+    <section className="pt-24 pb-12 relative overflow-hidden bg-gradient-to-b from-white via-violet-50/50 to-violet-100/30">
+      <div className="max-w-7xl mx-auto px-6 text-center">
         <Reveal>
-          <div
-            className="p-12 md:p-16 rounded-3xl relative overflow-hidden"
-            style={{
-              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%)',
-              border: '1px solid rgba(99, 102, 241, 0.3)',
-              boxShadow: '0 25px 80px -20px rgba(99, 102, 241, 0.35)',
-            }}
-          >
-            <div
-              className="w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl"
-              style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
-            >
-              <Cpu className="w-8 h-8 text-white" />
-            </div>
-
-            <h2
-              className="font-sora font-extrabold mb-5 text-slate-100"
-              style={{ fontSize: 'clamp(2rem, 4.5vw, 3.25rem)', letterSpacing: '-0.02em' }}
-            >
-              Start Building Machine Learning<br />
-              <GText from="#6366f1" to="#ec4899">Pipelines in Minutes</GText>
+          <div className="max-w-3xl mx-auto mb-10">
+            <h2 className="font-display font-extrabold text-3xl sm:text-5xl text-slate-900 tracking-tight mb-4">
+              Take your machine learning workflow to the next level
             </h2>
-
-            <p className="text-base md:text-lg mb-10 max-w-xl mx-auto text-slate-400">
-              Join thousands of data scientists, engineers, and analysts shipping production models with FlowML Studio.
+            <p className="text-slate-600 text-base sm:text-lg mb-8">
+              Join thousands of data scientists, researchers, and developers who build, train, and deploy models with FlowML.
             </p>
-
             <div className="flex flex-wrap items-center justify-center gap-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <button
                 onClick={onLaunch}
-                className="flex items-center gap-3 px-9 py-4 rounded-2xl text-base md:text-lg font-bold text-white shadow-2xl transition-all"
-                style={{
-                  background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
-                  boxShadow: '0 8px 32px rgba(99, 102, 241, 0.5)',
-                }}
+                className="px-8 py-3.5 rounded-full text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white shadow-lg shadow-violet-500/25 transition-all cursor-pointer flex items-center gap-2"
               >
-                <Zap className="w-5 h-5 fill-current" />
-                Launch FlowML Studio Free
-                <ArrowRight className="w-5 h-5" />
-              </motion.button>
+                Start Building Free <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => navigate('/docs')}
+                className="px-6 py-3.5 rounded-full text-xs font-semibold bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 shadow-xs transition-all cursor-pointer"
+              >
+                Read Documentation
+              </button>
             </div>
+          </div>
+        </Reveal>
 
-            <p className="mt-5 text-xs text-slate-500">
-              No credit card required • 100% local processing • Open-source compatible
-            </p>
+        {/* Large perspective app mockup preview fading at the bottom */}
+        <Reveal delay={0.2}>
+          <div className="max-w-5xl mx-auto mt-12 bg-white rounded-t-3xl border-t border-x border-slate-200/90 shadow-2xl p-4 sm:p-6 pb-0 overflow-hidden">
+            <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+              <span className="text-[11px] font-mono text-slate-400 ml-2">flowml-studio://canvas</span>
+            </div>
+            <div className="h-64 sm:h-80 bg-gradient-to-tr from-slate-50 via-violet-50/30 to-slate-100 rounded-t-2xl p-6 flex flex-col items-center justify-center text-center">
+              <div className="w-16 h-16 rounded-2xl bg-violet-600 text-white flex items-center justify-center shadow-lg shadow-violet-500/30 mb-4">
+                <Cpu className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="font-display font-bold text-xl text-slate-900 mb-2">FlowML Studio Canvas</h3>
+              <p className="text-xs text-slate-500 max-w-md">
+                Experience full visual pipeline editing with live metrics, node execution logs, and automated code generation.
+              </p>
+            </div>
           </div>
         </Reveal>
       </div>
@@ -1606,72 +1142,77 @@ function CTA({ onLaunch }) {
   );
 }
 
-/* ─── FOOTER ─────────────────────────────────────────────────────────────────── */
+/* ─── DARK MODERN SAAS FOOTER ────────────────────────────────────────────────── */
 function Footer() {
   const navigate = useNavigate();
 
   return (
-    <footer className="py-16 border-t" style={{ background: '#080c14', borderColor: 'rgba(255, 255, 255, 0.06)' }}>
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-4 gap-8 mb-12">
-          {/* Brand col */}
-          <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
-              >
+    <footer className="bg-[#0A0D14] text-slate-400 py-16 px-6 text-left border-t border-slate-900">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 pb-12 border-b border-white/10">
+          {/* Brand info */}
+          <div className="col-span-2">
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center text-white">
                 <Cpu className="w-4 h-4 text-white" />
               </div>
-              <span
-                className="font-sora font-extrabold text-lg"
-                style={{
-                  background: 'linear-gradient(90deg, #6366f1, #3b82f6)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                FlowML Studio
-              </span>
+              <span className="font-display font-extrabold text-lg text-white tracking-tight">FlowML</span>
             </div>
-            <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
+            <p className="text-xs text-slate-400 max-w-xs leading-relaxed mb-6">
               The next-generation visual pipeline canvas for machine learning development, automated benchmarking, and transparent explainable AI.
             </p>
+            <div className="flex items-center gap-4 text-slate-400">
+              <a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-white transition-colors" aria-label="GitHub">
+                <Code2 className="w-4 h-4" />
+              </a>
+              <a href="https://twitter.com" target="_blank" rel="noreferrer" className="hover:text-white transition-colors" aria-label="Twitter">
+                <Globe className="w-4 h-4" />
+              </a>
+            </div>
           </div>
 
-          {/* Product links */}
+          {/* Solutions Column */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-4">Product</h4>
-            <ul className="space-y-2.5 text-sm text-slate-400">
-              <li><button onClick={() => navigate('/studio')} className="hover:text-white transition-colors">Studio Canvas</button></li>
-              <li><button onClick={() => navigate('/app')} className="hover:text-white transition-colors">Workspace Dashboard</button></li>
-              <li><button onClick={() => navigate('/app/templates')} className="hover:text-white transition-colors">Pre-built Blueprints</button></li>
-              <li><button onClick={() => navigate('/signup')} className="hover:text-white transition-colors">Create Free Account</button></li>
+            <h4 className="font-display font-bold text-xs text-white uppercase tracking-wider mb-4">Solutions</h4>
+            <ul className="space-y-2.5 text-xs">
+              <li><button onClick={() => navigate('/studio')} className="hover:text-white transition-colors cursor-pointer">AutoML Studio</button></li>
+              <li><button onClick={() => navigate('/studio')} className="hover:text-white transition-colors cursor-pointer">Data Cleaning</button></li>
+              <li><button onClick={() => navigate('/studio')} className="hover:text-white transition-colors cursor-pointer">Model Tuning</button></li>
+              <li><button onClick={() => navigate('/studio')} className="hover:text-white transition-colors cursor-pointer">FastAPI Export</button></li>
             </ul>
           </div>
 
-          {/* Resources links */}
+          {/* Product Column */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-4">Resources & Legal</h4>
-            <ul className="space-y-2.5 text-sm text-slate-400">
-              <li><button onClick={() => navigate('/docs')} className="hover:text-white transition-colors">Documentation</button></li>
-              <li><button onClick={() => navigate('/tutorials')} className="hover:text-white transition-colors">Tutorials</button></li>
-              <li><button onClick={() => navigate('/about')} className="hover:text-white transition-colors">About FlowML</button></li>
-              <li><button onClick={() => navigate('/contact')} className="hover:text-white transition-colors">Contact Support</button></li>
-              <li><button onClick={() => navigate('/privacy')} className="hover:text-white transition-colors">Privacy Policy</button></li>
-              <li><button onClick={() => navigate('/terms')} className="hover:text-white transition-colors">Terms of Service</button></li>
+            <h4 className="font-display font-bold text-xs text-white uppercase tracking-wider mb-4">Product</h4>
+            <ul className="space-y-2.5 text-xs">
+              <li><button onClick={() => navigate('/features')} className="hover:text-white transition-colors cursor-pointer">Features</button></li>
+              <li><button onClick={() => navigate('/app/projects')} className="hover:text-white transition-colors cursor-pointer">Projects</button></li>
+              <li><button onClick={() => navigate('/app/templates')} className="hover:text-white transition-colors cursor-pointer">Blueprints</button></li>
+              <li><button onClick={() => navigate('/signin')} className="hover:text-white transition-colors cursor-pointer">Sign In</button></li>
+            </ul>
+          </div>
+
+          {/* Resources Column */}
+          <div>
+            <h4 className="font-display font-bold text-xs text-white uppercase tracking-wider mb-4">Resources</h4>
+            <ul className="space-y-2.5 text-xs">
+              <li><button onClick={() => navigate('/docs')} className="hover:text-white transition-colors cursor-pointer">Documentation</button></li>
+              <li><button onClick={() => navigate('/tutorials')} className="hover:text-white transition-colors cursor-pointer">Tutorials</button></li>
+              <li><button onClick={() => navigate('/privacy')} className="hover:text-white transition-colors cursor-pointer">Privacy Policy</button></li>
+              <li><button onClick={() => navigate('/terms')} className="hover:text-white transition-colors cursor-pointer">Terms of Service</button></li>
             </ul>
           </div>
         </div>
 
-        <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <p>© 2026 FlowML Studio. All rights reserved.</p>
           <div className="flex items-center gap-6">
-            <button onClick={() => navigate('/privacy')} className="hover:text-slate-400 transition-colors">Privacy</button>
+            <button onClick={() => navigate('/privacy')} className="hover:text-white transition-colors cursor-pointer">Privacy</button>
             <span>•</span>
-            <button onClick={() => navigate('/terms')} className="hover:text-slate-400 transition-colors">Terms</button>
+            <button onClick={() => navigate('/terms')} className="hover:text-white transition-colors cursor-pointer">Terms</button>
             <span>•</span>
-            <button onClick={() => navigate('/contact')} className="hover:text-slate-400 transition-colors">Contact</button>
+            <button onClick={() => navigate('/contact')} className="hover:text-white transition-colors cursor-pointer">Contact</button>
           </div>
         </div>
       </div>
@@ -1679,25 +1220,86 @@ function Footer() {
   );
 }
 
-/* ─── MAIN LANDING PAGE ──────────────────────────────────────────────────────── */
+/* ─── MAIN LANDING PAGE COMPONENT ────────────────────────────────────────────── */
 export default function LandingPage() {
   const navigate = useNavigate();
   const launch = () => navigate('/studio');
 
   return (
-    <div style={{ background: '#080c14', fontFamily: 'Inter, sans-serif', color: '#f0f4ff', minHeight: '100vh' }}>
+    <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-violet-500 selection:text-white">
       <Navbar onLaunch={launch} />
-      <Hero onLaunch={launch} />
-      <Stats />
-      <Features />
-      <Blueprints onLaunch={launch} />
-      <Models />
-      <CodeCompare />
-      <Testimonials />
-      <Pricing onLaunch={launch} />
-      <FAQ />
-      <CTA onLaunch={launch} />
-      <Footer onLaunch={launch} />
+
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-20 overflow-hidden bg-gradient-to-b from-violet-100/40 via-purple-50/20 to-white text-center">
+        {/* Soft Radial Ambient Glow */}
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[550px] opacity-40 pointer-events-none rounded-full blur-3xl -z-10"
+          style={{ background: 'radial-gradient(circle, rgba(167, 139, 250, 0.4) 0%, rgba(245, 243, 255, 0) 70%)' }}
+        />
+
+        <div className="max-w-7xl mx-auto px-6">
+          <HeroReveal>
+            {/* Announcement Pill */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white shadow-xs mb-8 hover:bg-slate-800 transition-colors cursor-pointer">
+              <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+              <span>v2.0 is live: Experience Next-Gen AutoML Studio</span>
+              <ArrowRight className="w-3.5 h-3.5 ml-0.5 text-slate-400" />
+            </div>
+
+            {/* Main Headline */}
+            <h1 className="font-display font-extrabold text-4xl sm:text-6xl md:text-7xl text-slate-900 tracking-tight leading-[1.08] max-w-4xl mx-auto mb-6">
+              Bring ML pipelines to life in just a few clicks.
+            </h1>
+
+            {/* Subtitle */}
+            <p className="text-slate-600 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed mb-8">
+              Empower your team with a no-code visual canvas and automated machine learning. From data cleaning to instant deployment, all in your browser.
+            </p>
+
+            {/* CTA Button */}
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <button
+                onClick={launch}
+                className="px-8 py-3.5 rounded-full text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white shadow-lg shadow-violet-500/25 transition-all cursor-pointer flex items-center gap-2"
+              >
+                Start building free <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </HeroReveal>
+
+          {/* Interactive Hero Showcase */}
+          <HeroReveal delay={0.2}>
+            <HeroPreviewDemo onLaunch={launch} />
+          </HeroReveal>
+        </div>
+      </section>
+
+      {/* 3-Column Features Trio */}
+      <FeatureCardsTrio />
+
+      {/* Simplify Your Workflow */}
+      <SimplifyWorkflowSection onLaunch={launch} />
+
+      {/* Integrations */}
+      <IntegrationsSection onLaunch={launch} />
+
+      {/* Dark Next-Gen Features Showcase */}
+      <DarkNextGenSection onLaunch={launch} />
+
+      {/* Social Proof */}
+      <SocialProofSection />
+
+      {/* Pricing Plans */}
+      <PricingSection onLaunch={launch} />
+
+      {/* Perfect ML Solution */}
+      <PerfectSolutionSection onLaunch={launch} />
+
+      {/* Bottom CTA Banner with Mockup */}
+      <BottomCtaSection onLaunch={launch} />
+
+      {/* Dark Modern Footer */}
+      <Footer />
     </div>
   );
 }

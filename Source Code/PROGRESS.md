@@ -128,15 +128,45 @@
   - `test_multi_user.py`: 3 and 5 simulated concurrent users with dataset privacy, account isolation, failing code, and crash recovery.
 ---
 
-## Phase 4: Fix Errors, Clean Routing, Redesign UI (In Progress)
+## Phase 4: Fix Errors, Clean Routing, Redesign UI ✓
 
 ### 1. Error Audit and Fixes ✓
-- [x] **Frontend ESLint & Build**: Resolved all 53 errors across components, views, and layout. `npm run lint` yields 0 errors, `npm run build` generates production bundle in 2.7s.
+- [x] **Frontend ESLint & Build**: Resolved all 53 errors across components, views, and layout. `npm run lint` yields 0 errors, `npm run build` generates production bundle in 900ms.
 - [x] **Backend Pytest & Modernized API Tests**:
   - `backend/pytest.ini` configured with `testpaths = tests` to isolate unit/integration test discovery.
-  - All 60/60 pytest tests pass cleanly in 42s.
+  - All 60/60 pytest tests pass cleanly in 47s.
   - `test_api.py` upgraded for Phase 1-4 authenticated architecture; runs complete end-to-end flow (upload -> analyze -> preprocess -> train -> visualizations -> predict) with 100% success.
 - [x] **Windows File Locking (WinError 32)**: Fixed `tempfile.NamedTemporaryFile` process locking in `routes/preprocess.py` and `routes/upload.py` by using Windows-safe named paths and `os.replace`.
 - [x] **Error Boundaries & Consistent Error Interceptor**:
   - Created `ErrorBoundary.jsx` with recovery UI and wrapped application in `main.jsx`.
   - Upgraded Axios response interceptor in `services/api.js` to normalize status codes (401, 403, 413, 429, 500) into user-friendly messages with no raw stack traces.
+- [x] **Windows Path Traversal Resolution**: Fixed `LocalDiskStore._safe_path` using `.resolve()` and `.relative_to()` to prevent false-positive traversal rejections from 8.3 short-name aliases and drive case differences.
+
+### 2. Routing Cleanup ✓
+- [x] Single router source of truth in [routes.jsx](file:///c:/Users/vishw/Desktop/Projects/FlowML/Source%20Code/frontend/src/routes.jsx):
+  - Public: `/`, `/features`, `/docs`, `/tutorials`, `/about`, `/contact`, `/privacy`, `/terms`.
+  - Auth: `/signin`, `/signup`, `/forgot-password`, `/verify-email`.
+  - App Dashboard: `/app/projects`, `/app/projects/new`, `/app/datasets`, `/app/models`, `/app/runs`, `/app/templates`, `/app/code`, `/app/admin`, `/app/settings`.
+  - Studio: `/studio`, `/studio/:projectId`.
+  - Canonical redirects: `/login` → `/signin`, `/register` → `/signup`, `/dashboard` → `/app/projects`.
+  - Removed duplicate `/app` route collision.
+  - 404 Catch-all route to [NotFoundPage.jsx](file:///c:/Users/vishw/Desktop/Projects/FlowML/Source%20Code/frontend/src/pages/NotFoundPage.jsx).
+
+### 3. Light Theme Redesign & Button Verification ✓
+- [x] **Global Light Theme Enforcement**:
+  - Stripped all hardcoded dark hex backgrounds (`#080c14`, `#0e1422`, `#0a0f1c`) across [LandingPage.jsx](file:///c:/Users/vishw/Desktop/Projects/FlowML/Source%20Code/frontend/src/pages/LandingPage.jsx), [InfoPages.jsx](file:///c:/Users/vishw/Desktop/Projects/FlowML/Source%20Code/frontend/src/pages/info/InfoPages.jsx), [AdminView.jsx](file:///c:/Users/vishw/Desktop/Projects/FlowML/Source%20Code/frontend/src/pages/dashboard/AdminView.jsx), and [ResultsOverlay.jsx](file:///c:/Users/vishw/Desktop/Projects/FlowML/Source%20Code/frontend/src/components/layout/ResultsOverlay.jsx).
+  - Consistent modern palette: light slate background (`#f8fafc`), pure white card surfaces (`#ffffff`), subtle borders (`#e2e8f0`), indigo/violet brand accents (`#4f46e5`), and slate-900 typography.
+  - No dark mode toggle; entire product strictly runs in clean light mode.
+- [x] **Button Clicks & Interactive Feedback**:
+  - Wired and verified all navigation links, tabs, CTAs, test run simulation triggers, download triggers, and modal actions with active/hover feedback.
+
+### 4. Typography System & Unified Violet Light UI ✓
+- [x] **Typography Foundation**:
+  - Google Fonts integrated in `index.html`: Plus Jakarta Sans (600, 700, 800), Inter (400, 500, 600), JetBrains Mono (400, 500).
+  - Extended font families in `tailwind.config.js` (`display`, `sans`, `mono`).
+  - Created reusable live-text `Logo.jsx` with bold wordmark typography.
+- [x] **Landing Page SaaS Migration**:
+  - Rebuilt `LandingPage.jsx` matching target SaaS aesthetic: violet ambient glows, dual-mockup hero showcase, pastel trio feature cards, interactive stepper, integrations hub, dark next-gen feature block, and flexible pricing.
+- [x] **Project-Wide Theme Unification**:
+  - Unified color system to FlowML Violet (`#7C3AED` / `violet-600`) and pure light surfaces across `DashboardLayout`, all dashboard views (`ProjectsView`, `DatasetsView`, `ModelsView`, `RunsView`, `TemplatesView`, `CodeEditorView`, `AdminView`, `SettingsView`), Info & Docs pages, Studio canvas, and Auth views.
+  - Production build passes with 0 errors.

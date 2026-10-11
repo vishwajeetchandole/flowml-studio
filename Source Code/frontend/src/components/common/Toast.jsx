@@ -12,7 +12,7 @@ const TOAST_ICONS = {
 const TOAST_COLORS = {
   success: { border: '#22c55e40', bg: 'rgba(34, 197, 94, 0.12)', text: '#22c55e', glow: 'rgba(34, 197, 94, 0.25)' },
   error:   { border: '#ef444440', bg: 'rgba(239, 68, 68, 0.12)', text: '#ef4444', glow: 'rgba(239, 68, 68, 0.25)' },
-  info:    { border: '#6366f140', bg: 'rgba(99, 102, 241, 0.12)', text: '#818cf8', glow: 'rgba(99, 102, 241, 0.25)' },
+  info:    { border: '#7C3AED40', bg: 'rgba(124, 58, 237, 0.12)', text: '#7C3AED', glow: 'rgba(124, 58, 237, 0.25)' },
   warning: { border: '#f59e0b40', bg: 'rgba(245, 158, 11, 0.12)', text: '#f59e0b', glow: 'rgba(245, 158, 11, 0.25)' },
 };
 

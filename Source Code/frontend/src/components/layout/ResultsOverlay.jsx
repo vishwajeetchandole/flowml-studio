@@ -22,7 +22,7 @@ import {
 
 /* ─── Step status config ─────────────────────────────────────────────────────── */
 const STEP_CFG = {
-  running: { color: '#6366f1', bg: 'rgba(99,102,241,0.12)',  Icon: Loader2,       spin: true  },
+  running: { color: '#7C3AED', bg: 'rgba(124,58,237,0.12)',  Icon: Loader2,       spin: true  },
   done:    { color: '#22c55e', bg: 'rgba(34,197,94,0.10)',   Icon: CheckCircle2,  spin: false },
   error:   { color: '#ef4444', bg: 'rgba(239,68,68,0.10)',   Icon: AlertCircle,   spin: false },
   warning: { color: '#f59e0b', bg: 'rgba(245,158,11,0.10)',  Icon: AlertTriangle, spin: false },
@@ -132,17 +132,17 @@ function OverviewTab({ results }) {
 
       {uploadResult && (
         <div className="rounded-2xl p-6" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-          <h3 className="font-sora font-bold text-base mb-4" style={{ color: 'var(--color-text)' }}>
+          <h3 className="font-display font-bold text-base mb-4" style={{ color: 'var(--color-text)' }}>
             Dataset Summary
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono">
             <div>
               <span className="text-slate-400 block text-[10px] uppercase">File Name</span>
-              <span className="text-white font-bold">{uploadResult.file_name}</span>
+              <span className="font-bold" style={{ color: 'var(--color-text)' }}>{uploadResult.file_name}</span>
             </div>
             <div>
               <span className="text-slate-400 block text-[10px] uppercase">Feature Dimensions</span>
-              <span className="text-white font-bold">{uploadResult.columns} cols × {uploadResult.rows} rows</span>
+              <span className="font-bold" style={{ color: 'var(--color-text)' }}>{uploadResult.columns} cols × {uploadResult.rows} rows</span>
             </div>
             <div>
               <span className="text-slate-400 block text-[10px] uppercase">Target Variable</span>
@@ -175,7 +175,7 @@ function ModelsTab({ results }) {
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
           <Trophy className="w-5 h-5 text-amber-400" />
-          <h3 className="font-sora text-lg font-bold" style={{ color: 'var(--color-text)' }}>
+          <h3 className="font-display text-lg font-bold" style={{ color: 'var(--color-text)' }}>
             Model Comparison & Benchmark Leaderboard
           </h3>
         </div>
@@ -197,17 +197,17 @@ function ModelsTab({ results }) {
               transition={{ delay: i * 0.05 }}
               className="p-5 rounded-2xl transition-all"
               style={{
-                background: isBest ? 'rgba(99,102,241,0.08)' : 'var(--color-surface)',
-                border: `1px solid ${isBest ? 'rgba(99,102,241,0.35)' : 'var(--color-border)'}`,
+                background: isBest ? 'rgba(124,58,237,0.08)' : 'var(--color-surface)',
+                border: `1px solid ${isBest ? 'rgba(124,58,237,0.35)' : 'var(--color-border)'}`,
               }}
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold"
-                    style={{ background: isBest ? 'rgba(99,102,241,0.2)' : 'var(--color-bg)', color: isBest ? '#818cf8' : 'var(--color-text-muted)' }}>
+                    style={{ background: isBest ? 'rgba(124,58,237,0.2)' : 'var(--color-bg)', color: isBest ? '#7C3AED' : 'var(--color-text-muted)' }}>
                     #{i + 1}
                   </span>
-                  <span className="font-sora text-base font-bold" style={{ color: isBest ? '#818cf8' : 'var(--color-text)' }}>
+                  <span className="font-display text-base font-bold" style={{ color: isBest ? '#7C3AED' : 'var(--color-text)' }}>
                     {m.model_name}
                   </span>
                   {isBest && (
@@ -216,7 +216,7 @@ function ModelsTab({ results }) {
                     </span>
                   )}
                 </div>
-                <span className="text-xl font-bold font-mono" style={{ color: isBest ? '#818cf8' : 'var(--color-text)' }}>
+                <span className="text-xl font-bold font-mono" style={{ color: isBest ? '#7C3AED' : 'var(--color-text)' }}>
                   {taskType === 'classification' ? pct(val) : fmt(val, 4)}
                 </span>
               </div>
@@ -227,7 +227,7 @@ function ModelsTab({ results }) {
                   className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${barPct}%`,
-                    background: isBest ? 'linear-gradient(90deg, #6366f1, #3b82f6)' : '#4b5563',
+                    background: isBest ? 'linear-gradient(90deg, #7C3AED, #6D28D9)' : '#4b5563',
                   }}
                 />
               </div>
@@ -283,7 +283,7 @@ function ActualVsPredTab({ results }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-sora text-lg font-bold" style={{ color: 'var(--color-text)' }}>
+          <h3 className="font-display text-lg font-bold" style={{ color: 'var(--color-text)' }}>
             Actual vs. Predicted Alignment
           </h3>
           <p className="text-xs text-slate-400">
@@ -302,13 +302,13 @@ function ActualVsPredTab({ results }) {
               <th className="py-3 px-4 text-right">Alignment Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-slate-100">
             {comparisons.map((c) => {
               const matched = String(c.actual) === String(c.predicted);
               return (
-                <tr key={c.index} className="hover:bg-white/[0.02]">
+                <tr key={c.index} className="hover:bg-slate-50">
                   <td className="py-2.5 px-4 text-slate-400">#{c.index + 1}</td>
-                  <td className="py-2.5 px-4 text-white font-bold">{String(c.actual)}</td>
+                  <td className="py-2.5 px-4 font-bold" style={{ color: 'var(--color-text)' }}>{String(c.actual)}</td>
                   <td className="py-2.5 px-4 text-primary font-bold">{String(c.predicted)}</td>
                   <td className="py-2.5 px-4 text-right">
                     <span
@@ -344,7 +344,7 @@ function ExplainabilityTab({ results }) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="font-sora text-lg font-bold" style={{ color: 'var(--color-text)' }}>
+        <h3 className="font-display text-lg font-bold" style={{ color: 'var(--color-text)' }}>
           Model Interpretability & Feature Attribution
         </h3>
         <p className="text-xs text-slate-400">
@@ -426,7 +426,7 @@ function PredictionsTab({ results }) {
         <button
           onClick={downloadCSV}
           className="px-4 py-2 rounded-xl text-xs font-bold text-white flex items-center gap-2 shadow-md"
-          style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+          style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
         >
           <Download className="w-3.5 h-3.5" />
           Download CSV
@@ -516,8 +516,8 @@ function Tab({ id, label, icon: Icon, active, onClick, badge }) {
       onClick={() => onClick(id)}
       className="flex items-center gap-2 px-4 py-3 text-xs font-semibold transition-all relative"
       style={{
-        color: active ? '#818cf8' : 'var(--color-text-muted)',
-        borderBottom: active ? '2.5px solid #6366f1' : '2.5px solid transparent',
+        color: active ? '#7C3AED' : 'var(--color-text-muted)',
+        borderBottom: active ? '2.5px solid #7C3AED' : '2.5px solid transparent',
       }}
     >
       <Icon className="w-4 h-4" />
@@ -549,12 +549,13 @@ export default function ResultsOverlay({ pipelineState, steps, results, onClose,
 <head>
   <title>FlowML Execution Report</title>
   <style>
-    body { font-family: sans-serif; background: #080c14; color: #f0f4ff; padding: 40px; }
-    h1 { color: #818cf8; font-size: 24px; }
-    .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; background: rgba(99,102,241,0.2); color: #818cf8; font-size: 12px; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #ffffff; color: #1F1B2E; padding: 40px; }
+    h1, h2, h3 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-weight: 700; }
+    h1 { color: #7C3AED; font-size: 24px; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #eef2ff; color: #4f46e5; font-size: 12px; font-weight: 600; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
-    th, td { border: 1px solid #1a2236; padding: 10px; text-align: left; }
-    th { background: #0e1420; color: #8892a4; text-transform: uppercase; font-size: 11px; }
+    th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
+    th { background: #f8fafc; color: #475569; text-transform: uppercase; font-size: 11px; }
   </style>
 </head>
 <body>
@@ -611,7 +612,7 @@ export default function ResultsOverlay({ pipelineState, steps, results, onClose,
           {isError   && <AlertCircle className="w-5 h-5 text-red-400" />}
 
           <div>
-            <h2 className="font-sora font-bold text-base" style={{ color: 'var(--color-text)' }}>
+            <h2 className="font-display font-bold text-base" style={{ color: 'var(--color-text)' }}>
               Pipeline Execution Results
             </h2>
             <p className="text-[11px] text-slate-400">
@@ -625,7 +626,7 @@ export default function ResultsOverlay({ pipelineState, steps, results, onClose,
             <button
               onClick={handleDownloadReport}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-md"
-              style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
+              style={{ background: 'linear-gradient(135deg, #7C3AED, #6D28D9)' }}
             >
               <FileText className="w-3.5 h-3.5" />
               Download Report

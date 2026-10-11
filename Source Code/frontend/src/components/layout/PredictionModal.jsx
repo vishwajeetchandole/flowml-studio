@@ -124,7 +124,7 @@ export default function PredictionModal({ result, trainedConfig, onClose }) {
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-purple-400">FlowML · Inference Engine</p>
-              <h2 className="text-lg font-bold font-sora" style={{ color: 'var(--color-text)' }}>
+              <h2 className="text-lg font-bold font-display" style={{ color: 'var(--color-text)' }}>
                 Prediction Results
               </h2>
             </div>

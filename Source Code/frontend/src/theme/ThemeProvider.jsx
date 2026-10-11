@@ -12,7 +12,7 @@ export const ThemeProvider = ({ children }) => {
 
   return (
     <ThemeContext.Provider value={{ theme: 'light', toggleTheme: () => {} }}>
-      <div className="light min-h-screen bg-slate-50 text-slate-900 antialiased selection:bg-indigo-500 selection:text-white">
+      <div className="light min-h-screen bg-slate-50 text-slate-900 antialiased selection:bg-violet-500 selection:text-white">
         {children}
       </div>
     </ThemeContext.Provider>
