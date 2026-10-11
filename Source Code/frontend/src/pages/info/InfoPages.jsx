@@ -808,6 +808,36 @@ print(f"Chart rendered for column: {first_num}")
 
 /* ─── 3. About Page ─────────────────────────────────────────────────────────── */
 export function AboutPage() {
+  const team = [
+    {
+      name: 'Vishwajeet Chandole',
+      initials: 'VC',
+      color: 'bg-violet-600',
+      role: 'Full-Stack ML Engineer & Lead Developer',
+      bio: 'Architect of the FlowML visual pipeline engine and DAG execution runtime. Vishwajeet designed the core canvas, node system, AutoML tournament engine, and FastAPI backend from the ground up.',
+      skills: ['React', 'FastAPI', 'Python ML', 'System Design', 'Canvas Engine'],
+      contributions: ['Pipeline DAG runtime', 'AutoML tournament', 'REST API design', 'Frontend architecture'],
+    },
+    {
+      name: 'Ajinkya Walvekar',
+      initials: 'AW',
+      color: 'bg-indigo-600',
+      role: 'ML Systems & Data Engineering',
+      bio: 'Led the development of FlowML\'s data ingestion pipelines, preprocessing node library, and code sandbox execution infrastructure. Built the isolated Python execution environment with memory and timeout enforcement.',
+      skills: ['Pandas', 'Scikit-Learn', 'Sandbox Security', 'Data Pipelines', 'Docker'],
+      contributions: ['Preprocessing nodes', 'Code sandbox', 'Dataset management', 'Export tooling'],
+    },
+    {
+      name: 'Kush Zalavadiya',
+      initials: 'KZ',
+      color: 'bg-emerald-600',
+      role: 'UI/UX Design & Frontend Engineer',
+      bio: 'Designed and implemented FlowML\'s visual identity, landing page, and dashboard interface. Kush crafted the light theme design system, component library, and interactive pipeline canvas animations.',
+      skills: ['UI Design', 'TailwindCSS', 'Framer Motion', 'Design Systems', 'Figma'],
+      contributions: ['Design system', 'Landing page', 'Component library', 'Theming & animations'],
+    },
+  ];
+
   return (
     <PageLayout
       title="About FlowML"
@@ -815,29 +845,115 @@ export function AboutPage() {
       badge="Our Mission"
       icon={Cpu}
     >
-      <div className="max-w-3xl space-y-8">
-        <div className="p-6 rounded-2xl border border-slate-100 bg-white p-6 rounded-2xl space-y-4">
-          <h2 className="text-lg font-bold text-slate-900">Visual Power Without The Black Box</h2>
-          <p className="text-sm text-slate-400 leading-relaxed">
-            FlowML Studio was created with a clear principle: machine learning should be visual and rapid, without sacrificing the rigour, auditability, and execution performance of state-of-the-art Python toolchains.
-          </p>
-          <p className="text-sm text-slate-400 leading-relaxed">
-            Every block on the canvas maps directly to verified scikit-learn transformers, real pandas dataframes, and mathematical loss functions. When you click run, your graph compiles into a validated Directed Acyclic Graph (DAG) executed with isolated memory sandboxes.
-          </p>
+      <div className="space-y-16">
+        {/* Mission Statement */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-xs">
+            <h2 className="text-lg font-bold text-slate-900 mb-3">Visual Power Without The Black Box</h2>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              FlowML Studio was created with a clear principle: machine learning should be visual and rapid, without sacrificing the rigour, auditability, and execution performance of state-of-the-art Python toolchains.
+            </p>
+            <p className="text-sm text-slate-600 leading-relaxed mt-3">
+              Every block on the canvas maps directly to verified scikit-learn transformers, real pandas dataframes, and mathematical loss functions. When you click run, your graph compiles into a validated Directed Acyclic Graph (DAG) executed with isolated memory sandboxes.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <div className="p-5 rounded-2xl bg-violet-50 border border-violet-200 text-center">
+              <span className="text-3xl font-black text-violet-600 block mb-1">100%</span>
+              <span className="text-xs font-semibold text-violet-700">Scikit-Learn Compatible</span>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-center">
+                <span className="text-2xl font-black text-blue-600 block mb-1">0ms</span>
+                <span className="text-xs font-semibold text-blue-700">Cloud Lock-in</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-center">
+                <span className="text-2xl font-black text-emerald-600 block mb-1">SHAP</span>
+                <span className="text-xs font-semibold text-emerald-700">Explainability</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="grid sm:grid-cols-3 gap-4">
-          <div className="p-5 rounded-xl bg-white/[0.02] border border-white/5 text-center">
-            <span className="text-2xl font-black text-violet-400 block mb-1">100%</span>
-            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Scikit-Learn Compatible</span>
+        {/* Team Section */}
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <span className="w-7 h-7 rounded-lg bg-violet-500/10 text-violet-600 flex items-center justify-center font-bold text-xs">
+              👥
+            </span>
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Meet the Team</h2>
           </div>
-          <div className="p-5 rounded-xl bg-white/[0.02] border border-white/5 text-center">
-            <span className="text-2xl font-black text-blue-400 block mb-1">0ms</span>
-            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Cloud Lock-in</span>
+          <p className="text-sm text-slate-500 mb-8">
+            FlowML was built by three engineers passionate about making machine learning accessible, transparent, and production-ready.
+          </p>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {team.map((member, i) => (
+              <div
+                key={i}
+                className="p-6 rounded-2xl border border-slate-200 bg-white shadow-xs hover:shadow-md hover:border-violet-200 transition-all"
+              >
+                {/* Avatar */}
+                <div className="flex items-center gap-4 mb-5">
+                  <div className={`w-14 h-14 rounded-2xl ${member.color} text-white flex items-center justify-center font-bold text-lg shadow-md`}>
+                    {member.initials}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base text-slate-900 leading-tight">{member.name}</h3>
+                    <p className="text-xs text-violet-600 font-semibold mt-0.5">{member.role}</p>
+                  </div>
+                </div>
+
+                {/* Bio */}
+                <p className="text-xs text-slate-600 leading-relaxed mb-5">{member.bio}</p>
+
+                {/* Skills */}
+                <div className="mb-4">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Core Skills</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {member.skills.map((skill) => (
+                      <span key={skill} className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Contributions */}
+                <div className="pt-4 border-t border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Key Contributions</p>
+                  <ul className="space-y-1">
+                    {member.contributions.map((c) => (
+                      <li key={c} className="flex items-center gap-2 text-xs text-slate-600">
+                        <span className="w-1 h-1 rounded-full bg-violet-400 shrink-0" />
+                        {c}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="p-5 rounded-xl bg-white/[0.02] border border-white/5 text-center">
-            <span className="text-2xl font-black text-emerald-400 block mb-1">SHAP</span>
-            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Explainable Decisions</span>
+        </div>
+
+        {/* Values */}
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 mb-6">Our Core Values</h2>
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {[
+              { icon: '🔬', title: 'Scientific Rigour', desc: 'Every node is backed by peer-reviewed ML algorithms and production-tested pipelines.' },
+              { icon: '🔍', title: 'Transparency', desc: 'SHAP explainability built-in so you always know why a model made a decision.' },
+              { icon: '🚀', title: 'Speed to Production', desc: 'From raw CSV to FastAPI endpoint in under 30 minutes. No DevOps expertise required.' },
+              { icon: '🔒', title: 'Privacy-First', desc: 'All data is user-scoped. No shared storage, no telemetry, no vendor cloud lock-in.' },
+              { icon: '🎨', title: 'Accessible Design', desc: 'Visual canvas for non-engineers, with Python export for expert control at any time.' },
+              { icon: '🤝', title: 'Open Collaboration', desc: 'Real-time shared workspaces so data science teams can prototype and review together.' },
+            ].map((v, i) => (
+              <div key={i} className="p-5 rounded-xl border border-slate-100 bg-white hover:border-violet-200 transition-colors">
+                <span className="text-xl block mb-2">{v.icon}</span>
+                <h4 className="text-sm font-bold text-slate-900 mb-1">{v.title}</h4>
+                <p className="text-xs text-slate-500 leading-relaxed">{v.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -100,6 +100,9 @@ export default function AppRoutes() {
         }
       />
 
+      {/* ─── Admin (hidden route - not linked anywhere in UI) ──────────────── */}
+      <Route path="/admin" element={<AdminView />} />
+
       {/* ─── Error 404 ─────────────────────────────────────────────────────── */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

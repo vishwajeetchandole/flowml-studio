@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Play, Save, Download, Terminal, Cpu,
   Loader2, CheckCircle2, AlertCircle, Zap,
@@ -9,25 +10,31 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Logo from '../common/Logo';
 
 /* ─── Brand logo mark ────────────────────────────────────────────────────────── */
-const BrandMark = () => (
-  <div className="flex items-center gap-3 select-none">
-    <div className="relative">
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg"
-        style={{ background: 'linear-gradient(135deg,#7C3AED,#7C3AED)' }}>
-        <Cpu className="w-5 h-5 text-white" />
+const BrandMark = () => {
+  const navigate = useNavigate();
+  return (
+    <div
+      onClick={() => navigate('/')}
+      className="flex items-center gap-3 select-none cursor-pointer group"
+      title="Go to Home"
+    >
+      <div className="relative">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg bg-violet-600 group-hover:scale-105 transition-transform">
+          <Cpu className="w-5 h-5 text-white" />
+        </div>
+        {/* animated glow ring */}
+        <div className="absolute inset-0 rounded-xl animate-pulse"
+          style={{ boxShadow: '0 0 16px rgba(124,58,237,0.5)', opacity: 0.6 }} />
       </div>
-      {/* animated glow ring */}
-      <div className="absolute inset-0 rounded-xl animate-pulse"
-        style={{ boxShadow: '0 0 16px rgba(124,58,237,0.5)', opacity: 0.6 }} />
-    </div>
-    <div>
-      <Logo size="text-xl" />
-      <div className="text-[9px] font-sans font-semibold uppercase tracking-widest text-[#6B6585]">
-        Studio
+      <div>
+        <Logo size="text-xl" />
+        <div className="text-[9px] font-sans font-semibold uppercase tracking-widest text-[#6B6585]">
+          Studio
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 /* ─── Run Pipeline button ─────────────────────────────────────────────────────── */
 const RunBtn = ({ isRunning, pipelineStatus, onRunPipeline }) => {

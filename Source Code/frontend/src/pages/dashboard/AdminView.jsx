@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Users, Activity, Cpu, HardDrive,
   Sliders, ShieldCheck, AlertTriangle,
-  CheckCircle2, Save, RefreshCw,
+  CheckCircle2, Save, RefreshCw, ArrowLeft,
 } from 'lucide-react';
 import {
   adminListUsers,
@@ -136,8 +137,32 @@ export default function AdminView() {
     { id: 'audit',  label: 'Audit Logs',     icon: ShieldCheck },
   ];
 
+  const navigate = useNavigate();
+
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="min-h-screen bg-slate-50 font-sans" style={{ color: 'var(--color-text)' }}>
+      {/* Admin Topbar */}
+      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/app/projects')}
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-violet-600 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to App
+          </button>
+          <span className="text-slate-300">|</span>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-rose-600 flex items-center justify-center">
+              <ShieldCheck className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span className="text-sm font-bold text-slate-900">Admin Console</span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 border border-rose-200 uppercase tracking-wider">Restricted Access</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Page Content */}
+      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -474,6 +499,7 @@ export default function AdminView() {
           </div>
         </Card>
       )}
+    </div>
     </div>
   );
 }

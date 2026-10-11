@@ -7,7 +7,7 @@ import Logo from '../../components/common/Logo';
 import {
   FolderKanban, Database, Layers, PlayCircle, LayoutTemplate,
   Settings, LogOut, Cpu, Plus, Sparkles, ExternalLink,
-  ChevronRight, Activity, Bell, Search, ShieldCheck, Terminal, Code,
+  ChevronRight, Activity, Bell, Search, Terminal, Code,
 } from 'lucide-react';
 
 export default function DashboardLayout() {
@@ -36,7 +36,6 @@ export default function DashboardLayout() {
     { to: '/app/runs', label: 'Run History', icon: PlayCircle },
     { to: '/app/code', label: 'Python Studio', icon: Code },
     { to: '/app/templates', label: 'Templates', icon: LayoutTemplate },
-    { to: '/app/admin', label: 'Admin Ops', icon: ShieldCheck },
     { to: '/app/settings', label: 'Settings', icon: Settings },
   ];
 
@@ -57,7 +56,8 @@ export default function DashboardLayout() {
         <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: 'var(--color-border)' }}>
           <div
             className="flex items-center gap-2.5 cursor-pointer"
-            onClick={() => navigate('/app/projects')}
+            onClick={() => navigate('/')}
+            title="Go to Home"
           >
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md"

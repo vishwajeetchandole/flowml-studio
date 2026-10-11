@@ -461,8 +461,9 @@ function TopBar({
 
         <div className="flex items-center gap-2.5">
           <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md"
-            style={{ background: 'linear-gradient(135deg, #7C3AED, #4F46E5)' }}
+            onClick={() => navigate('/')}
+            className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md bg-violet-600 hover:scale-105 transition-transform cursor-pointer"
+            title="Go to Home"
           >
             <Cpu className="w-4 h-4 text-white" />
           </div>

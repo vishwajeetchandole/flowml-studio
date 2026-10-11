@@ -55,9 +55,9 @@ function Navbar({ onLaunch }) {
 
   const navLinks = [
     { label: 'Features', href: '#features' },
-    { label: 'Solutions', href: '#solutions' },
+    { label: 'Workflow', href: '#solutions' },
     { label: 'Integrations', href: '#integrations' },
-    { label: 'Pricing', href: '#pricing' },
+    { label: 'About', route: '/about' },
     { label: 'Docs', route: '/docs' },
   ];
 
@@ -83,8 +83,9 @@ function Navbar({ onLaunch }) {
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         {/* Brand Logo */}
         <div
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          onClick={() => navigate('/')}
           className="flex items-center gap-2.5 cursor-pointer group"
+          title="FlowML Home"
         >
           <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center text-white shadow-md shadow-violet-600/20 group-hover:scale-105 transition-transform">
             <Cpu className="w-5 h-5 text-white" />
@@ -100,7 +101,7 @@ function Navbar({ onLaunch }) {
             <button
               key={link.label}
               onClick={() => handleLinkClick(link)}
-              className="text-sm font-medium text-slate-600 hover:text-slate-950 transition-colors cursor-pointer"
+              className="text-sm font-medium text-slate-600 hover:text-violet-600 transition-colors cursor-pointer"
             >
               {link.label}
             </button>
@@ -463,8 +464,11 @@ function FeatureCardsTrio() {
     <section id="features" className="py-24 max-w-7xl mx-auto px-6">
       <Reveal>
         <div className="text-center max-w-2xl mx-auto mb-16">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-violet-50 text-violet-600 border border-violet-200 mb-4">
+            <Sparkles className="w-3 h-3" /> Core Features
+          </span>
           <h2 className="font-display font-bold text-3xl sm:text-4xl text-slate-900 tracking-tight mb-4">
-            The ultimate toolkit for ML engineers & teams
+            The ultimate toolkit for ML engineers &amp; teams
           </h2>
           <p className="text-slate-600 text-base leading-relaxed">
             Everything you need to preprocess data, train state-of-the-art models, and deploy APIs in minutes.
@@ -521,6 +525,9 @@ function SimplifyWorkflowSection({ onLaunch }) {
           {/* Left Column: Numbered List */}
           <div className="lg:col-span-5 text-left">
             <Reveal>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-900 text-white mb-4">
+                How It Works
+              </span>
               <h2 className="font-display font-bold text-3xl sm:text-4xl text-slate-900 tracking-tight mb-8">
                 Simplify your workflow
               </h2>
@@ -676,6 +683,19 @@ function IntegrationsSection({ onLaunch }) {
 
   return (
     <section id="integrations" className="py-24 max-w-7xl mx-auto px-6">
+      <Reveal>
+        <div className="text-center max-w-2xl mx-auto mb-14">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-200 mb-4">
+            Ecosystem
+          </span>
+          <h2 className="font-display font-bold text-3xl sm:text-4xl text-slate-900 tracking-tight mb-3">
+            One platform, unlimited integrations
+          </h2>
+          <p className="text-slate-600 text-sm">
+            Export production-ready code with zero vendor lock-in across every major ML framework.
+          </p>
+        </div>
+      </Reveal>
       <div className="grid lg:grid-cols-12 gap-12 items-center">
         {/* Left Side: Integrations Hub Illustration */}
         <div className="lg:col-span-6">
@@ -708,12 +728,6 @@ function IntegrationsSection({ onLaunch }) {
         {/* Right Side: Copy & Testimonial */}
         <div className="lg:col-span-6 text-left">
           <Reveal delay={0.1}>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-900 text-white mb-4">
-              Native Ecosystem
-            </span>
-            <h2 className="font-display font-bold text-3xl sm:text-4xl text-slate-900 tracking-tight mb-4">
-              One platform, unlimited integrations
-            </h2>
             <p className="text-slate-600 text-base leading-relaxed mb-6">
               Export production-ready code with zero vendor lock-in. Generate clean Python scripts, Jupyter notebooks, Dockerfiles, and REST APIs ready for your CI/CD pipeline.
             </p>
@@ -753,6 +767,9 @@ function DarkNextGenSection({ onLaunch }) {
         <div className="bg-[#0B0F17] rounded-3xl p-8 sm:p-14 text-white shadow-2xl relative overflow-hidden text-left">
           {/* Header */}
           <div className="text-center max-w-2xl mx-auto mb-14">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-violet-300 border border-white/20 mb-4">
+              Advanced Capabilities
+            </span>
             <h2 className="font-display font-bold text-3xl sm:text-4xl text-white tracking-tight mb-3">
               Power up your workflow with next-gen features
             </h2>
@@ -821,188 +838,88 @@ function DarkNextGenSection({ onLaunch }) {
 }
 
 /* ─── SOCIAL PROOF & TESTIMONIALS ────────────────────────────────────────────── */
+const TESTIMONIALS = [
+  {
+    initials: 'MV', color: 'bg-violet-600',
+    quote: 'FlowML has completely redefined how our team prototypes models. We test hypotheses 10x faster without writing boilerplate training loops.',
+    name: 'Marcus Vance', role: 'Senior AI Scientist at DataVantage', stars: 5,
+  },
+  {
+    initials: 'SC', color: 'bg-indigo-600',
+    quote: 'FlowML cut our time from raw CSV to deployed prediction API from 2 weeks to under 20 minutes. It\'s become indispensable in our stack.',
+    name: 'Dr. Sarah Chen', role: 'VP of AI at VectorScale', stars: 5,
+  },
+  {
+    initials: 'RT', color: 'bg-emerald-600',
+    quote: 'The visual pipeline canvas made ML accessible to our entire product team — not just data scientists. SHAP explainability charts alone are worth it.',
+    name: 'Raj Thakkar', role: 'Head of Product at AnalyticsHQ', stars: 5,
+  },
+  {
+    initials: 'EL', color: 'bg-amber-500',
+    quote: 'I went from raw clinical data to a validated XGBoost model in one afternoon. The automated preprocessing handled all the null imputation seamlessly.',
+    name: 'Dr. Elena Litvak', role: 'Clinical AI Researcher at MedTech Labs', stars: 5,
+  },
+  {
+    initials: 'JK', color: 'bg-rose-500',
+    quote: 'No-code AutoML with Python export? That\'s the dream. Our interns can build and iterate on models now, and we export clean code for production CI/CD.',
+    name: 'James Kinsley', role: 'ML Engineering Lead at CloudForge', stars: 5,
+  },
+  {
+    initials: 'PW', color: 'bg-sky-600',
+    quote: 'Real-time ROC curves and side-by-side model leaderboards changed how we evaluate. We made model selection decisions in minutes instead of days.',
+    name: 'Priya Watkins', role: 'Data Science Manager at FinAxis', stars: 5,
+  },
+];
+
 function SocialProofSection() {
   return (
-    <section className="py-20 border-b border-slate-200/80 bg-slate-50/40">
+    <section className="py-24 bg-slate-50/40 border-y border-slate-200/80">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-12 gap-8 items-center">
-          <div className="md:col-span-5 text-left">
-            <Reveal>
-              <h3 className="font-display font-bold text-2xl sm:text-3xl text-slate-900 tracking-tight">
-                Loved by ML engineers & data science teams
-              </h3>
-            </Reveal>
+        <Reveal>
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-600 border border-amber-200 mb-4">
+              <Star className="w-3 h-3 fill-current" /> Testimonials
+            </span>
+            <h2 className="font-display font-bold text-3xl sm:text-4xl text-slate-900 tracking-tight mb-3">
+              Loved by ML engineers &amp; data science teams
+            </h2>
+            <p className="text-slate-600 text-sm leading-relaxed">
+              Join thousands of researchers, engineers, and product teams who build and ship models with FlowML.
+            </p>
           </div>
+        </Reveal>
 
-          <div className="md:col-span-7">
-            <Reveal delay={0.1}>
-              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm text-left">
-                <div className="flex items-center gap-1 text-amber-400 mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-current" />
-                  ))}
-                </div>
-                <p className="text-slate-700 text-sm sm:text-base leading-relaxed italic mb-4">
-                  "FlowML has completely redefined how our team prototypes models. We test hypotheses 10x faster without writing boilerplate training loops."
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="flex -space-x-2">
-                    <span className="w-7 h-7 rounded-full bg-violet-600 text-white font-bold text-[10px] flex items-center justify-center border-2 border-white">MV</span>
-                    <span className="w-7 h-7 rounded-full bg-indigo-600 text-white font-bold text-[10px] flex items-center justify-center border-2 border-white">ER</span>
-                    <span className="w-7 h-7 rounded-full bg-amber-500 text-white font-bold text-[10px] flex items-center justify-center border-2 border-white">PK</span>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {TESTIMONIALS.map((t, i) => (
+            <Reveal key={i} delay={i * 0.08}>
+              <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-violet-200 transition-all text-left flex flex-col justify-between h-full">
+                <div>
+                  <div className="flex items-center gap-1 text-amber-400 mb-3">
+                    {[...Array(t.stars)].map((_, j) => (
+                      <Star key={j} className="w-3.5 h-3.5 fill-current" />
+                    ))}
                   </div>
+                  <p className="text-slate-700 text-sm leading-relaxed italic mb-5">
+                    &ldquo;{t.quote}&rdquo;
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
+                  <span className={`w-9 h-9 rounded-full ${t.color} text-white font-bold text-xs flex items-center justify-center shrink-0`}>{t.initials}</span>
                   <div>
-                    <p className="font-display font-bold text-xs text-slate-900">Marcus Vance</p>
-                    <p className="text-[11px] text-slate-500">Senior AI Scientist at DataVantage</p>
+                    <p className="font-display font-bold text-xs text-slate-900">{t.name}</p>
+                    <p className="text-[11px] text-slate-500">{t.role}</p>
                   </div>
                 </div>
               </div>
             </Reveal>
-          </div>
+          ))}
         </div>
       </div>
     </section>
   );
 }
 
-/* ─── FLEXIBLE PRICING PLANS ─────────────────────────────────────────────────── */
-function PricingSection({ onLaunch }) {
-  const [isYearly, setIsYearly] = useState(false);
-
-  const plans = [
-    {
-      name: 'Starter',
-      price: isYearly ? '$15' : '$19',
-      desc: 'Ideal for solo data scientists and academic researchers.',
-      features: [
-        'Unlimited local pipelines',
-        '100MB dataset upload limit',
-        'Scikit-learn algorithms',
-        'Export to Python script',
-        'Community Discord access',
-      ],
-      popular: false,
-      btnLabel: 'Get Started',
-      btnStyle: 'bg-slate-900 hover:bg-slate-800 text-white',
-    },
-    {
-      name: 'Pro',
-      price: isYearly ? '$39' : '$49',
-      desc: 'Everything in Starter plus advanced AutoML and cloud models.',
-      features: [
-        'Unlimited datasets & pipelines',
-        '5GB dataset upload limit',
-        'XGBoost & LightGBM engines',
-        'Automated Bayesian tuning',
-        'SHAP & LIME explainability',
-        '1-Click FastAPI export',
-        'Priority technical support',
-      ],
-      popular: true,
-      btnLabel: 'Get Started Pro',
-      btnStyle: 'bg-violet-600 hover:bg-violet-700 text-white shadow-lg shadow-violet-500/25',
-    },
-    {
-      name: 'Enterprise',
-      price: isYearly ? '$65' : '$79',
-      desc: 'For high-scale teams requiring VPC security and dedicated compute.',
-      features: [
-        'Everything in Pro plan',
-        'Dedicated GPU compute cluster',
-        'Private VPC / On-prem deployment',
-        'Team RBAC & SSO integration',
-        'Custom ML algorithm nodes',
-        '99.9% Uptime SLA',
-      ],
-      popular: false,
-      btnLabel: 'Contact Sales',
-      btnStyle: 'bg-slate-900 hover:bg-slate-800 text-white',
-    },
-  ];
-
-  return (
-    <section id="pricing" className="py-24 max-w-7xl mx-auto px-6">
-      <Reveal>
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <h2 className="font-display font-bold text-3xl sm:text-4xl text-slate-900 tracking-tight mb-4">
-            Flexible pricing plans
-          </h2>
-          <p className="text-slate-600 text-base leading-relaxed mb-6">
-            Choose a plan that fits your machine learning workflow, whether you're a solo researcher or scaling enterprise.
-          </p>
-
-          {/* Billing Switch */}
-          <div className="inline-flex items-center gap-3 p-1.5 rounded-full bg-slate-100 border border-slate-200/80">
-            <button
-              onClick={() => setIsYearly(false)}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                !isYearly ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setIsYearly(true)}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                isYearly ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Yearly <span className="text-[10px] text-violet-700 bg-violet-100 px-1.5 py-0.5 rounded-full">Save 20%</span>
-            </button>
-          </div>
-        </div>
-      </Reveal>
-
-      {/* Pricing Cards Grid */}
-      <div className="grid md:grid-cols-3 gap-6 items-stretch">
-        {plans.map((p, i) => (
-          <Reveal key={p.name} delay={i * 0.1}>
-            <div
-              className={`p-8 rounded-3xl h-full flex flex-col justify-between text-left transition-all ${
-                p.popular
-                  ? 'bg-white border-2 border-violet-600 shadow-xl ring-4 ring-violet-500/10'
-                  : 'bg-white border border-slate-200/90 shadow-sm hover:shadow-md'
-              }`}
-            >
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-display font-bold text-lg text-slate-900">{p.name}</h3>
-                  {p.popular && (
-                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-violet-100 text-violet-700 uppercase tracking-wide">
-                      Most Popular
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-baseline gap-1 mb-2">
-                  <span className="font-display font-extrabold text-4xl text-slate-900">{p.price}</span>
-                  <span className="text-xs text-slate-500 font-medium">/ month</span>
-                </div>
-                <p className="text-xs text-slate-600 mb-6">{p.desc}</p>
-
-                <button
-                  onClick={onLaunch}
-                  className={`w-full py-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-all mb-8 ${p.btnStyle}`}
-                >
-                  {p.btnLabel}
-                </button>
-
-                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-3">Included Features:</p>
-                <ul className="space-y-2.5">
-                  {p.features.map((feat) => (
-                    <li key={feat} className="flex items-center gap-2 text-xs text-slate-700">
-                      <Check className="w-3.5 h-3.5 text-violet-600 shrink-0" />
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </Reveal>
-        ))}
-      </div>
-    </section>
-  );
-}
+/* Pricing section removed per user request */
 
 /* ─── THE PERFECT ML SOLUTION FOR EVERY WORKFLOW ─────────────────────────────── */
 function PerfectSolutionSection({ onLaunch }) {
@@ -1018,6 +935,16 @@ function PerfectSolutionSection({ onLaunch }) {
   return (
     <section className="py-24 bg-slate-50/60 border-y border-slate-200/80">
       <div className="max-w-7xl mx-auto px-6">
+        <Reveal>
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200 mb-4">
+              Why FlowML
+            </span>
+            <h2 className="font-display font-bold text-3xl sm:text-4xl text-slate-900 tracking-tight mb-3">
+              The perfect machine learning solution for every workflow
+            </h2>
+          </div>
+        </Reveal>
         <div className="grid lg:grid-cols-12 gap-12 items-center">
           {/* Left Preview Card */}
           <div className="lg:col-span-5">
@@ -1053,9 +980,6 @@ function PerfectSolutionSection({ onLaunch }) {
           {/* Right Checklist */}
           <div className="lg:col-span-7 text-left">
             <Reveal delay={0.1}>
-              <h2 className="font-display font-bold text-3xl sm:text-4xl text-slate-900 tracking-tight mb-4">
-                The perfect machine learning solution for every workflow
-              </h2>
               <p className="text-slate-600 text-base leading-relaxed mb-8">
                 From exploratory data analysis and feature engineering to hyperparameter tuning and model monitoring, FlowML covers your entire pipeline.
               </p>
@@ -1288,9 +1212,6 @@ export default function LandingPage() {
 
       {/* Social Proof */}
       <SocialProofSection />
-
-      {/* Pricing Plans */}
-      <PricingSection onLaunch={launch} />
 
       {/* Perfect ML Solution */}
       <PerfectSolutionSection onLaunch={launch} />
