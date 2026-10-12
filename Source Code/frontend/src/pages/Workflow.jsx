@@ -153,6 +153,7 @@ const WorkflowInner = ({ onNodeClick, actionsRef, projectId: routeProjectId }) =
   const [nodes, setNodes, onNodesChange] = useNodesState(saved.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(saved.edges);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const flowWrapperRef = useRef(null);
 
   // Undo / Redo history stacks
   const historyRef = useRef({
@@ -196,6 +197,58 @@ const WorkflowInner = ({ onNodeClick, actionsRef, projectId: routeProjectId }) =
     return true;
   }, [nodes, edges, setNodes, setEdges]);
 
+  const addNode = useCallback((type) => {
+    if (!Object.prototype.hasOwnProperty.call(nodeTypes, type) || !reactFlowInstance || !flowWrapperRef.current) {
+      return null;
+    }
+
+    const bounds = flowWrapperRef.current.getBoundingClientRect();
+    const zoom = reactFlowInstance.getZoom();
+    const centerX = bounds.left + bounds.width / 2;
+    const centerY = bounds.top + bounds.height / 2;
+    const offsets = [[0, 0]];
+
+    for (let ring = 1; ring <= Math.ceil(Math.sqrt(nodes.length)) + 1; ring += 1) {
+      for (let x = -ring; x <= ring; x += 1) offsets.push([x, -ring]);
+      for (let y = -ring + 1; y <= ring; y += 1) offsets.push([ring, y]);
+      for (let x = ring - 1; x >= -ring; x -= 1) offsets.push([x, ring]);
+      for (let y = ring - 1; y > -ring; y -= 1) offsets.push([-ring, y]);
+    }
+
+    const position = offsets
+      .map(([x, y]) => {
+        const center = reactFlowInstance.screenToFlowPosition({
+          x: centerX + x * 250,
+          y: centerY + y * 165,
+        });
+        return { x: center.x - 110, y: center.y - 75 };
+      })
+      .find((candidate) => nodes.every((node) => {
+        const width = (node.width ?? 220) + 24 / zoom;
+        const height = (node.height ?? 150) + 24 / zoom;
+        return candidate.x + 220 <= node.position.x
+          || candidate.x >= node.position.x + width
+          || candidate.y + 150 <= node.position.y
+          || candidate.y >= node.position.y + height;
+      }));
+
+    if (!position) return null;
+
+    const newNode = {
+      id: `node-${Math.random().toString(36).slice(2, 11)}`,
+      type,
+      position,
+      data: {
+        label: LABEL_MAP[type] || type,
+        description: DESC_MAP[type] || `Configure ${type} node`,
+      },
+    };
+
+    pushHistory();
+    setNodes((currentNodes) => currentNodes.concat(newNode));
+    return newNode;
+  }, [nodes, pushHistory, reactFlowInstance, setNodes]);
+
   const dotColor = '#dde3ed';
   const canvasBg  = '#f0f4f8';
 
@@ -204,6 +257,7 @@ const WorkflowInner = ({ onNodeClick, actionsRef, projectId: routeProjectId }) =
     if (!actionsRef) return;
     actionsRef.current = {
       getWorkflowData: () => ({ nodes, edges }),
+      addNode,
       setWorkflowData: (data) => {
         if (data.nodes) setNodes(data.nodes);
         if (data.edges) setEdges(data.edges);
@@ -252,7 +306,7 @@ const WorkflowInner = ({ onNodeClick, actionsRef, projectId: routeProjectId }) =
         );
       },
     };
-  }, [nodes, edges, actionsRef, setNodes, setEdges, undo, redo, pushHistory]);
+  }, [nodes, edges, actionsRef, setNodes, setEdges, undo, redo, pushHistory, addNode]);
 
   const onConnect = useCallback(
     (params) => {
@@ -306,6 +360,7 @@ const WorkflowInner = ({ onNodeClick, actionsRef, projectId: routeProjectId }) =
   return (
     <div className="w-full h-full relative">
       <div
+        ref={flowWrapperRef}
         className="w-full h-full"
         style={{
           '--dot-color': dotColor,
