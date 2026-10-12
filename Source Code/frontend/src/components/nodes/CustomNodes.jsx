@@ -104,6 +104,20 @@ const BaseNode = memo(({ id, data, type, selected }) => {
           }}
         />
       )}
+      {!isSource && (
+        <Handle
+          id="target-top"
+          type="target"
+          position={Position.Top}
+          style={{
+            width: 12, height: 12,
+            background: color,
+            border: '2.5px solid var(--color-surface)',
+            top: -6,
+            boxShadow: `0 0 8px ${color}60`,
+          }}
+        />
+      )}
 
       {/* Card */}
       <div
@@ -224,6 +238,20 @@ const BaseNode = memo(({ id, data, type, selected }) => {
             background: color,
             border: '2.5px solid var(--color-surface)',
             right: -6,
+            boxShadow: `0 0 8px ${color}60`,
+          }}
+        />
+      )}
+      {!isSink && (
+        <Handle
+          id="source-bottom"
+          type="source"
+          position={Position.Bottom}
+          style={{
+            width: 12, height: 12,
+            background: color,
+            border: '2.5px solid var(--color-surface)',
+            bottom: -6,
             boxShadow: `0 0 8px ${color}60`,
           }}
         />

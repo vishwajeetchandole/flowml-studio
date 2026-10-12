@@ -6,7 +6,7 @@ Features:
     missing required parameters).  Returns structured per-node errors.
   - Topological execution with per-node status: Pending/Running/Completed/Failed.
   - Stop support: cancel_flag checked between nodes.
-  - Node output caching by SHA-256 hash of (node params + upstream output hashes).
+  - Per-run node status and real outputs (nodes are re-executed for each run).
   - Per-run logs written to store.
   - Supports new node types: removeDuplicates, selectColumns, splitData,
     knn, svm, kmeans, aiDecision, explainableAi, report.
@@ -372,26 +372,13 @@ def execute_pipeline(
         node_type = node.get("type", "unknown")
         node_data = node.get("data", {})
 
-        # ── Cache check ───────────────────────────────────────────────────────
         upstream_hashes = _get_upstream_hashes(node_id)
         this_hash = _node_hash(node, upstream_hashes)
-        cached = _cache_get(this_hash)
 
         node_statuses[node_id] = "Running"
         _log(f"▶ Node [{node_type}] ({node_id})")
 
         try:
-            if cached is not None:
-                _log(f"Cache hit for node {node_id} — skipping execution.")
-                node_statuses[node_id] = "Completed"
-                node_output_hashes[node_id] = this_hash
-                results.append({
-                    "node_id": node_id, "type": node_type,
-                    "status": "completed", "cached": True,
-                    "message": "(result from cache)",
-                })
-                continue
-
             # ── Upload / Load CSV ─────────────────────────────────────────────
             if node_type in UPLOAD_TYPES:
                 dataset_info = node_data.get("uploadedDataset") or {}
@@ -542,9 +529,21 @@ def execute_pipeline(
                     result_msg = f"K-Means done. Silhouette: {ctx['train_results'].get('silhouette_score', 'N/A')}"
                 elif node_type == "aiDecision":
                     analysis = ctx.get("analysis") or analyze_dataset(ctx["df"])
-                    ctx["train_results"] = _run_ai_decision(ctx["df"], analysis, target_col, task_type)
-                    ctx["model_id"] = ctx["train_results"].get("model_id", uuid.uuid4().hex)
-                    result_msg = f"AI Decision done. Best: {ctx['train_results'].get('best_model')}"
+                    if not target_col or target_col not in ctx["df"].columns:
+                        raise ValueError(f"Target column '{target_col}' not found in dataset.")
+                    ctx["target_column"] = target_col
+                    ctx["task_type"] = task_type
+                    ctx["model_id"] = uuid.uuid4().hex
+                    with tempfile.TemporaryDirectory(prefix=f"flowml_{ctx['model_id']}_") as artifact_dir:
+                        ctx["train_results"] = _run_ai_decision(
+                            ctx["df"], analysis, target_col, task_type, artifact_dir=artifact_dir
+                        )
+                        if store and uid:
+                            _save_train_artifacts_to_store(store, uid, ctx["model_id"], ctx, artifact_dir)
+                    result_msg = (
+                        f"AutoML selected {ctx['train_results']['best_model']}; "
+                        f"evaluation completed on {ctx['train_results']['test_size']} held-out rows."
+                    )
                 else:
                     if not target_col or target_col not in ctx["df"].columns:
                         raise ValueError(f"Target column '{target_col}' not found in dataset.")
@@ -552,16 +551,21 @@ def execute_pipeline(
                     ctx["task_type"] = task_type
                     X = ctx["df"].drop(columns=[target_col])
                     y = ctx["df"][target_col]
-                    ctx["train_results"] = train_models(X, y, task_type)
                     ctx["model_id"] = uuid.uuid4().hex
-                    best = ctx["train_results"]["best_model"]
+                    model_parameters = _node_model_parameters(node_type, node_data)
+                    with tempfile.TemporaryDirectory(prefix=f"flowml_{ctx['model_id']}_") as artifact_dir:
+                        ctx["train_results"] = train_models(
+                            X, y, task_type, selected_model=node_type,
+                            model_parameters=model_parameters, artifact_dir=artifact_dir,
+                        )
+                        best = ctx["train_results"]["best_model"]
+                        if store and uid:
+                            _save_train_artifacts_to_store(store, uid, ctx["model_id"], ctx, artifact_dir)
 
-                    # Save artifacts to store if available
-                    if store and uid:
-                        model_id = ctx["model_id"]
-                        _save_train_artifacts_to_store(store, uid, model_id, ctx)
-
-                    result_msg = f"Training complete. Best: {best}"
+                    result_msg = (
+                        f"{'AutoML selected' if ctx['train_results']['model_selection'] == 'automl' else 'Configured'} "
+                        f"{best}; evaluation completed on {ctx['train_results']['test_size']} held-out rows."
+                    )
 
             # ── Explainable AI ─────────────────────────────────────────────────
             elif node_type in EXPLAINER_TYPES:
@@ -579,7 +583,10 @@ def execute_pipeline(
                 pred_df = ctx["df"]
                 target  = ctx.get("target_column")
                 if store and uid and ctx["model_id"]:
-                    pred = predict_with_store(pred_df, uid, ctx["model_id"], store, target_column=target)
+                    pred = predict_with_store(
+                        pred_df, uid, ctx["model_id"], store,
+                        target_column=target, evaluate=False,
+                    )
                 else:
                     pred = {"predictions": []}
                 ctx["predictions"] = pred["predictions"]
@@ -599,12 +606,10 @@ def execute_pipeline(
                     "status": "skipped",
                     "message": f"Node type '{node_type}' is not yet wired into the pipeline.",
                 })
-                _cache_set(this_hash, True)
                 node_output_hashes[node_id] = this_hash
                 continue
 
             node_statuses[node_id] = "Completed"
-            _cache_set(this_hash, True)
             node_output_hashes[node_id] = this_hash
             results.append({
                 "node_id": node_id, "type": node_type,
@@ -702,7 +707,8 @@ def _run_kmeans(df: pd.DataFrame, node_data: dict) -> dict:
 
 
 def _run_ai_decision(
-    df: pd.DataFrame, analysis: dict, target_col: Optional[str], task_type: str
+    df: pd.DataFrame, analysis: dict, target_col: Optional[str], task_type: str,
+    artifact_dir: Optional[str] = None,
 ) -> dict:
     """
     Recommend models from profiler output and train the top 3.
@@ -725,7 +731,11 @@ def _run_ai_decision(
     else:
         recommended = ["Random Forest", "Gradient Boosting", "Logistic Regression"]
 
-    results = train_models(X, y, task_type)
+    if artifact_dir:
+        results = train_models(X, y, task_type, artifact_dir=artifact_dir)
+    else:
+        with tempfile.TemporaryDirectory(prefix="flowml_automl_") as temporary_dir:
+            results = train_models(X, y, task_type, artifact_dir=temporary_dir)
     results["recommended_models"] = recommended
     return results
 
@@ -813,18 +823,47 @@ def _save_report(store, uid: str, run_id: str, html: str) -> None:
         log_event(f"Failed to save report: {exc}", level="WARNING")
 
 
-def _save_train_artifacts_to_store(store, uid: str, model_id: str, ctx: dict) -> None:
-    """Copy legacy save-dir artifacts into the per-user store."""
-    legacy_dir = "models/saved_models"
-    artifact_files = [
-        "best_model.joblib", "features.joblib", "task_type.joblib",
-        "target_encoder.joblib", "feature_encoders.joblib",
-        "fallback_imputer.joblib", "test_data.joblib", "model_results.joblib",
-    ]
-    for fname in artifact_files:
-        src = os.path.join(legacy_dir, fname)
-        if os.path.exists(src):
-            try:
-                store.save_artifact(uid, model_id, fname, src)
-            except Exception:
-                pass
+def _node_model_parameters(node_type: str, data: dict) -> dict:
+    """Extract the parameters exposed by the model-node configuration UI."""
+    if node_type == "randomForest":
+        return {
+            "n_estimators": int(data.get("n_estimators", 100)),
+            "max_depth": int(data.get("max_depth", 10)),
+        }
+    if node_type == "logisticRegression":
+        return {
+            "C": float(data.get("C", 1)),
+            "solver": data.get("solver", "lbfgs"),
+        }
+    if node_type == "knn":
+        return {"n_neighbors": int(data.get("n_neighbors", 5))}
+    if node_type == "svm":
+        return {"kernel": data.get("kernel", "rbf")}
+    return {}
+
+
+def _save_train_artifacts_to_store(store, uid: str, model_id: str, ctx: dict, artifact_dir: str) -> None:
+    """Copy run-local model artifacts and metadata into the caller's model store."""
+    for filename in os.listdir(artifact_dir):
+        if filename == "model_meta.joblib":
+            continue
+        store.save_artifact(uid, model_id, filename, os.path.join(artifact_dir, filename))
+
+    train_results = ctx["train_results"]
+    metadata = {
+        "model_id": model_id,
+        "target_column": ctx["target_column"],
+        "task_type": ctx["task_type"],
+        "algorithm": train_results["best_model"],
+        "best_model": train_results["best_model"],
+        "selected_model": train_results["selected_model"],
+        "model_selection": train_results["model_selection"],
+        "model_parameters": train_results["model_parameters"],
+        "training_status": train_results["training_status"],
+        "input_features": train_results["input_features"],
+        "input_schema": train_results["input_schema"],
+        "feature_names": train_results["feature_names"],
+    }
+    metadata_path = os.path.join(artifact_dir, "model_meta.joblib")
+    joblib.dump(metadata, metadata_path)
+    store.save_artifact(uid, model_id, "model_meta.joblib", metadata_path)

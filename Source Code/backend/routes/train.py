@@ -3,9 +3,11 @@ import uuid
 import asyncio
 import tempfile
 import joblib
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
-from typing import Optional
+import shutil
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field
+from typing import Any, Dict, Optional
 
 from auth import get_current_user
 from services.store import StoreBackend, get_store
@@ -22,6 +24,10 @@ class TrainRequest(BaseModel):
     processed_dataset_id: Optional[str] = None
     target_column: str
     task_type: str = "classification"   # "classification" | "regression"
+    model_name: Optional[str] = None
+    model_parameters: Optional[Dict[str, Any]] = None
+    test_size: float = Field(default=0.2, gt=0, lt=1)
+    random_state: int = 42
 
 
 @router.post("/train")
@@ -31,23 +37,15 @@ async def train(
     store: StoreBackend = Depends(get_store),
 ):
     """
-    Train multiple ML models. Uses processed_dataset_id if provided, else dataset_id.
-    Returns leaderboard + model_id (key for subsequent predict/download calls).
+    Train the configured estimator or compare the model zoo using held-out evaluation.
+    Preprocessing settings from processed_dataset_id are refit on train rows only.
     """
-    # Resolve training file (prefer preprocessed)
-    file_path: Optional[str] = None
-    used_dataset_id: Optional[str] = None
-    for ds_id in [request.processed_dataset_id, request.dataset_id]:
-        if ds_id:
-            try:
-                file_path = store.get_dataset_path(uid, ds_id)
-                used_dataset_id = ds_id
-                break
-            except Exception:
-                pass
-
-    if file_path is None:
-        raise_http_exception(404, "Dataset not found", "Neither dataset could be located.")
+    try:
+        file_path = store.get_dataset_path(uid, request.dataset_id)
+    except HTTPException as exc:
+        if exc.status_code == 404:
+            raise_http_exception(404, "Dataset not found", f"Dataset '{request.dataset_id}' not found.")
+        raise
 
     try:
         df = load_dataset(file_path)
@@ -63,62 +61,69 @@ async def train(
     X = df.drop(columns=[request.target_column])
     y = df[request.target_column]
 
-    # Detect preprocessors for this dataset (if preprocessed)
-    preprocessors_path: Optional[str] = None
+    preprocessing_config = None
     if request.processed_dataset_id:
         try:
             preprocessors_path = store.get_artifact_path(
                 uid, request.processed_dataset_id, "preprocessors.joblib"
             )
-        except Exception:
-            pass
+            preprocessing_config = joblib.load(preprocessors_path).get("config")
+        except HTTPException as exc:
+            if exc.status_code != 404:
+                raise
+            raise_http_exception(
+                400, "Preprocessing configuration unavailable",
+                f"Preprocessing settings for dataset '{request.processed_dataset_id}' were not found.",
+            )
+        except Exception as exc:
+            raise_http_exception(
+                400, "Preprocessing configuration unavailable",
+                f"Could not load preprocessing settings for this run: {exc}",
+            )
 
     model_id = uuid.uuid4().hex
 
-    try:
-        loop = asyncio.get_running_loop()
-        results = await loop.run_in_executor(
-            None,
-            lambda: train_models(X, y, request.task_type)
-        )
-    except Exception as exc:
-        log_event(f"[{uid}] Training error: {exc}", level="ERROR")
-        raise_http_exception(500, "Error training models", str(exc))
+    with tempfile.TemporaryDirectory(prefix=f"flowml_{model_id}_") as artifact_dir:
+        try:
+            loop = asyncio.get_running_loop()
+            results = await loop.run_in_executor(
+                None,
+                lambda: train_models(
+                    X, y, request.task_type, selected_model=request.model_name,
+                    model_parameters=request.model_parameters,
+                    preprocessing_config=preprocessing_config,
+                    artifact_dir=artifact_dir,
+                    test_size=request.test_size,
+                    random_state=request.random_state,
+                )
+            )
+        except Exception as exc:
+            log_event(f"[{uid}] Training/evaluation error: {exc}", level="ERROR")
+            raise_http_exception(422, "Training or evaluation failed", str(exc))
 
-    # Artifacts are written to legacy save dir by train_models; re-save into store
-    legacy_save_dir = "models/saved_models"
-    artifact_files = [
-        "best_model.joblib", "features.joblib", "task_type.joblib",
-        "target_encoder.joblib", "feature_encoders.joblib",
-        "fallback_imputer.joblib", "test_data.joblib", "model_results.joblib",
-    ]
-    for fname in artifact_files:
-        src = os.path.join(legacy_save_dir, fname)
-        if os.path.exists(src):
-            store.save_artifact(uid, model_id, fname, src)
+        for fname in os.listdir(artifact_dir):
+            store.save_artifact(uid, model_id, fname, os.path.join(artifact_dir, fname))
 
-    # Copy preprocessors into the model store too (for inference)
-    if preprocessors_path and os.path.exists(preprocessors_path):
-        store.save_artifact(uid, model_id, "preprocessors.joblib", preprocessors_path)
-
-    # Save lightweight metadata — use delete=False + explicit close before copy (Windows-safe)
-    meta_tmp = tempfile.mktemp(suffix=".joblib")
-    try:
-        joblib.dump({
+        metadata = {
             "model_id": model_id,
             "target_column": request.target_column,
             "task_type": request.task_type,
-            "dataset_id": used_dataset_id,
+            "dataset_id": request.dataset_id,
+            "algorithm": results["best_model"],
             "best_model": results["best_model"],
-        }, meta_tmp)
+            "selected_model": results["selected_model"],
+            "model_selection": results["model_selection"],
+            "model_parameters": results["model_parameters"],
+            "training_status": results["training_status"],
+            "input_features": results["input_features"],
+            "input_schema": results["input_schema"],
+            "feature_names": results["feature_names"],
+        }
+        meta_tmp = os.path.join(artifact_dir, "model_meta.joblib")
+        joblib.dump(metadata, meta_tmp)
         store.save_artifact(uid, model_id, "model_meta.joblib", meta_tmp)
-    finally:
-        try:
-            os.unlink(meta_tmp)
-        except OSError:
-            pass
 
-    log_event(f"[{uid}] Training OK → model_id={model_id}, best={results['best_model']}")
+    log_event(f"[{uid}] Training OK → model_id={model_id}, model={results['best_model']}")
     return {**results, "model_id": model_id}
 
 
@@ -138,19 +143,47 @@ async def list_user_models(
             "task_type": "classification",
             "target_column": None,
             "dataset_id": None,
+            "training_status": "unknown",
             "artifacts": m.get("artifacts", []),
             "version": "1.0.0",
         }
         try:
             meta_path = store.get_artifact_path(uid, mid, "model_meta.joblib")
-            if os.path.exists(meta_path):
+        except HTTPException as exc:
+            if exc.status_code == 404:
+                enriched.append(meta_info)
+                continue
+            raise
+        if os.path.exists(meta_path):
+            try:
                 data = joblib.load(meta_path)
-                meta_info.update(data)
-                meta_info["algorithm"] = data.get("best_model", "Trained Model")
-        except Exception:
-            pass
+            except Exception as exc:
+                log_event(f"[{uid}] Invalid metadata for model '{mid}': {exc}", level="ERROR")
+                raise_http_exception(500, "Model metadata unavailable", f"Could not read metadata for model '{mid}'.")
+            meta_info.update(data)
+            meta_info["algorithm"] = data.get("algorithm", data.get("best_model", "Trained Model"))
         enriched.append(meta_info)
     return enriched
+
+
+@router.get("/models/{model_id}/download")
+async def download_model_bundle(
+    model_id: str,
+    uid: str = Depends(get_current_user),
+    store: StoreBackend = Depends(get_store),
+):
+    """Download the trained estimator together with its fitted preprocessing."""
+    try:
+        artifact_path = store.get_artifact_path(uid, model_id, "model_bundle.joblib")
+    except HTTPException as exc:
+        if exc.status_code == 404:
+            raise_http_exception(404, "Model artifact not found", f"No downloadable artifact exists for model '{model_id}'.")
+        raise
+    return FileResponse(
+        path=artifact_path,
+        filename=f"flowml_model_{model_id}.joblib",
+        media_type="application/octet-stream",
+    )
 
 
 @router.delete("/models/{model_id}")
@@ -166,4 +199,3 @@ async def delete_user_model(
         raise HTTPException(status_code=404, detail=f"Model '{model_id}' not found.")
     shutil.rmtree(m_dir)
     return {"status": "deleted", "model_id": model_id}
-

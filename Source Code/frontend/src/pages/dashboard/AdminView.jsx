@@ -90,7 +90,7 @@ export default function AdminView({ onSignOut }) {
     ['VITE_FIREBASE_AUTH_DOMAIN', import.meta.env.VITE_FIREBASE_AUTH_DOMAIN],
     ['VITE_FIREBASE_PROJECT_ID', import.meta.env.VITE_FIREBASE_PROJECT_ID],
     ['VITE_FIREBASE_STORAGE_BUCKET', import.meta.env.VITE_FIREBASE_STORAGE_BUCKET],
-    ['VITE_API_BASE_URL', import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000 (Default)'],
+    ['VITE_API_BASE_URL', import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000 (Default)'],
   ];
 
   const loadData = async () => {

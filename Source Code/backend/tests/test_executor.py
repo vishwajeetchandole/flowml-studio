@@ -125,8 +125,8 @@ class TestCaching:
         node = {"id": "n1", "type": "fillMissing", "data": {}}
         assert _node_hash(node, ["aaa"]) != _node_hash(node, ["bbb"])
 
-    def test_cached_node_skipped(self, tmp_path):
-        """Same graph run twice: second run should report cache hits."""
+    def test_same_graph_is_reexecuted_with_real_results(self, tmp_path):
+        """A later run must not reuse an empty cache marker instead of node output."""
         clear_cache()
         store = make_store(tmp_path)
         store_csv(store, "u1", "ds1", tmp_path)
@@ -141,7 +141,8 @@ class TestCaching:
         r2 = execute_pipeline({"nodes": nodes, "edges": edges},
                                uid="u1", run_id="run2", store=store)
         assert r2["status"] == "success", r2
-        assert r2["results"][0].get("cached") is True
+        assert r2["results"][0].get("cached") is not True
+        assert "20 rows" in r2["results"][0]["message"]
         clear_cache()
 
 

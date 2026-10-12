@@ -93,10 +93,14 @@ export default function ProjectsView({ initialCreateOpen = false }) {
 
   const handleDelete = () => {
     if (!deleteTarget) return;
-    deleteProject(deleteTarget.id);
-    refreshProjects();
-    showToast(`Project "${deleteTarget.name}" deleted.`, 'info');
-    setDeleteTarget(null);
+    try {
+      deleteProject(deleteTarget.id);
+      refreshProjects();
+      showToast(`Project "${deleteTarget.name}" deleted.`, 'info');
+      setDeleteTarget(null);
+    } catch (error) {
+      showToast(error.message || 'Failed to delete project.', 'error');
+    }
   };
 
   const handleDuplicate = (id) => {
@@ -526,7 +530,7 @@ export default function ProjectsView({ initialCreateOpen = false }) {
                 Delete Project?
               </h3>
               <p className="text-xs leading-relaxed mb-6" style={{ color: 'var(--color-text-muted)' }}>
-                Are you sure you want to delete <span className="font-bold text-white">"{deleteTarget.name}"</span>? This will permanently delete the project and its stored canvas workflow.
+                Are you sure you want to delete <span className="font-bold" style={{ color: 'var(--color-text)' }}>"{deleteTarget.name}"</span>? This will permanently delete the project and its stored canvas workflow.
               </p>
               <div className="flex items-center justify-center gap-3">
                 <button

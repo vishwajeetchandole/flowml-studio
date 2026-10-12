@@ -74,6 +74,40 @@ const Sel = ({ value, onChange, options }) => (
   </select>
 );
 
+const ColumnSelection = ({ columns, value, onChange, automatic, onAutomaticChange }) => (
+  <div className="space-y-2">
+    <label className="flex items-center gap-2 text-xs" style={{ color: 'var(--color-text)' }}>
+      <input
+        type="checkbox"
+        checked={automatic}
+        onChange={(e) => onAutomaticChange(e.target.checked)}
+        className="accent-violet-600"
+      />
+      Automatic (all applicable columns)
+    </label>
+    {!automatic && (
+      <>
+        <select
+          multiple
+          size={Math.min(Math.max(columns.length, 3), 6)}
+          value={value}
+          onChange={(e) => onChange(Array.from(e.target.selectedOptions, (option) => option.value))}
+          className="w-full px-3 py-2 rounded-xl text-xs focus:outline-none"
+          style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+          aria-label="Choose columns"
+        >
+          {columns.map((column) => <option key={column} value={column}>{column}</option>)}
+        </select>
+        {!columns.length && (
+          <p className="text-[9px]" style={{ color: 'var(--color-text-muted)' }}>
+            Upload a dataset to choose columns.
+          </p>
+        )}
+      </>
+    )}
+  </div>
+);
+
 /* ─── Status message ─────────────────────────────────────────────────────────── */
 const Msg = ({ type, text }) => {
   const cfg = {
@@ -165,7 +199,7 @@ function UploadConfig({ node, onUpdate }) {
 }
 
 /* ─── Preprocess Config Panel ────────────────────────────────────────────────── */
-function PreprocessConfig({ node, onUpdate }) {
+function PreprocessConfig({ node, onUpdate, columns }) {
   const d = node.data;
   const up = (k, v) => onUpdate(node.id, { [k]: v, validationError: null });
 
@@ -179,6 +213,15 @@ function PreprocessConfig({ node, onUpdate }) {
             ['last',  'Keep Last Occurrence'],
           ]} />
         </Field>
+        <Field label="Compare Columns">
+          <ColumnSelection
+            columns={columns}
+            value={d.duplicate_columns ?? []}
+            onChange={(v) => up('duplicate_columns', v)}
+            automatic={d.duplicate_columns_auto ?? true}
+            onAutomaticChange={(v) => up('duplicate_columns_auto', v)}
+          />
+        </Field>
       </div>
     );
   }
@@ -187,14 +230,13 @@ function PreprocessConfig({ node, onUpdate }) {
     return (
       <div className="space-y-4">
         <Msg type="info" text="Specify which feature columns to retain in the downstream pipeline." />
-        <Field label="Selected Columns (comma-separated)">
-          <input
-            type="text"
-            value={d.selected_columns ?? ''}
-            onChange={(e) => up('selected_columns', e.target.value)}
-            placeholder="e.g. age, income, tenure, score"
-            className="w-full px-3 py-2 rounded-xl text-xs focus:outline-none"
-            style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+        <Field label="Columns to Keep">
+          <ColumnSelection
+            columns={columns}
+            value={Array.isArray(d.selected_columns) ? d.selected_columns : (d.selected_columns || '').split(',').map((c) => c.trim()).filter(Boolean)}
+            onChange={(v) => up('selected_columns', v)}
+            automatic={d.selected_columns_auto ?? !d.selected_columns?.length}
+            onAutomaticChange={(v) => up('selected_columns_auto', v)}
           />
         </Field>
       </div>
@@ -217,7 +259,10 @@ function PreprocessConfig({ node, onUpdate }) {
           <input
             type="number"
             value={d.random_state ?? 42}
-            onChange={(e) => up('random_state', parseInt(e.target.value) || 42)}
+            onChange={(e) => {
+              const value = Number.parseInt(e.target.value, 10);
+              up('random_state', Number.isNaN(value) ? 42 : value);
+            }}
             className="w-full px-3 py-2 rounded-xl text-xs focus:outline-none"
             style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
           />
@@ -229,24 +274,46 @@ function PreprocessConfig({ node, onUpdate }) {
   return (
     <div className="space-y-4">
       {node.type === 'fillMissing' && (
-        <Field label="Missing Value Strategy">
-          <Sel value={d.missing_values ?? 'mean'} onChange={(v) => up('missing_values', v)} options={[
-            ['mean', 'Mean (Numeric columns)'],
-            ['median', 'Median (Skewed data)'],
-            ['most_frequent', 'Mode (Categorical)'],
-            ['constant', 'Constant Fill (0 / "missing")'],
-            ['drop', 'Drop Rows with Missing Values'],
-          ]} />
-        </Field>
+        <>
+          <Field label="Missing Value Strategy">
+            <Sel value={d.missing_values ?? 'mean'} onChange={(v) => up('missing_values', v)} options={[
+              ['mean', 'Mean (Numeric columns)'],
+              ['median', 'Median (Skewed data)'],
+              ['most_frequent', 'Mode (Categorical)'],
+              ['constant', 'Constant Fill (0 / "missing")'],
+              ['drop', 'Drop Rows with Missing Values'],
+            ]} />
+          </Field>
+          <Field label="Columns to Impute">
+            <ColumnSelection
+              columns={columns}
+              value={d.missing_value_columns ?? []}
+              onChange={(v) => up('missing_value_columns', v)}
+              automatic={d.missing_value_columns_auto ?? true}
+              onAutomaticChange={(v) => up('missing_value_columns_auto', v)}
+            />
+          </Field>
+        </>
       )}
 
       {node.type === 'encode' && (
-        <Field label="Categorical Encoding">
-          <Sel value={d.categorical_encoding ?? 'label'} onChange={(v) => up('categorical_encoding', v)} options={[
-            ['label', 'Label Encoding (Integer IDs)'],
-            ['onehot', 'One-Hot Encoding (Binary vectors)'],
-          ]} />
-        </Field>
+        <>
+          <Field label="Categorical Encoding">
+            <Sel value={d.categorical_encoding ?? 'label'} onChange={(v) => up('categorical_encoding', v)} options={[
+              ['label', 'Label Encoding (Integer IDs)'],
+              ['onehot', 'One-Hot Encoding (Binary vectors)'],
+            ]} />
+          </Field>
+          <Field label="Columns to Encode">
+            <ColumnSelection
+              columns={columns}
+              value={d.encoding_columns ?? []}
+              onChange={(v) => up('encoding_columns', v)}
+              automatic={d.encoding_columns_auto ?? true}
+              onAutomaticChange={(v) => up('encoding_columns_auto', v)}
+            />
+          </Field>
+        </>
       )}
 
       {node.type === 'scale' && (
@@ -258,12 +325,23 @@ function PreprocessConfig({ node, onUpdate }) {
           ]} />
         </Field>
       )}
+      {node.type === 'scale' && (
+        <Field label="Columns to Scale">
+          <ColumnSelection
+            columns={columns}
+            value={d.scaling_columns ?? []}
+            onChange={(v) => up('scaling_columns', v)}
+            automatic={d.scaling_columns_auto ?? true}
+            onAutomaticChange={(v) => up('scaling_columns_auto', v)}
+          />
+        </Field>
+      )}
     </div>
   );
 }
 
 /* ─── Model Config Panel ─────────────────────────────────────────────────────── */
-function ModelConfig({ node, onUpdate }) {
+function ModelConfig({ node, onUpdate, columns }) {
   const d = node.data;
   const up = (k, v) => onUpdate(node.id, { [k]: v, validationError: null });
 
@@ -341,14 +419,11 @@ function ModelConfig({ node, onUpdate }) {
       )}
 
       {/* Target Column Override */}
-      <Field label="Target Column (Optional Override)" hint="Leave blank to use auto-detected target">
-        <input
-          type="text"
-          placeholder="e.g. churn, price, label"
+      <Field label="Target Column" hint="Automatic uses the target detected from your dataset">
+        <Sel
           value={d.target_column ?? ''}
-          onChange={(e) => up('target_column', e.target.value)}
-          className="w-full px-3 py-2 rounded-xl text-xs focus:outline-none"
-          style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+          onChange={(v) => up('target_column', v || null)}
+          options={[['', 'Automatic'], ...columns.map((column) => [column, column])]}
         />
       </Field>
     </div>
@@ -643,15 +718,15 @@ print(f"Dropped {len(cols_to_drop)} columns exceeding {threshold*100}% nulls: {c
 }
 
 /* ─── Main PipelinePanel ─────────────────────────────────────────────────────── */
-export default function PipelinePanel({ node, onClose, onUpdateNodeData }) {
+export default function PipelinePanel({ node, onClose, onUpdateNodeData, columns = [] }) {
   const meta = TYPE_META[node.type] ?? { label: node.data.label ?? node.type, color: '#7C3AED', Icon: Settings };
   const { Icon, color } = meta;
 
   const renderContent = () => {
     if (UPLOAD_TYPES.includes(node.type))     return <UploadConfig     node={node} onUpdate={onUpdateNodeData} />;
-    if (PREPROCESS_TYPES.includes(node.type)) return <PreprocessConfig  node={node} onUpdate={onUpdateNodeData} />;
+    if (PREPROCESS_TYPES.includes(node.type)) return <PreprocessConfig  node={node} onUpdate={onUpdateNodeData} columns={columns} />;
     if (node.type === 'customPython')         return <CustomPythonConfig node={node} onUpdate={onUpdateNodeData} />;
-    if (MODEL_TYPES.includes(node.type))      return <ModelConfig       node={node} onUpdate={onUpdateNodeData} />;
+    if (MODEL_TYPES.includes(node.type))      return <ModelConfig       node={node} onUpdate={onUpdateNodeData} columns={columns} />;
     if (AI_TYPES.includes(node.type))         return <AIConfig          node={node} onUpdate={onUpdateNodeData} />;
     if (OUTPUT_TYPES.includes(node.type))     return <OutputConfig      node={node} onUpdate={onUpdateNodeData} />;
     return <p className="text-xs text-slate-400">Configure parameters for this node.</p>;

@@ -4,189 +4,274 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
-    accuracy_score, precision_score, recall_score, f1_score,
-    mean_squared_error, mean_absolute_error, r2_score,
+    accuracy_score, confusion_matrix, mean_squared_error, mean_absolute_error,
+    precision_recall_fscore_support, r2_score,
 )
 from sklearn.preprocessing import LabelEncoder
-from sklearn.impute import SimpleImputer
 from utils.logger import log_event
+from services.preprocessing import apply_transformers, preprocess_data
 
-# ── Classification models ────────────────────────────────────────────────────
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.svm import SVC
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression, LinearRegression, Ridge, Lasso
+from sklearn.ensemble import (
+    RandomForestClassifier, GradientBoostingClassifier,
+    RandomForestRegressor, GradientBoostingRegressor,
+)
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.svm import SVC, SVR
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 
-# ── Regression models ────────────────────────────────────────────────────────
-from sklearn.linear_model import LinearRegression, Ridge, Lasso
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.svm import SVR
+RESULT_PREVIEW_LIMIT = 500
 
-SAVE_DIR = "models/saved_models"
+MODEL_ZOOS = {
+    "classification": {
+        "Logistic Regression": lambda: LogisticRegression(max_iter=1000),
+        "Random Forest": lambda: RandomForestClassifier(n_estimators=100, random_state=42),
+        "Decision Tree": lambda: DecisionTreeClassifier(random_state=42),
+        "SVM": lambda: SVC(probability=True, random_state=42),
+        "KNN": KNeighborsClassifier,
+        "Gradient Boosting": lambda: GradientBoostingClassifier(random_state=42),
+    },
+    "regression": {
+        "Linear Regression": LinearRegression,
+        "Ridge": Ridge,
+        "Lasso": Lasso,
+        "Random Forest Regressor": lambda: RandomForestRegressor(n_estimators=100, random_state=42),
+        "KNN Regressor": KNeighborsRegressor,
+        "Decision Tree Regressor": lambda: DecisionTreeRegressor(random_state=42),
+        "SVR": SVR,
+        "Gradient Boosting Regressor": lambda: GradientBoostingRegressor(random_state=42),
+    },
+}
+
+MODEL_ALIASES = {
+    "randomForest": {"classification": "Random Forest", "regression": "Random Forest Regressor"},
+    "decisionTree": {"classification": "Decision Tree", "regression": "Decision Tree Regressor"},
+    "linearRegression": {"regression": "Linear Regression"},
+    "logisticRegression": {"classification": "Logistic Regression"},
+    "knn": {"classification": "KNN", "regression": "KNN Regressor"},
+    "svm": {"classification": "SVM", "regression": "SVR"},
+}
 
 
-def train_models(X: pd.DataFrame, y: pd.Series, task_type: str, test_size: float = 0.2) -> dict:
-    """
-    Trains multiple models for the given task type and returns a comparison dict
-    plus the name of the best model.  All fitted artefacts are saved to SAVE_DIR
-    so they can be reloaded consistently at prediction time.
-    """
-    log_event(f"Starting model training — task: {task_type}, samples: {len(X)}")
+def train_models(
+    X: pd.DataFrame,
+    y: pd.Series,
+    task_type: str,
+    test_size: float = 0.2,
+    selected_model: str | None = None,
+    model_parameters: dict | None = None,
+    preprocessing_config: dict | None = None,
+    artifact_dir: str | None = None,
+    random_state: int = 42,
+) -> dict:
+    """Train and evaluate one configured estimator or compare the supported model zoo."""
+    if artifact_dir is None:
+        raise ValueError("A run-specific artifact directory is required for model training.")
+    if task_type not in MODEL_ZOOS:
+        raise ValueError(f"Unknown task_type '{task_type}'. Use 'classification' or 'regression'.")
+    if X.empty or y.empty or len(X) != len(y):
+        raise ValueError("Training requires non-empty features and target with matching row counts.")
 
     X = X.copy()
+    y = y.copy()
+    config = {
+        "missing_values": "mean",
+        "categorical_encoding": "label",
+        "scaling": "none",
+        **(preprocessing_config or {}),
+    }
 
-    # ── Encode target for classification ────────────────────────────────────
+    if config.get("remove_duplicates"):
+        duplicate_columns = config.get("duplicate_columns")
+        if duplicate_columns is None:
+            frame = X.copy()
+            frame["__flowml_training_target__"] = y
+            keep = config.get("keep", "first")
+            frame = frame.drop_duplicates(keep=keep)
+            y = frame.pop("__flowml_training_target__")
+            X = frame
+        else:
+            target_column_names = {config.get("target_column"), y.name}
+            duplicate_columns = [
+                "__flowml_training_target__" if column in target_column_names else column
+                for column in duplicate_columns
+            ]
+            duplicate_columns = [
+                column for column in duplicate_columns
+                if column in X.columns or column == "__flowml_training_target__"
+            ]
+            if duplicate_columns:
+                frame = X.copy()
+                frame["__flowml_training_target__"] = y
+                frame = frame.drop_duplicates(subset=duplicate_columns, keep=config.get("keep", "first"))
+                y = frame.pop("__flowml_training_target__")
+                X = frame
+
+    if X.empty or y.empty or len(X) != len(y):
+        raise ValueError("Preprocessing left no training rows or features.")
+
+    input_features = X.columns.tolist()
     target_encoder = None
     if task_type == "classification":
         target_encoder = LabelEncoder()
-        y = target_encoder.fit_transform(y.astype(str))
+        y = pd.Series(target_encoder.fit_transform(y.astype(str)), index=y.index)
+    elif not pd.api.types.is_numeric_dtype(y):
+        raise ValueError("Regression target must contain numeric values.")
 
-    # ── Auto-encode categorical feature columns ──────────────────────────────
-    feature_encoders: dict = {}
-    cat_cols = X.select_dtypes(include=["object", "category", "string"]).columns.tolist()
-    for col in cat_cols:
-        le = LabelEncoder()
-        X[col] = le.fit_transform(X[col].astype(str))
-        feature_encoders[col] = le
-
-    # ── Auto-impute NaNs (safe DataFrame-preserving idiom) ───────────────────
-    fallback_imputer = None
-    if X.isnull().values.any():
-        fallback_imputer = SimpleImputer(strategy="mean")
-        X = pd.DataFrame(
-            fallback_imputer.fit_transform(X),
-            columns=X.columns,
-            index=X.index,
-        )
-
-    # ── Train / test split ───────────────────────────────────────────────────
     stratify = y if task_type == "classification" else None
     try:
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=42, stratify=stratify
+            X, y, test_size=test_size, random_state=random_state, stratify=stratify
         )
     except ValueError:
-        # Fallback without stratify if any class is too rare
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=42
+            X, y, test_size=test_size, random_state=random_state
         )
 
-    log_event(f"Split: {len(X_train)} train / {len(X_test)} test")
+    config["target_column"] = "__flowml_target__"
+    train_frame = X_train.copy()
+    train_frame[config["target_column"]] = y_train
+    training_config = {**config, "remove_duplicates": False}
+    processed_train, transformers = preprocess_data(train_frame, training_config)
+    transformers["config"] = config
+    X_train_processed = processed_train.drop(columns=[config["target_column"]])
+    X_test_processed = apply_transformers(X_test, transformers)
+    expected_features = X_train_processed.columns.tolist()
+    missing_transformed = [col for col in expected_features if col not in X_test_processed.columns]
+    if missing_transformed:
+        raise ValueError(f"Preprocessing did not produce expected features: {missing_transformed}")
+    X_test_processed = X_test_processed[expected_features]
 
-    # ── Model zoo ────────────────────────────────────────────────────────────
-    if task_type == "classification":
-        model_zoo = {
-            "Logistic Regression":   LogisticRegression(max_iter=1000),
-            "Random Forest":          RandomForestClassifier(n_estimators=100, random_state=42),
-            "Decision Tree":          DecisionTreeClassifier(random_state=42),
-            "SVM":                    SVC(probability=True, random_state=42),
-            "KNN":                    KNeighborsClassifier(),
-            "Gradient Boosting":      GradientBoostingClassifier(random_state=42),
-        }
-    elif task_type == "regression":
-        model_zoo = {
-            "Linear Regression":              LinearRegression(),
-            "Ridge":                          Ridge(),
-            "Lasso":                          Lasso(),
-            "Random Forest Regressor":        RandomForestRegressor(n_estimators=100, random_state=42),
-            "Decision Tree Regressor":        DecisionTreeRegressor(random_state=42),
-            "SVR":                            SVR(),
-            "Gradient Boosting Regressor":    GradientBoostingRegressor(random_state=42),
-        }
-    else:
-        raise ValueError(f"Unknown task_type '{task_type}'. Use 'classification' or 'regression'.")
+    model_zoo = MODEL_ZOOS[task_type]
+    if selected_model:
+        canonical = MODEL_ALIASES.get(selected_model, {}).get(task_type, selected_model)
+        if canonical not in model_zoo:
+            supported = ", ".join(model_zoo)
+            raise ValueError(
+                f"Model '{selected_model}' is not supported for {task_type}. Supported models: {supported}."
+            )
+        model_zoo = {canonical: model_zoo[canonical]}
 
     results = []
-    best_model_name: str | None = None
+    best_model_name = None
     best_model = None
     best_score = -float("inf") if task_type == "classification" else float("inf")
+    best_predictions = None
 
-    for name, model in model_zoo.items():
+    for name, model_factory in model_zoo.items():
         try:
-            log_event(f"Training {name}…")
-            model.fit(X_train, y_train)
-            preds = model.predict(X_test)
-
+            model = model_factory()
+            if selected_model and model_parameters:
+                try:
+                    model.set_params(**model_parameters)
+                except (TypeError, ValueError) as exc:
+                    raise ValueError(f"Invalid parameters for {name}: {exc}") from exc
+            model.fit(X_train_processed, y_train)
+            predictions = model.predict(X_test_processed)
             if task_type == "classification":
-                acc       = float(accuracy_score(y_test, preds))
-                precision = float(precision_score(y_test, preds, average="macro", zero_division=0))
-                recall    = float(recall_score(y_test, preds, average="macro", zero_division=0))
-                f1        = float(f1_score(y_test, preds, average="macro", zero_division=0))
-                score = acc
-                results.append({
-                    "model_name": name,
-                    "accuracy":  round(acc, 4),
-                    "precision": round(precision, 4),
-                    "recall":    round(recall, 4),
-                    "f1_score":  round(f1, 4),
-                })
-                if score > best_score:
-                    best_score, best_model_name, best_model = score, name, model
-
-            else:  # regression
-                mse  = float(mean_squared_error(y_test, preds))
-                rmse = float(np.sqrt(mse))
-                mae  = float(mean_absolute_error(y_test, preds))
-                r2   = float(r2_score(y_test, preds))
+                accuracy = float(accuracy_score(y_test, predictions))
+                precision, recall, f1, support = precision_recall_fscore_support(
+                    y_test, predictions, labels=np.arange(len(target_encoder.classes_)),
+                    zero_division=0,
+                )
+                class_metrics = [
+                    {
+                        "class": str(target_encoder.classes_[i]),
+                        "precision": float(precision[i]),
+                        "recall": float(recall[i]),
+                        "f1_score": float(f1[i]),
+                        "support": int(support[i]),
+                    }
+                    for i in range(len(target_encoder.classes_))
+                ]
+                metrics = {
+                    "accuracy": accuracy,
+                    "precision": float(np.mean(precision)),
+                    "recall": float(np.mean(recall)),
+                    "f1_score": float(np.mean(f1)),
+                    "confusion_matrix": confusion_matrix(
+                        y_test, predictions, labels=np.arange(len(target_encoder.classes_))
+                    ).tolist(),
+                    "class_labels": [str(value) for value in target_encoder.classes_],
+                    "class_metrics": class_metrics,
+                }
+                score = accuracy
+            else:
+                mse = float(mean_squared_error(y_test, predictions))
+                metrics = {
+                    "mae": float(mean_absolute_error(y_test, predictions)),
+                    "mse": mse,
+                    "rmse": float(np.sqrt(mse)),
+                    "r2": float(r2_score(y_test, predictions)) if len(y_test) > 1 else None,
+                }
                 score = mse
-                results.append({
-                    "model_name": name,
-                    "mse":  round(mse, 4),
-                    "rmse": round(rmse, 4),
-                    "mae":  round(mae, 4),
-                    "r2":   round(r2, 4),
-                })
-                if score < best_score:
-                    best_score, best_model_name, best_model = score, name, model
 
+            results.append({"model_name": name, **metrics})
+            if (task_type == "classification" and score > best_score) or (
+                task_type == "regression" and score < best_score
+            ):
+                best_score = score
+                best_model_name = name
+                best_model = model
+                best_predictions = predictions
         except Exception as exc:
             log_event(f"{name} failed: {exc}", level="WARNING")
             results.append({"model_name": name, "error": str(exc)})
 
     if best_model is None:
-        raise RuntimeError("All models failed to train. Check your data.")
+        failures = "; ".join(f"{item['model_name']}: {item['error']}" for item in results)
+        raise RuntimeError(f"Model training/evaluation failed: {failures}")
 
-    log_event(f"Training complete. Best model: {best_model_name}")
-
-    # ── Persist all artefacts ────────────────────────────────────────────────
-    os.makedirs(SAVE_DIR, exist_ok=True)
-
-    joblib.dump(best_model,     os.path.join(SAVE_DIR, "best_model.joblib"))
-    joblib.dump(X.columns.tolist(), os.path.join(SAVE_DIR, "features.joblib"))
-    joblib.dump(task_type,      os.path.join(SAVE_DIR, "task_type.joblib"))
-
+    selected_metrics = next(item for item in results if item["model_name"] == best_model_name)
+    display_actual = (
+        target_encoder.inverse_transform(np.asarray(y_test, dtype=int)).tolist()
+        if target_encoder is not None else y_test.tolist()
+    )
+    display_predictions = (
+        target_encoder.inverse_transform(np.asarray(best_predictions, dtype=int)).tolist()
+        if target_encoder is not None else best_predictions.tolist()
+    )
+    status = "completed"
+    destination = artifact_dir
+    os.makedirs(destination, exist_ok=True)
+    joblib.dump(best_model, os.path.join(destination, "best_model.joblib"))
+    joblib.dump(expected_features, os.path.join(destination, "features.joblib"))
+    joblib.dump(input_features, os.path.join(destination, "input_features.joblib"))
+    joblib.dump(task_type, os.path.join(destination, "task_type.joblib"))
+    joblib.dump(transformers, os.path.join(destination, "preprocessors.joblib"))
+    joblib.dump((X_test_processed, y_test), os.path.join(destination, "test_data.joblib"))
+    joblib.dump(results, os.path.join(destination, "model_results.joblib"))
     if target_encoder is not None:
-        joblib.dump(target_encoder, os.path.join(SAVE_DIR, "target_encoder.joblib"))
-    else:
-        # Remove stale encoder from a previous run
-        stale = os.path.join(SAVE_DIR, "target_encoder.joblib")
-        if os.path.exists(stale):
-            os.remove(stale)
+        joblib.dump(target_encoder, os.path.join(destination, "target_encoder.joblib"))
+    joblib.dump({
+        "estimator": best_model,
+        "preprocessors": transformers,
+        "input_features": input_features,
+        "features": expected_features,
+        "target_encoder": target_encoder,
+        "task_type": task_type,
+    }, os.path.join(destination, "model_bundle.joblib"))
 
-    if feature_encoders:
-        joblib.dump(feature_encoders, os.path.join(SAVE_DIR, "feature_encoders.joblib"))
-    else:
-        stale = os.path.join(SAVE_DIR, "feature_encoders.joblib")
-        if os.path.exists(stale):
-            os.remove(stale)
-
-    if fallback_imputer is not None:
-        joblib.dump(fallback_imputer, os.path.join(SAVE_DIR, "fallback_imputer.joblib"))
-
-    # Save test data for post-training visualisations (confusion matrix etc.)
-    joblib.dump((X_test, y_test), os.path.join(SAVE_DIR, "test_data.joblib"))
-
-    # Save model results for comparison chart
-    joblib.dump(results, os.path.join(SAVE_DIR, "model_results.joblib"))
-
-    log_event(f"All artefacts saved to {SAVE_DIR}")
-
+    log_event(f"Training complete. Selected model: {best_model_name}")
     return {
-        "models":      results,
-        "best_model":  best_model_name,
-        "task_type":   task_type,
-        "train_size":  int(len(X_train)),
-        "test_size":   int(len(X_test)),
+        "models": results,
+        "best_model": best_model_name,
+        "selected_model": best_model_name if selected_model else None,
+        "model_selection": "configured" if selected_model else "automl",
+        "model_parameters": best_model.get_params(deep=False),
+        "training_status": status,
+        "task_type": task_type,
+        "train_size": int(len(X_train)),
+        "test_size": int(len(X_test)),
+        "evaluation": selected_metrics,
+        "best_score": selected_metrics["accuracy"] if task_type == "classification" else selected_metrics["r2"],
+        "input_features": input_features,
+        "input_schema": {
+            name: ("number" if pd.api.types.is_numeric_dtype(X[name]) else "string")
+            for name in input_features
+        },
+        "feature_names": expected_features,
+        "test_predictions": display_predictions[:RESULT_PREVIEW_LIMIT],
+        "test_actual": display_actual[:RESULT_PREVIEW_LIMIT],
+        "test_preview_rows": min(len(display_actual), RESULT_PREVIEW_LIMIT),
     }

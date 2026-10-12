@@ -3,7 +3,7 @@ import joblib
 import pandas as pd
 import numpy as np
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import LabelEncoder, StandardScaler, MinMaxScaler
+from sklearn.preprocessing import LabelEncoder, StandardScaler, MinMaxScaler, RobustScaler
 from utils.logger import log_event
 
 PREPROCESSORS_DIR = "models/saved_models"
@@ -30,8 +30,11 @@ def preprocess_data(
     config keys:
         missing_values       : "mean" | "median" | "most_frequent" | "constant" | "drop"
         categorical_encoding : "label" | "onehot"
-        scaling              : "standard" | "minmax" | "none"
+        scaling              : "standard" | "minmax" | "robust" | "none"
         target_column        : str  (excluded from imputation/scaling)
+        *_columns            : optional column lists; omitted means automatic selection
+        selected_columns     : optional feature list to retain (target is kept)
+        remove_duplicates    : bool, with optional duplicate_columns and keep
     """
     log_event("Starting data preprocessing...")
     processed_df = df.copy()
@@ -39,17 +42,43 @@ def preprocess_data(
 
     target_col = config.get("target_column")
 
+    # Remove duplicate rows and restrict the working set before fitting transformations.
+    if config.get("remove_duplicates"):
+        duplicate_columns = config.get("duplicate_columns")
+        duplicate_columns = [c for c in duplicate_columns if c in processed_df.columns] if duplicate_columns is not None else None
+        if duplicate_columns is None or duplicate_columns:
+            processed_df = processed_df.drop_duplicates(
+                subset=duplicate_columns,
+                keep=config.get("keep", "first"),
+            )
+
+    selected_columns = config.get("selected_columns")
+    if selected_columns is not None:
+        retained = [c for c in selected_columns if c in processed_df.columns]
+        if target_col in processed_df.columns and target_col not in retained:
+            retained.append(target_col)
+        processed_df = processed_df[retained]
+
     # ── 1. Missing-value imputation ──────────────────────────────────────────
     strategy = config.get("missing_values", "mean")
-    processed_df, transformers = _impute(processed_df, strategy, transformers, target_col)
+    processed_df, transformers = _impute(
+        processed_df, strategy, transformers, target_col,
+        config.get("missing_value_columns"),
+    )
 
     # ── 2. Categorical encoding ──────────────────────────────────────────────
     encoding = config.get("categorical_encoding", "label")
-    processed_df, transformers = _encode(processed_df, encoding, transformers, target_col)
+    processed_df, transformers = _encode(
+        processed_df, encoding, transformers, target_col,
+        config.get("encoding_columns"),
+    )
 
     # ── 3. Feature scaling ───────────────────────────────────────────────────
     scaling = config.get("scaling", "none")
-    processed_df, transformers = _scale(processed_df, scaling, target_col, transformers)
+    processed_df, transformers = _scale(
+        processed_df, scaling, target_col, transformers,
+        config.get("scaling_columns"),
+    )
 
     transformers["config"] = config
     transformers["final_columns"] = list(processed_df.columns)
@@ -70,6 +99,9 @@ def apply_transformers(df: pd.DataFrame, transformers: dict) -> pd.DataFrame:
     This guarantees identical encodings at inference time.
     """
     df = df.copy()
+    selected_columns = transformers.get("config", {}).get("selected_columns")
+    if selected_columns is not None:
+        df = df[[column for column in selected_columns if column in df.columns]]
 
     # ── Numeric imputer ──────────────────────────────────────────────────────
     if "numeric_imputer" in transformers:
@@ -127,16 +159,33 @@ def apply_transformers(df: pd.DataFrame, transformers: dict) -> pd.DataFrame:
 # Private helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _impute(df: pd.DataFrame, strategy: str, transformers: dict, target_col: str | None = None):
+def _impute(
+    df: pd.DataFrame,
+    strategy: str,
+    transformers: dict,
+    target_col: str | None = None,
+    selected_columns: list[str] | None = None,
+):
     # Exclude target column from imputer fits so saved transformers are feature-only
     all_num_cols = df.select_dtypes(include="number").columns.tolist()
     all_cat_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
+    if selected_columns is not None:
+        selected = set(selected_columns)
+        all_num_cols = [c for c in all_num_cols if c in selected or c == target_col]
+        all_cat_cols = [c for c in all_cat_cols if c in selected or c == target_col]
     num_cols = [c for c in all_num_cols if c != target_col]
     cat_cols = [c for c in all_cat_cols if c != target_col]
 
+    if strategy == "none":
+        return df, transformers
+
     if strategy == "drop":
         before = len(df)
-        df = df.dropna()
+        subset = list(selected_columns) if selected_columns is not None else None
+        if subset is not None and target_col in df.columns and target_col not in subset:
+            subset.append(target_col)
+        if subset is None or subset:
+            df = df.dropna(subset=subset)
         log_event(f"Dropped {before - len(df)} rows with missing values.")
         return df, transformers
 
@@ -177,10 +226,19 @@ def _impute(df: pd.DataFrame, strategy: str, transformers: dict, target_col: str
     return df, transformers
 
 
-def _encode(df: pd.DataFrame, encoding: str, transformers: dict, target_col: str | None = None):
+def _encode(
+    df: pd.DataFrame,
+    encoding: str,
+    transformers: dict,
+    target_col: str | None = None,
+    selected_columns: list[str] | None = None,
+):
     # Only encode feature columns, not the target
     all_cat_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
     cat_cols = [c for c in all_cat_cols if c != target_col]
+    if selected_columns is not None:
+        selected = set(selected_columns)
+        cat_cols = [c for c in cat_cols if c in selected]
     if not cat_cols:
         return df, transformers
 
@@ -203,18 +261,34 @@ def _encode(df: pd.DataFrame, encoding: str, transformers: dict, target_col: str
     return df, transformers
 
 
-def _scale(df: pd.DataFrame, scaling: str, target_col: str | None, transformers: dict):
+def _scale(
+    df: pd.DataFrame,
+    scaling: str,
+    target_col: str | None,
+    transformers: dict,
+    selected_columns: list[str] | None = None,
+):
     if scaling == "none":
         return df, transformers
 
     num_cols = df.select_dtypes(include="number").columns.tolist()
+    if selected_columns is not None:
+        selected = set(selected_columns)
+        num_cols = [c for c in num_cols if c in selected]
     if target_col and target_col in num_cols:
         num_cols.remove(target_col)
 
     if not num_cols:
         return df, transformers
 
-    scaler = StandardScaler() if scaling == "standard" else MinMaxScaler()
+    scaler = (
+        StandardScaler() if scaling == "standard"
+        else MinMaxScaler() if scaling == "minmax"
+        else RobustScaler() if scaling == "robust"
+        else None
+    )
+    if scaler is None:
+        raise ValueError(f"Unknown scaling strategy '{scaling}'.")
     df[num_cols] = pd.DataFrame(
         scaler.fit_transform(df[num_cols]),
         columns=num_cols, index=df.index,

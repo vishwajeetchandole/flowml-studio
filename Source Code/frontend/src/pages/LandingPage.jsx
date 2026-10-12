@@ -8,10 +8,10 @@ import SignIn from './auth/SignIn';
 import SignUp from './auth/SignUp';
 import {
   ArrowRight, Sparkles, Check, Star, Play, Database,
-  Sliders, Brain, Award, Shield, Zap, Cloud, Code2,
+  Sliders, Brain, Award, Shield, Zap, Cloud,
   Share2, ArrowUpRight, CheckCircle2, ChevronRight,
   TrendingUp, Activity, Terminal, Lock, FileSpreadsheet, LogOut,
-  Globe, BarChart3, Layers, Users, RefreshCw
+  BarChart3, Layers, Users, RefreshCw
 } from 'lucide-react';
 import Logo from '../components/common/Logo';
 import FlowMLIcon from '../components/FlowMLIcon';
@@ -1106,14 +1106,6 @@ function Footer() {
             <p className="text-xs text-slate-400 max-w-xs leading-relaxed mb-6">
               The next-generation visual pipeline canvas for machine learning development, automated benchmarking, and transparent explainable AI.
             </p>
-            <div className="flex items-center gap-4 text-slate-400">
-              <a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-white transition-colors" aria-label="GitHub">
-                <Code2 className="w-4 h-4" />
-              </a>
-              <a href="https://twitter.com" target="_blank" rel="noreferrer" className="hover:text-white transition-colors" aria-label="Twitter">
-                <Globe className="w-4 h-4" />
-              </a>
-            </div>
           </div>
 
           {/* Solutions Column */}

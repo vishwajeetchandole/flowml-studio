@@ -1,6 +1,6 @@
 import os
 import joblib
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
@@ -110,13 +110,15 @@ async def download_model(
     uid: str = Depends(get_current_user),
     store: StoreBackend = Depends(get_store),
 ):
-    """Download the best trained model artifact for caller's model_id."""
+    """Download the fitted estimator and preprocessing bundle for caller's model_id."""
     try:
-        model_path = store.get_artifact_path(uid, model_id, "best_model.joblib")
-    except Exception:
-        raise_http_exception(404, "Model not found", f"No trained model found for model_id='{model_id}'.")
+        model_path = store.get_artifact_path(uid, model_id, "model_bundle.joblib")
+    except HTTPException as exc:
+        if exc.status_code == 404:
+            raise_http_exception(404, "Model artifact not found", f"No fitted model bundle found for model_id='{model_id}'.")
+        raise
     return FileResponse(
         path=model_path,
-        filename="best_model.joblib",
+        filename=f"flowml_model_{model_id}.joblib",
         media_type="application/octet-stream",
     )

@@ -169,7 +169,7 @@ npm run dev
 
 Open the Vite URL printed in the terminal (normally `http://localhost:5173`). `VITE_DEV_AUTH=true` selects the local mock account flow. Use a unique email and password to sign up; the mock verification flow is local-only. To use Firebase instead, configure the Firebase web values in `.env.local`, set `VITE_DEV_AUTH=false`, configure the backend service credentials privately, then restart both servers. Never commit `.env`, `.env.local`, or Firebase credential files.
 
-`VITE_API_BASE_URL` defaults to `http://localhost:8000`. Backend CORS defaults to the two local Vite origins and can be overridden with `CORS_ORIGINS`. The backend health check is available at `http://localhost:8000/api/health`.
+`VITE_API_BASE_URL` defaults to `http://127.0.0.1:8000`, matching the backend's local IPv4 bind address. Backend CORS defaults to the two local Vite origins and can be overridden with `CORS_ORIGINS`. The backend health check is available at `http://127.0.0.1:8000/api/health`.
 
 ### Checks
 

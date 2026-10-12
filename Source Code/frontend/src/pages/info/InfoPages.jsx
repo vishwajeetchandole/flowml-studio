@@ -199,7 +199,7 @@ export function DocsPage() {
           type: 'removeDuplicates',
           inputs: 'DataFrame',
           outputs: 'De-duplicated DataFrame',
-          params: 'keep: First or Last occurrence, subset: Column identifiers',
+          params: 'keep: First or Last occurrence; compare all columns automatically or choose a subset',
           when: 'Eliminate duplicate rows to prevent over-weighting repeated observations.',
           tip: 'Connect right after Upload Node for clean baseline data hygiene.'
         },
@@ -208,7 +208,7 @@ export function DocsPage() {
           type: 'selectColumns',
           inputs: 'DataFrame',
           outputs: 'Filtered DataFrame',
-          params: 'selected_columns: Array of feature names to keep',
+          params: 'selected_columns: Choose feature columns to keep, or use Automatic to retain all',
           when: 'Drop uninformative IDs, tracking timestamps, or data leakage columns.',
           tip: 'Drastically reduces memory usage and speeds up model training.'
         }
@@ -224,7 +224,7 @@ export function DocsPage() {
           type: 'fillMissing',
           inputs: 'DataFrame',
           outputs: 'Imputed DataFrame',
-          params: 'strategy: mean | median | most_frequent | constant | drop',
+          params: 'strategy: mean | median | most_frequent | constant | drop; impute all compatible columns automatically or choose columns',
           when: 'Handle null or NaN values. Scikit-learn estimators fail if missing values are present.',
           tip: 'Use median for skewed numeric distributions; use most_frequent for categories.'
         },
@@ -233,7 +233,7 @@ export function DocsPage() {
           type: 'encode',
           inputs: 'DataFrame',
           outputs: 'Numerically Encoded DataFrame',
-          params: 'categorical_encoding: label (Ordinal) | onehot (Dummy Columns)',
+          params: 'categorical_encoding: label | onehot; encode all categorical columns automatically or choose columns',
           when: 'Convert textual categorical values into machine-readable numbers.',
           tip: 'Use One-Hot for nominal categories (<10 unique values); Label Encoding for ordinal ranks.'
         },
@@ -242,7 +242,7 @@ export function DocsPage() {
           type: 'scale',
           inputs: 'DataFrame',
           outputs: 'Normalized Feature DataFrame',
-          params: 'scaling: standard (Z-Score) | minmax (0-1 Range) | robust (IQR)',
+          params: 'scaling: standard | minmax | robust; scale all numeric columns automatically or choose columns',
           when: 'Normalize feature magnitudes so features with large values do not dominate the model.',
           tip: 'Mandatory for KNN, SVM, Logistic Regression, and Neural Networks.'
         },

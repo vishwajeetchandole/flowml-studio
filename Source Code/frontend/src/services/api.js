@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getCurrentIdToken, getCurrentUserId } from './firebase';
 
 // ── Base URL ──────────────────────────────────────────────────────────────────
-export const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -67,7 +67,10 @@ api.interceptors.response.use(
       } else if (status >= 500) {
         msg = 'The server could not complete the request. Please try again shortly.';
       } else if (typeof detail === 'object' && detail !== null) {
-        msg = detail.error || detail.message || detail.details || 'Server processed request with errors.';
+        const summary = detail.error || detail.message;
+        msg = summary && detail.details
+          ? `${summary}: ${detail.details}`
+          : summary || detail.details || 'Server processed request with errors.';
       } else if (typeof detail === 'string') {
         msg = detail;
       } else if (data?.message) {
@@ -130,13 +133,20 @@ export const preprocessDataset = (datasetId, config, targetColumn = null) =>
 /**
  * POST /api/train
  */
-export const trainModels = (datasetId, targetColumn, taskType = 'classification', processedDatasetId = null) =>
+export const trainModels = (
+  datasetId, targetColumn, taskType = 'classification', processedDatasetId = null,
+  modelName = null, modelParameters = null, trainingOptions = {}
+) =>
   api
     .post('/api/train', {
       dataset_id: datasetId,
       target_column: targetColumn,
       task_type: taskType,
       ...(processedDatasetId ? { processed_dataset_id: processedDatasetId } : {}),
+      ...(modelName ? { model_name: modelName } : {}),
+      ...(modelParameters ? { model_parameters: modelParameters } : {}),
+      ...(trainingOptions.test_size != null ? { test_size: trainingOptions.test_size } : {}),
+      ...(trainingOptions.random_state != null ? { random_state: trainingOptions.random_state } : {}),
     })
     .then((r) => r.data);
 
@@ -158,6 +168,23 @@ export const runPredictions = (datasetId, targetColumn = null, modelId = null) =
       ...(targetColumn ? { target_column: targetColumn } : {}),
     })
     .then((r) => r.data);
+
+/** POST /api/predict — infer directly from manually entered feature rows */
+export const predictRows = (modelId, rows, targetColumn = null) =>
+  api
+    .post('/api/predict', {
+      model_id: modelId,
+      rows,
+      ...(targetColumn ? { target_column: targetColumn } : {}),
+    })
+    .then((r) => r.data);
+
+/** GET /api/download-model?model_id={model_id} */
+export const downloadModelArtifact = (modelId) =>
+  api.get('/api/download-model', {
+    params: { model_id: modelId },
+    responseType: 'blob',
+  }).then((r) => r.data);
 
 /** POST /api/visualizations */
 export const getVisualizations = (datasetId, modelId) =>
@@ -226,9 +253,9 @@ export function saveProject(project) {
 }
 
 export function deleteProject(id) {
+  localStorage.removeItem(workflowStorageKey(id));
   const projects = getProjects().filter((p) => p.id !== id);
   localStorage.setItem(projectsKey(), JSON.stringify(projects));
-  localStorage.removeItem(workflowStorageKey(id));
   return true;
 }
 

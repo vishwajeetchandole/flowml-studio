@@ -255,6 +255,14 @@ python -m pytest tests/ -v
 * `GET /api/runs/{id}` - Inspect run status, live logs, node state, and metrics
 * `POST /api/runs/{id}/stop` - Abort active pipeline execution
 
+### Model Training & Inference
+* `POST /api/train` - Train a configured `model_name` or compare models with AutoML; evaluation is calculated on a held-out split
+* `GET /api/models` - List trained model metadata, algorithm, parameters, and artifact status
+* `GET /api/models/{model_id}/download` - Download the estimator together with fitted preprocessing
+* `POST /api/predict` - Predict from an owned `dataset_id` or manual `rows`; supplied target labels are evaluated separately
+
+The training response includes classification accuracy, macro precision/recall/F1, confusion matrix and class-wise metrics, or regression MAE/MSE/RMSE/R². Prediction rejects feature schemas that do not match the trained model and reports that supervised metrics are unavailable when inputs have no labels.
+
 ### Isolated Python Code Studio
 * `POST /api/code/run` - Execute Python script in isolated Docker / sandbox worker
 * `POST /api/code/runs/{run_id}/stop` - Abort active running Python worker

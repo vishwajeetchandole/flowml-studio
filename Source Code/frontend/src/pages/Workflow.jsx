@@ -1,13 +1,18 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Trash2 } from 'lucide-react';
 import ReactFlow, {
   addEdge,
+  BaseEdge,
   Controls,
+  EdgeLabelRenderer,
   MiniMap,
   useNodesState,
   useEdgesState,
   ReactFlowProvider,
   MarkerType,
+  getBezierPath,
+  useReactFlow,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -120,6 +125,7 @@ const initialNodes = [
 const initialEdges = [
   {
     id: 'e1-2',
+    type: 'deletable',
     source: 'node-1',
     target: 'node-2',
     animated: true,
@@ -127,6 +133,60 @@ const initialEdges = [
     markerEnd: { type: MarkerType.ArrowClosed, color: '#7C3AED' },
   },
 ];
+
+const DeletableEdge = ({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  style,
+  markerEnd,
+  selected,
+}) => {
+  const [edgePath, labelX, labelY] = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+  });
+  const { deleteElements } = useReactFlow();
+
+  return (
+    <>
+      <BaseEdge id={id} path={edgePath} style={style} markerEnd={markerEnd} />
+      {selected && (
+        <EdgeLabelRenderer>
+          <button
+            type="button"
+            aria-label="Remove connection"
+            title="Remove connection"
+            className="nodrag nopan pointer-events-auto flex h-6 w-6 items-center justify-center rounded-full border border-red-300 bg-white text-red-500 shadow-md transition-colors hover:bg-red-50"
+            style={{
+              position: 'absolute',
+              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+            }}
+            onClick={(event) => {
+              event.stopPropagation();
+              deleteElements({ edges: [{ id }] });
+            }}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </EdgeLabelRenderer>
+      )}
+    </>
+  );
+};
+
+const edgeTypes = {
+  deletable: DeletableEdge,
+};
 
 // Inner component — must be inside ReactFlowProvider
 const WorkflowInner = ({ onNodeClick, actionsRef, projectId: routeProjectId }) => {
@@ -151,7 +211,9 @@ const WorkflowInner = ({ onNodeClick, actionsRef, projectId: routeProjectId }) =
 
   const saved = getSavedWorkflow();
   const [nodes, setNodes, onNodesChange] = useNodesState(saved.nodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(saved.edges);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(
+    saved.edges.map((edge) => ({ ...edge, type: 'deletable' }))
+  );
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
   const flowWrapperRef = useRef(null);
 
@@ -260,7 +322,9 @@ const WorkflowInner = ({ onNodeClick, actionsRef, projectId: routeProjectId }) =
       addNode,
       setWorkflowData: (data) => {
         if (data.nodes) setNodes(data.nodes);
-        if (data.edges) setEdges(data.edges);
+        if (data.edges) {
+          setEdges(data.edges.map((edge) => ({ ...edge, type: 'deletable' })));
+        }
       },
       updateNode: (nodeId, newData) => {
         pushHistory();
@@ -315,6 +379,7 @@ const WorkflowInner = ({ onNodeClick, actionsRef, projectId: routeProjectId }) =
         addEdge(
           {
             ...params,
+            type: 'deletable',
             animated: true,
             style: { stroke: '#7C3AED' },
             markerEnd: { type: MarkerType.ArrowClosed, color: '#7C3AED' },
@@ -325,6 +390,10 @@ const WorkflowInner = ({ onNodeClick, actionsRef, projectId: routeProjectId }) =
     },
     [setEdges, pushHistory]
   );
+
+  const onEdgesDeleteWithHistory = useCallback(() => {
+    pushHistory();
+  }, [pushHistory]);
 
   const onDragOver = useCallback((event) => {
     event.preventDefault();
@@ -374,6 +443,7 @@ const WorkflowInner = ({ onNodeClick, actionsRef, projectId: routeProjectId }) =
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onEdgesDelete={onEdgesDeleteWithHistory}
           onConnect={onConnect}
           onInit={setReactFlowInstance}
           onDrop={onDrop}
@@ -381,6 +451,7 @@ const WorkflowInner = ({ onNodeClick, actionsRef, projectId: routeProjectId }) =
           onNodeClick={(_, node) => onNodeClick(node)}
           onPaneClick={() => onNodeClick(null)}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           fitView
           fitViewOptions={{ padding: 0.3 }}
           snapToGrid
@@ -388,6 +459,7 @@ const WorkflowInner = ({ onNodeClick, actionsRef, projectId: routeProjectId }) =
           minZoom={0.25}
           maxZoom={2}
           defaultEdgeOptions={{
+            type: 'deletable',
             animated: true,
             style: { stroke: '#7C3AED', strokeWidth: 2.5 },
             markerEnd: { type: MarkerType.ArrowClosed, color: '#7C3AED' },

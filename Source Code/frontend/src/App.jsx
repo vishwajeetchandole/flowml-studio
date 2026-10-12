@@ -26,6 +26,14 @@ const PREPROCESS_TYPES = ['fillMissing', 'encode', 'scale', 'removeDuplicates', 
 const MODEL_TYPES      = ['randomForest', 'linearRegression', 'decisionTree', 'logisticRegression', 'knn', 'svm', 'kmeans', 'aiDecision'];
 const OUTPUT_TYPES     = ['prediction', 'report'];
 const VIZ_TYPES        = ['explainableAi'];
+const MODEL_ALGORITHMS = {
+  randomForest: 'Random Forest',
+  linearRegression: 'Linear Regression',
+  decisionTree: 'Decision Tree',
+  logisticRegression: 'Logistic Regression',
+  knn: 'KNN',
+  svm: 'SVM',
+};
 
 /* ─── Topological sort & Cycle check ─────────────────────────────────────────── */
 function topoSort(nodes, edges) {
@@ -58,6 +66,7 @@ function AppInner() {
   });
 
   const [selectedNode,   setSelectedNode]   = useState(null);
+  const [datasetColumns, setDatasetColumns] = useState([]);
   const [showPanel,      setShowPanel]      = useState(false);
   const [pipelineState,  setPipelineState]  = useState('idle');
   const [pipelineSteps,  setPipelineSteps]  = useState([]);
@@ -171,8 +180,32 @@ function AppInner() {
     setShowPanel(false);
 
     let uploadResult = null, preprocessResult = null, trainResult = null;
-    let predResult = null, vizResult = null;
+    let predResult = null, vizResult = null, vizError = null;
     let targetColumn = null, taskType = 'classification';
+    const pendingPreprocessNodes = [];
+    const preprocessConfig = {
+      missing_values: 'none',
+      categorical_encoding: 'none',
+      scaling: 'none',
+    };
+    const splitOptions = { test_size: 0.2, random_state: 42 };
+    let preprocessingStarted = false;
+
+    const applyPreprocessing = async () => {
+      if (!pendingPreprocessNodes.length || preprocessingStarted || !uploadResult) return;
+      preprocessingStarted = true;
+      const sid = addStep('Apply preprocessing', 'running', 'Applying configured node options…');
+      const result = await preprocessDataset(uploadResult.dataset_id, preprocessConfig, targetColumn);
+      preprocessResult = result;
+      updateStep(sid, {
+        status: 'done',
+        detail: `${result.rows?.toLocaleString()} rows · ${result.columns} columns`,
+      });
+      pendingPreprocessNodes.forEach(({ node, stepId }) => {
+        workflowRef.current?.setNodeStatus(node.id, 'completed');
+        updateStep(stepId, { status: 'done', detail: 'Options applied to dataset' });
+      });
+    };
 
     try {
       for (const node of ordered) {
@@ -211,6 +244,8 @@ function AppInner() {
 
             const asid = addStep('Analyze Dataset', 'running', 'Inferring schema & target…');
             const analysis = await analyzeDataset(uploadResult.dataset_id);
+          setDatasetColumns(Object.keys(analysis.column_types || {}));
+          workflowRef.current?.updateNode(node.id, { _analysis: analysis });
           targetColumn = analysis.suggested_target;
           taskType     = analysis.suggested_task_type ?? 'classification';
           updateStep(asid, { status: 'done', detail: `Target: "${targetColumn}" · Task: ${taskType}` });
@@ -220,30 +255,103 @@ function AppInner() {
         /* 2 ─ Preprocess */
         else if (PREPROCESS_TYPES.includes(t)) {
           if (!uploadResult) { addStep('Preprocess', 'skipped', 'No dataset available'); continue; }
-          const sid = addStep(`Preprocess — ${node.data.label}`, 'running', 'Applying transformations…');
-          const cfg = {
-            missing_values:       node.data.missing_values       ?? 'mean',
-            categorical_encoding: node.data.categorical_encoding ?? 'label',
-            scaling:              node.data.scaling              ?? 'standard',
-          };
-          const r = await preprocessDataset(uploadResult.dataset_id, cfg, targetColumn);
-          preprocessResult = r;
-          updateStep(sid, { status: 'done', detail: `${r.rows?.toLocaleString()} rows · ${r.columns} features` });
-          workflowRef.current?.setNodeStatus(node.id, 'completed');
+          if (t === 'splitData') {
+            splitOptions.test_size = Number(node.data.test_size ?? 0.2);
+            splitOptions.random_state = Number(node.data.random_state ?? 42);
+            addStep(`Configure — ${node.data.label}`, 'done', `${Math.round(splitOptions.test_size * 100)}% test split`);
+            workflowRef.current?.setNodeStatus(node.id, 'completed');
+            continue;
+          }
+
+          if (t === 'fillMissing') {
+            preprocessConfig.missing_values = node.data.missing_values ?? 'mean';
+            if (node.data.missing_value_columns_auto === false) {
+              preprocessConfig.missing_value_columns = node.data.missing_value_columns ?? [];
+            } else {
+              delete preprocessConfig.missing_value_columns;
+            }
+          } else if (t === 'encode') {
+            preprocessConfig.categorical_encoding = node.data.categorical_encoding ?? 'label';
+            if (node.data.encoding_columns_auto === false) {
+              preprocessConfig.encoding_columns = node.data.encoding_columns ?? [];
+            } else {
+              delete preprocessConfig.encoding_columns;
+            }
+          } else if (t === 'scale') {
+            preprocessConfig.scaling = node.data.scaling ?? 'standard';
+            if (node.data.scaling_columns_auto === false) {
+              preprocessConfig.scaling_columns = node.data.scaling_columns ?? [];
+            } else {
+              delete preprocessConfig.scaling_columns;
+            }
+          } else if (t === 'selectColumns') {
+            if (node.data.selected_columns_auto === false) {
+              preprocessConfig.selected_columns = Array.isArray(node.data.selected_columns)
+                ? node.data.selected_columns
+                : (node.data.selected_columns || '').split(',').map((column) => column.trim()).filter(Boolean);
+            } else {
+              delete preprocessConfig.selected_columns;
+            }
+          } else if (t === 'removeDuplicates') {
+            preprocessConfig.remove_duplicates = true;
+            preprocessConfig.keep = node.data.keep ?? 'first';
+            if (node.data.duplicate_columns_auto === false) {
+              preprocessConfig.duplicate_columns = node.data.duplicate_columns ?? [];
+            } else {
+              delete preprocessConfig.duplicate_columns;
+            }
+          }
+          const stepId = addStep(`Configure — ${node.data.label}`, 'running', 'Waiting to apply preprocessing options…');
+          pendingPreprocessNodes.push({ node, stepId });
         }
 
         /* 3 ─ Models */
         else if (MODEL_TYPES.includes(t)) {
           if (!uploadResult) { addStep('Train Models', 'skipped', 'No dataset available'); continue; }
-          const sid = addStep('Train Models', 'running', 'Fitting ML estimators…');
+          await applyPreprocessing();
+          if (t === 'kmeans') {
+            throw new Error('K-Means is an unsupervised model and cannot be trained through supervised target evaluation.');
+          }
+          const selectedTarget = node.data.target_column || targetColumn;
+          if (!selectedTarget) throw new Error('Choose a target column before training a supervised model.');
+          const modelName = MODEL_ALGORITHMS[t] ?? null;
+          const modelParameters = t === 'randomForest'
+            ? {
+                n_estimators: Number(node.data.n_estimators ?? 100),
+                max_depth: Number(node.data.max_depth ?? 10),
+              }
+            : t === 'logisticRegression'
+              ? { C: Number(node.data.C ?? 1), solver: node.data.solver ?? 'lbfgs' }
+            : t === 'knn'
+              ? { n_neighbors: Number(node.data.n_neighbors ?? 5) }
+              : t === 'svm'
+                ? { kernel: node.data.kernel ?? 'rbf' }
+                : null;
+          const sid = addStep(
+            modelName ? `Train ${modelName}` : 'AutoML Model Comparison',
+            'running',
+            'Fitting model and evaluating held-out test data…'
+          );
           const processedDatasetId = preprocessResult?.processed_dataset_id ?? null;
-          const r   = await trainModels(uploadResult.dataset_id, targetColumn, taskType, processedDatasetId);
-          trainResult = { ...r, targetColumn, taskType };
-          const best = r.models?.find((m) => m.model_name === r.best_model);
+          const r = await trainModels(
+            uploadResult.dataset_id,
+            selectedTarget,
+            taskType,
+            processedDatasetId,
+            modelName,
+            modelParameters,
+            splitOptions
+          );
+          trainResult = { ...r, targetColumn: selectedTarget, taskType };
+          targetColumn = selectedTarget;
+          const evaluation = r.evaluation;
           const metricStr = taskType === 'classification'
-            ? `Acc ${(best?.accuracy * 100).toFixed(1)}%`
-            : `R² ${best?.r2?.toFixed(3)}`;
-          updateStep(sid, { status: 'done', detail: `Optimal: ${r.best_model} (${metricStr})` });
+            ? `Accuracy ${(evaluation.accuracy * 100).toFixed(1)}%`
+            : `R² ${evaluation.r2 == null ? 'N/A' : evaluation.r2.toFixed(3)}`;
+          updateStep(sid, {
+            status: 'done',
+            detail: `${r.model_selection === 'configured' ? 'Configured' : 'AutoML selected'}: ${r.best_model} · ${metricStr}`,
+          });
           workflowRef.current?.setNodeStatus(node.id, 'completed');
         }
 
@@ -271,15 +379,18 @@ function AppInner() {
         }
       }
 
+      await applyPreprocessing();
+
       if (!vizResult && uploadResult && trainResult?.model_id) {
         try {
           vizResult = await getVisualizations(uploadResult.dataset_id, trainResult.model_id);
         } catch (e) {
-          console.warn('Fallback visualization failed:', e);
+          vizError = e.message || 'Visualization generation failed.';
+          addStep('Visualizations', 'warning', vizError);
         }
       }
 
-      setResults({ uploadResult, preprocessResult, trainResult, predResult, vizResult, targetColumn, taskType });
+      setResults({ uploadResult, preprocessResult, trainResult, predResult, vizResult, vizError, targetColumn, taskType });
       setPipelineState('done');
       addStep('Pipeline Complete', 'done', '🎉 All pipeline stages completed successfully');
       showToast('Pipeline complete!', 'success');
@@ -299,6 +410,12 @@ function AppInner() {
   };
 
   const handleNodeClick = useCallback((node) => {
+    const sourceNode = workflowRef.current?.getWorkflowData()?.nodes?.find((candidate) =>
+      UPLOAD_TYPES.includes(candidate.type) && (candidate.data?._info || candidate.data?._analysis)
+    );
+    const info = sourceNode?.data?._info;
+    const analysis = sourceNode?.data?._analysis;
+    setDatasetColumns(info?.column_names || Object.keys(analysis?.column_types || {}));
     setSelectedNode(node);
     setShowPanel(!!node);
   }, []);
@@ -315,6 +432,12 @@ function AppInner() {
       return;
     }
 
+    const sourceNode = workflowRef.current?.getWorkflowData()?.nodes?.find((candidate) =>
+      UPLOAD_TYPES.includes(candidate.type) && (candidate.data?._info || candidate.data?._analysis)
+    );
+    const info = sourceNode?.data?._info;
+    const analysis = sourceNode?.data?._analysis;
+    setDatasetColumns(info?.column_names || Object.keys(analysis?.column_types || {}));
     setSelectedNode(node);
     setShowPanel(true);
     setShowResults(false);
@@ -433,8 +556,14 @@ function AppInner() {
               >
                 <PipelinePanel
                   node={selectedNode}
+                  columns={datasetColumns}
                   onClose={() => { setShowPanel(false); setSelectedNode(null); }}
-                  onUpdateNodeData={(id, data) => workflowRef.current?.updateNode(id, data)}
+                  onUpdateNodeData={(id, data) => {
+                    workflowRef.current?.updateNode(id, data);
+                    setSelectedNode((current) => current?.id === id
+                      ? { ...current, data: { ...current.data, ...data } }
+                      : current);
+                  }}
                 />
               </motion.div>
             )}
